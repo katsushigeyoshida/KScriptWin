@@ -1,0 +1,69 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UseWPF>true</UseWPF>
+    <UseWindowsForms>False</UseWindowsForms>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Remove="Icon\charactergrowfont.png" />
+    <None Remove="Icon\charactershrinkfont.png" />
+    <None Remove="Icon\Document.png" />
+    <None Remove="Icon\FolderOpened.png" />
+    <None Remove="Icon\Run.png" />
+    <None Remove="Icon\Save.png" />
+    <None Remove="Icon\SaveAs.png" />
+    <None Remove="Icon\Search.png" />
+    <None Remove="Icon\Settings.png" />
+    <None Remove="Icon\StatusHelp.png" />
+    <None Remove="Icon\StatusHelpOutline.png" />
+    <None Remove="Icon\Stop.png" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="AvalonEdit" Version="6.3.0.90" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\CoreLib\CoreLib.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Resource Include="Icon\charactergrowfont.png" />
+    <Resource Include="Icon\charactershrinkfont.png" />
+    <Resource Include="Icon\Document.png" />
+    <Resource Include="Icon\FolderOpened.png" />
+    <Resource Include="Icon\Run.png" />
+    <Resource Include="Icon\Save.png" />
+    <Resource Include="Icon\SaveAs.png" />
+    <Resource Include="Icon\Search.png" />
+    <Resource Include="Icon\Settings.png" />
+    <Resource Include="Icon\StatusHelp.png" />
+    <Resource Include="Icon\StatusHelpOutline.png" />
+    <Resource Include="Icon\Stop.png" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Update="Properties\Settings.Designer.cs">
+      <DesignTimeSharedInput>True</DesignTimeSharedInput>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>Settings.settings</DependentUpon>
+    </Compile>
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="Properties\Settings.settings">
+      <Generator>SettingsSingleFileGenerator</Generator>
+      <LastGenOutput>Settings.Designer.cs</LastGenOutput>
+    </None>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="TestData\" />
+  </ItemGroup>
+
+</Project>

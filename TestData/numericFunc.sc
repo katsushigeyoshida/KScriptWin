@@ -1,0 +1,27 @@
+﻿//	数値関数テスト
+a = PI;
+b = E;
+println(PI, " ", a);
+println(E, " ", b,);
+println(mod(10,3));
+println(pow(2,3));
+println(max(5,3));
+println(combi(13,5));
+println(permu(13,5));
+println(DEG(asin(0.7071)));
+println(DEG(atan2(1,1)));
+println(exp(1));
+println(ln(E));
+println(round(15.56,3));
+println(equals(15,15));
+println(lcm(3,8));
+println(JD(2024,10,15));
+println(sum([@]*[@],1,10));
+println(sum([@]^2,1,2,3,4,5));
+println(product([@],1,5));
+println(product([@]^2,1,2,3,4,5));
+println(1+4+9+16+25);
+println(repeat([%]*1.02,10000,1,5));
+println(repeat([%]*[@],10,2,7));
+a = (((((10*2)*3)*4)*5)*6)*7;
+println(a);

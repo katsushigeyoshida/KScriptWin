@@ -1,0 +1,102 @@
+﻿KScriptWin
+KScriptをWPFで動作させる環境の作成とWindows用関数の追加
+
+プログラムソースの構成
+    MainWindow                              動作環境(エディタなど)
+        KScript                             スクリプト解析処理本体
+            KParse                          構文解析
+            KLexer                          字句解析
+            KScriptLib                      スクリプトの関数
+                GraphView                   グラフィック表示ダイヤログ
+                    GraphDraw               プロット,グラフ処理
+                        Entity              表示要素
+                        YWorldDraw(CoreLib) 2Dグラフィック処理
+            YCalc.express(CoreLib)          数値計算処理
+            YLib(CoreLib)                   汎用関数ライブラリ
+        AvalonEditor(NuGet)                 エディタ本体
+        RingBuffer                          出力表示用汎用リングバッファ
+
+ConsoleからWPFに変更
+・スクリプトの編集にAvalonEditor を使用
+・print文の出力を callback 関数を使って実行側で出力先を設定できるようにした
+・print文の出力先はEditBoxにして間に RingBuffer を入れて出力
+
+Editorの機能(AvalonEditor)
+・行番号 (既存機能)
+・ハイライト表示(SyntaxHighlighting=""C#"") (既存機能)
+・ファイルのロードセーブ (2024/09/29)
+・フォントの拡大縮小 (22024/09/29)
+・テキストの変更確認(テキストのハッシュ値を保存して比較) (2024/09/29)
+・フォントの種類の変更 (2024/09/30)
+・検索・置換え (検索のみ 2024/09/30)
+・関数名や定数の入力候補機能(コードスニペット snippets) Apps/F8キー (2024/10/10)
+
+Win版用の関数
+    a = inputBox(title);                    文字入力ダイヤログ
+    messageBox(outString[, title]);         文字列のダイヤログ表示
+    plotWindowSet(left,bottom,right,top);   表示領域の設定
+    plotAspect(1);                          アスペクト比固定の設定(0(非固定)/1(固定))
+    plotColor("Blue");                      要素の色設定
+    plotPointType("cross");                 点種の設定("dot", "cross", "plus", "box", "circle", "triangle")
+    plotLineType("dash");                   線種の設定("solid", "dash", "center", "phantom")
+    plotPointSize(3);                       点サイズの設定
+    plotLineThickness(2);                   線の太さの設定
+    plotPoint(x, y);                        点の表示
+    plotLine(sx, sy, ex, ey);               線分の表示(始点x,y、終点x,y)
+    plotArc(cx, cy, r[, sa][, ea]);         円弧の表示(中心x,中心y,半径[,始角[,終角]])
+    plotText(text,x,y,size,rotate,ha,va);   文字列表示(文字列,座標[,大きさ[,回転角[,水平アライメント[,垂直アライメント]]]])
+
+ScriptLibの追加関数の引数の処理方法
+    //  配列以外の引数 messageBox("メッセージ" [, title])
+    public void messageBox(Token args) {
+        //  , で複数の引数に分解
+        List<string> listArg = mLexer.commaSplit(args.mValue);
+        //  引数ごとに変数や数式を処理して文字列にする
+        List<string> datas = new List<string>();
+        for (int i = 0; i < listArg.Count; i++)
+            datas.Add(getValueToken(listArg[i]).mValue);
+        //  必要に応じて文字列を数値に変換
+        double b = ylib.doubleParse(datas[0]);
+
+    //  配列の場合 a = sum(x[]);  a = sum(y[,]);  
+    public Token sum(Token arg)　{
+        //  配列名と配列の次元を求める
+        (string arrayName, int no) = getArrayName(arg);
+        List<double> listData = new();
+        if (no == 1 || no == 2) {
+            //  配列を数値配列に変換
+            listData = cnvListDouble(arg);
+        } else
+            return new Token(arrayName, TokenType.ERROR);
+        double sum = listData.Sum();
+        return new Token(sum.ToString(), TokenType.LITERAL);
+    }
+    //  配列の場合  graphSet(x[], y[] [,title]);
+    public void graphSet(Token args) {
+        List<string> listArg = mLexer.commaSplit(args.mValue);
+        if (listArg.Count < 2)
+            return ;
+        List<double> x = cnvListDouble(new Token(listArg[0], TokenType.ARRAY));
+        List<double> y = cnvListDouble(new Token(listArg[1], TokenType.ARRAY));
+        if (x.Count != y.Count)
+            return ;
+        string title = "";
+        if (2 < listArg.Count)
+            title = getValueToken(listArg[2]).mValue.Trim('"');
+
+
+機能追加
+・グラフィック関数 (2024/10/06)
+・ダイヤログ関数(xxxDlg関数) input,message (2024/10/06) menuSlelct
+・グラフ機能(散布図,折線,棒グラフ)
+・他のソースの参照機能
+・システム設定(フォントファミリ・サイズ、)
+
+履歴
+2024/10/06 グラフィック関数
+2024/10/13 ファイル参照機能
+2024/10/06 ダイヤログ関数 (input,message)
+2024/10/04 中断、一時停止機能
+2024/09/30 エディタのフォント選択、検索、
+2024/09/29 スクリプトの作成にAvalonEditorを使用,print文をコールバック関数にして実行側で出力先を選択
+2024/09/27 Console版から移植で作成開始
