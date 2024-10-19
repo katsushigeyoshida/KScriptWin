@@ -97,6 +97,15 @@
                             List<Token> stateList = getStatement(tokens, ++i);
                             statement.AddRange(stateList);      //  {文...}/文 処理文
                             i += stateList.Count;
+                            while (i + 1 < tokens.Count && 
+                                tokens[i].mValue == "else" && tokens[i + 1].mValue == "if") {
+                                statement.Add(tokens[i++]);
+                                statement.Add(tokens[i++]);
+                                statement.Add(tokens[i]);           //  (...) 制御文
+                                stateList = getStatement(tokens, ++i);
+                                statement.AddRange(stateList);      //  {文...}/文 処理文
+                                i += stateList.Count;
+                            }
                             if (i < tokens.Count && tokens[i].mValue == "else") {
                                 statement.Add(tokens[i]);       //  else
                                 stateList = getStatement(tokens, ++i);

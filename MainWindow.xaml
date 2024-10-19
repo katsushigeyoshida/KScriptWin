@@ -32,8 +32,13 @@
                 <ToolBarTray>
                     <ToolBar Height="30">
                         <ComboBox Name="cbFontFamily" Width="100" SelectionChanged="cbFontFamily_SelectionChanged">
-
                         </ComboBox>
+                        <Button x:Name="btFontUp" ToolTip="文字拡大" Width="25" Height="25" Click="Button_Click"   >
+                            <Image Source="Icon\charactergrowfont.png" ></Image>
+                        </Button>
+                        <Button x:Name="btFontDown" ToolTip="文字縮小" Width="25" Height="25" Click="Button_Click"   >
+                            <Image Source="Icon\charactershrinkfont.png" ></Image>
+                        </Button>
                     </ToolBar>
                     <ToolBar>
                         <Button x:Name="btNew" ToolTip="新規 Ctrol+N" Width="25" Height="25" Click="Button_Click"   >
@@ -47,12 +52,6 @@
                         </Button>
                         <Button x:Name="btSaveAs" ToolTip="名前を付けて保存" Width="25" Height="25" Click="Button_Click"   >
                             <Image Source="Icon\SaveAs.png" ></Image>
-                        </Button>
-                        <Button x:Name="btFontUp" ToolTip="文字拡大" Width="25" Height="25" Click="Button_Click"   >
-                            <Image Source="Icon\charactergrowfont.png" ></Image>
-                        </Button>
-                        <Button x:Name="btFontDown" ToolTip="文字縮小" Width="25" Height="25" Click="Button_Click"   >
-                            <Image Source="Icon\charactershrinkfont.png" ></Image>
                         </Button>
                     </ToolBar>
                     <ToolBar Height="30">

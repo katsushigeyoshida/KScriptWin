@@ -7,7 +7,9 @@ KScript はC言語に似せたスクリプト言語でインタプリタとし�
 KScriptWin はWindows上でKScriptのコード作成とそれを実行する環境である。
   
 使い方などは[説明書](Document/KScriptWinManual.pdf)を参照。  
-実行方法は[KScriptWin.zip](KScriptWin.zip)をダウンロードし適当なフォルダーに展開して KScriptWin.exe を実行する。
+実行方法は[KScriptWin.zip](KScriptWin.zip)をダウンロードし適当なフォルダーに展開して KScriptWin.exe を実行する。  
+<img src="Image/zip_DownLoad_commnet.png" width="80%">
+
 ### 画面
 メインウィンドウ    
 <img src="Image/MainWindow.png" width="80%">  

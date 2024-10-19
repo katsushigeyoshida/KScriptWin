@@ -155,6 +155,10 @@ namespace KScriptWin
                         tokens.Add(new Token(buf, TokenType.VARIABLE));
                     }
                     i--;
+                } else if (twoChar != "" && 0 <= Array.IndexOf(Token.assignment, twoChar)) {
+                    //  複合演算子
+                    tokens.Add(new Token(twoChar, TokenType.ASSIGNMENT));
+                    i++;
                 } else if (Char.IsNumber(str[i]) || str[i] == '.' ||
                     (i == 0 && (str[i] == '-' || str[i] == '+'))) {
                     //  数値
@@ -174,10 +178,6 @@ namespace KScriptWin
                     buf = stripBracketString(buf, str[i]);
                     buf = buf.Replace("\\n", "\n");
                     tokens.Add(new Token(buf, TokenType.STRING));
-                } else if (twoChar != "" && 0 <= Array.IndexOf(Token.assignment, twoChar)) {
-                    //  複合演算子
-                    tokens.Add(new Token(twoChar, TokenType.ASSIGNMENT));
-                    i++;
                 } else if (0 <= Array.IndexOf(Token.operators, str[i])) {
                     //  識別子(演算子/条件演算子)
                     if (twoChar != "" && 0 <= Array.IndexOf(Token.condition, twoChar)) {

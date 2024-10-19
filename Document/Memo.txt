@@ -91,6 +91,9 @@ ScriptLibの追加関数の引数の処理方法
 ・グラフ機能(散布図,折線,棒グラフ)
 ・他のソースの参照機能
 ・システム設定(フォントファミリ・サイズ、)
+・else if のサポート
+・条件文の true/false は現状は
+・3Dグラフィック関数
 
 履歴
 2024/10/06 グラフィック関数
@@ -100,3 +103,13 @@ ScriptLibの追加関数の引数の処理方法
 2024/09/30 エディタのフォント選択、検索、
 2024/09/29 スクリプトの作成にAvalonEditorを使用,print文をコールバック関数にして実行側で出力先を選択
 2024/09/27 Console版から移植で作成開始
+
+
+
+echo "# KScriptWin" >> README.md
+git init
+git add README.md
+git commit -m "first commit"
+git branch -M main
+git remote add origin https://github.com/katsushigeyoshida/KScriptWin.git
+git push -u origin main

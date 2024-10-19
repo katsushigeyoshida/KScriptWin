@@ -120,7 +120,7 @@ namespace KScriptWin
         /// </summary>
         public KScript()
         {
-            mScriptLib = new ScriptLib(this, mParse.mVariables);
+            mScriptLib = new ScriptLib(this);
         }
 
         /// <summary>
@@ -131,7 +131,7 @@ namespace KScriptWin
         {
             //  初期化
             clear();
-            mScriptLib = new ScriptLib(this, mParse.mVariables);
+            mScriptLib = new ScriptLib(this);
             //  字句解析・ スクリプト登録(mFunctionsに登録)
             mTokenList = mLexer.tokenList(script);
             mStatements = mParse.getStatements(mTokenList);
@@ -213,13 +213,7 @@ namespace KScriptWin
                 tokenList.AddRange(tokens.Skip(sp));
             List<List<Token>> statements = mParse.getStatements(tokenList);
             foreach (var statement in statements) {
-                if (mControlData.mAbort) return RETURNTYPE.BREAK;
-                if (mControlData.mPause) {
-                    Thread.Sleep(100);
-                    ylib.DoEvents();
-                    //await Task.Delay(100);
-                    continue;
-                }
+                if (pause()) return RETURNTYPE.BREAK;
                 returnType = exeStatement(statement);
                 if (returnType != RETURNTYPE.NORMAL)
                     break;
@@ -359,18 +353,27 @@ namespace KScriptWin
         /// <returns>実行結果</returns>
         public RETURNTYPE ifStatement(List<Token> tokens)
         {
-            if (conditinalStatement(tokens, 1)) {
-                List<Token> tokenList = mParse.getStatement(tokens, 2);
-                return exeStatements(tokenList, 0);
-            } else {
-                int n = tokens.FindIndex(p => p.mValue == "else");
-                if (0 < n) {
-                    List<Token> tokenList = mParse.getStatement(tokens, n + 1);
+            List<Token> statment, tokenList;
+            int n = tokens.FindIndex(p => p.mValue == "else");
+            while (0 <= n) {
+                statment = tokens.Take(n).ToList();    //  if ... (else)
+                if (0 == statment.Count || statment[0].mValue != "if") break;
+                if (conditinalStatement(statment, 1)) {
+                    tokenList = mParse.getStatement(statment, 2);
                     return exeStatements(tokenList, 0);
                 }
+                tokens = tokens.Skip(n + 1).ToList();
+                n = tokens.FindIndex(p => p.mValue == "else");
             }
-            //calcError("ifStatement", tokens);
-            return RETURNTYPE.NORMAL;
+            if (0 < tokens.Count && tokens[0].mValue == "if") {
+                if (conditinalStatement(tokens, 1)) {
+                    tokenList = mParse.getStatement(tokens, 2);
+                    return exeStatements(tokenList, 0);
+                } else
+                    return RETURNTYPE.NORMAL;
+            }
+            tokenList = mParse.getStatement(tokens);
+            return exeStatements(tokenList, 0);
         }
 
         /// <summary>
@@ -381,6 +384,7 @@ namespace KScriptWin
         public RETURNTYPE whileStatement(List<Token> tokens)
         {
             while (conditinalStatement(tokens, 1)) {
+                if (pause()) return RETURNTYPE.BREAK;
                 RETURNTYPE returnType = exeStatements(tokens, 2);
                 if (returnType == RETURNTYPE.BREAK)
                     break;
@@ -403,6 +407,7 @@ namespace KScriptWin
             if (funcStatement.Count == 3) {
                 letStatement(funcStatement[0]);                     //  初期値
                 while (conditinalStatement(funcStatement[1])) {     //  条件
+                    if (pause()) return RETURNTYPE.BREAK;
                     RETURNTYPE returnType = exeStatements(tokens, 2);
                     if (returnType == RETURNTYPE.BREAK)
                         break;
@@ -531,16 +536,13 @@ namespace KScriptWin
         private Token programFunc(string funcName, Token arg, Token ret)
         {
             KScript script = new KScript(mParse.mFunctions[funcName].mValue);
-            //script.mOutputString = mOutputString;
             script.mControlData = mControlData;
             script.printCallback = printCallback;
-            //  参照関数の設定
-            script.mParse.mFunctions = mParse.mFunctions;
-            //  引数の変換
-            List<Token> srcArgs = getFuncArgs(arg.mValue);
-            List<Token> outArgs = getFuncArgs(mParse.mFunctions[funcName].mValue, 1);
-            setFuncArg(srcArgs, outArgs, script);
-            script.execute(funcName, null);
+            script.mParse.mFunctions = mParse.mFunctions;       //  参照関数の設定
+            List<Token> callArgs = getFuncArgs(arg.mValue);     //  呼出し側引数の取得(配列以外は数値に変換)
+            List<Token> funcArgs = getFuncArgNames(mParse.mFunctions[funcName].mValue, 1);  //  関数側引数名の取得
+            setFuncArg(callArgs, funcArgs, script);             //  呼出し側から関数側に値を渡す
+            script.execute(funcName, null);                     //  関数の実行
             //  戻り値の設定
             if (script.mParse.mVariables.ContainsKey("return")) {
                 getFuncArray(script.mParse.mVariables["return"], ret, script);
@@ -562,6 +564,9 @@ namespace KScriptWin
                     tokens = mLexer.tokenList(mLexer.stripBracketString(tokens[sp].mValue));
                 else if (tokens.Count == 1)
                     tokens = mLexer.tokenList(mLexer.stripBracketString(tokens[0].mValue));
+
+                if (tokens.Count == 1) return true;     //  条件式が定数の場合
+                if (tokens.Count == 2) return false;    //  条件式意味不明
 
                 List<Token> a = new List<Token>();
                 List<Token> b = new List<Token>();
@@ -643,6 +648,13 @@ namespace KScriptWin
                     i++;
                 } else if (tokens[i].mType == TokenType.OPERATOR) {
                     token = tokens[i].copy();
+                } else if (tokens[i].mType == TokenType.ASSIGNMENT) {
+                    token = tokens[i].copy();
+                    if (tokens[i].mValue[1] == '=') {
+                        token.mValue = tokens[i].mValue[0].ToString() + getVariable(tokens[i - 1]).mValue;
+                    } else {
+                        token.mValue = tokens[i].mValue[0].ToString() + "1";
+                    }
                 } else {
                     //  ERROR
                     outputString($"ERROR: not express word [{tokens[i]}]\n");
@@ -650,8 +662,24 @@ namespace KScriptWin
                 }
                 if (token == null || token.mType == TokenType.ERROR)
                     return new Token("", TokenType.ERROR);
-                if (buf == null) {
+                if (buf == null && token.mType != TokenType.ASSIGNMENT) {
                     buf = token.copy();
+                } else if (token.mType == TokenType.ASSIGNMENT) {
+                    Token tmpValue, tmpKey;
+                    if (0 < i && tokens[i - 1].mType == TokenType.VARIABLE)
+                        tmpKey = tokens[i - 1];
+                    else
+                        tmpKey = tokens[i + 1];
+                    tmpValue = getVariable(tmpKey);
+                    tmpValue.mValue += token.mValue;
+                    tmpValue.mValue = mCalc.expression(tmpValue.mValue).ToString();
+                    tmpValue.mType = TokenType.LITERAL;
+                    if (i + 1 < tokens.Count && tokens[i + 1].mType == TokenType.VARIABLE) {
+                        buf = tmpValue.copy();
+                        i++;
+                    } else if (tokens[i].mValue[1] == '=')
+                        i++;
+                    mParse.addVariable(tmpKey, tmpValue);
                 } else if (buf.mType == TokenType.STRING || token.mType == TokenType.STRING) {
                     if (0 < i && tokens[i - 1].mType == TokenType.OPERATOR)
                         buf.mValue = buf.mValue.Remove(buf.mValue.Length - 1);
@@ -734,7 +762,23 @@ namespace KScriptWin
             List<Token> funcList = mParse.getStatement(mLexer.tokenList(func));
             List<string> funcargs = mLexer.commaSplit(mLexer.stripBracketString(funcList[sp].mValue, '('));
             for (int i = 0; i < funcargs.Count; i++)
-                args.Add(new Token(funcargs[i].Trim(), TokenType.VARIABLE));
+                args.Add(getValueToken(funcargs[i].Trim()));
+            return args;
+        }
+
+        /// <summary>
+        /// プログラム関数の引数名の取得
+        /// </summary>
+        /// <param name="func">関数スクリプト</param>
+        /// <param name="sp">引数の位置</param>
+        /// <returns>引数名リスト</returns>
+        private List<Token> getFuncArgNames(string func, int sp = 0)
+        {
+            List<Token> args = new List<Token>();
+            List<Token> funcList = mParse.getStatement(mLexer.tokenList(func));
+            List<string> funcargs = mLexer.commaSplit(mLexer.stripBracketString(funcList[sp].mValue, '('));
+            for (int i = 0; i < funcargs.Count; i++)
+                args.Add(mLexer.string2Token(funcargs[i].Trim()));
             return args;
         }
 
@@ -781,6 +825,8 @@ namespace KScriptWin
 
         /// <summary>
         /// 変数または配列変数を数値に変換
+        /// m + 2 →  3 + 2 → 5
+        /// a[m, n+1] → a[2,3+1] → a[2,4] → 5
         /// </summary>
         /// <param name="value">変数または配列変数</param>
         /// <returns>数値</returns>
@@ -789,6 +835,7 @@ namespace KScriptWin
             string buf = "";
             int sp = value.IndexOf("[");
             if (0 <= sp) {
+                //  配列引数
                 List<Token> tokens = mLexer.splitArgList(value);
                 buf = tokens[0].mValue;
                 for (int i = 1; i < tokens.Count; i++) {
@@ -800,7 +847,8 @@ namespace KScriptWin
                     }
                 }
             } else {
-                buf = express(new Token(value, TokenType.VARIABLE)).mValue;
+                //  通常の引数
+                buf = express(mLexer.string2Token(value)).mValue.Trim();
             }
 
             if (mParse.mVariables.ContainsKey(buf))
@@ -1011,6 +1059,22 @@ namespace KScriptWin
                 buf += token.mValue + " ";
             buf.Trim();
             return buf;
+        }
+
+        /// <summary>
+        /// Pause機能 
+        /// </summary>
+        /// <returns>true(Abort)</returns>
+        private bool pause()
+        {
+            if (mControlData.mAbort) return true;
+            while (mControlData.mPause) {
+                if (mControlData.mAbort) return true;
+                Thread.Sleep(100);
+                ylib.DoEvents();
+                continue;
+            }
+            return false;
         }
     }
 }

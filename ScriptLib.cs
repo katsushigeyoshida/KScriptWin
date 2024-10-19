@@ -69,8 +69,6 @@ namespace KScriptWin
     /// 　　(string name, int index) getArrayNo(string arrayName)   配列から配列名と配列のインデックスを取得
     /// 　　(string name, int? row, int? col) getArrayNo2(string arrayName) 2次元配列から配列名と行と列を取り出す
     /// 　　(string name, int no) getArrayName(Token args)      変数名または配列名と配列の次元の取得
-    /// 　　Token getValueToken(string value)                   引数の変数または配列変数を数値に変換
-    ///                                                         m + 2 →  3 + 2 → 5 , a[m, n+1] → a[2,3+1] → a[2,4] → 5
     ///                                                     
     /// 　　void setReturnArray(Token[] src, Token dest)        配列戻り値に設定
     /// 　　void setReturnArray(double[,] src, Token dest)      2D配列の戻り値に設定
@@ -80,11 +78,6 @@ namespace KScriptWin
     /// </summary>
     public class ScriptLib
     {
-        public Dictionary<string, Token> mVariables;    //  変数リスト(変数名,値)
-
-        private GraphView mGraph;
-        private double mGraphFontSize = 12;
-
         public static string[] mFuncNames = new string[] {
             "inputBox(); 文字入力ダイヤログ",
             "messageBox(outString[, title]); 文字列のダイヤログ表示",
@@ -128,7 +121,11 @@ namespace KScriptWin
             "graphFontSize(5); グラフのフォントサイズの設定", 
         };
 
-        private KScript mScript;
+        public Dictionary<string, Token> mVariables;    //  変数リスト(変数名,値)
+        public KScript mScript;
+
+        private GraphView mGraph;
+        private double mGraphFontSize = 12;
         private KLexer mLexer = new KLexer();
         private YCalc mCalc = new YCalc();
         private YLib ylib = new YLib();
@@ -137,11 +134,10 @@ namespace KScriptWin
         /// コンストラクタ
         /// </summary>
         /// <param name="script">Scriptクラス</param>
-        /// <param name="variables">変数テーブル(KParse.mVariable)</param>
-        public ScriptLib(KScript script, Dictionary<string, Token> variables)
+        public ScriptLib(KScript script)
         {
             mScript = script;
-            mVariables = variables;
+            mVariables = script.mParse.mVariables;
         }
 
         /// <summary>
@@ -153,7 +149,7 @@ namespace KScriptWin
         public Token innerFunc(Token funcName, Token arg, Token ret)
         {
             string argValue = mLexer.stripBracketString(arg.mValue);
-            Token args = getValueToken(argValue);
+            Token args = mScript.getValueToken(argValue);
             switch (funcName.mValue) {
                 case "input": return new Token(Console.ReadLine(), TokenType.STRING);
                 case "inputBox": return inputBox(args);
@@ -200,7 +196,7 @@ namespace KScriptWin
         }
 
         /// <summary>
-        /// メニューを出して項目を選択
+        /// メニューを出して項目を選択(inner function)
         /// </summary>
         /// <param name="args">引数(menu[],title)</param>
         /// <returns>項目No</returns>
@@ -223,17 +219,17 @@ namespace KScriptWin
         }
 
         /// <summary>
-        /// グラフのフォントサイズの設定
+        /// グラフのフォントサイズの設定(inner function)
         /// </summary>
         /// <param name="arg">サイズ</param>
         public void graphFontSize(Token arg)
         {
-            double size = ylib.doubleParse(getValueToken(arg.mValue).mValue);
+            double size = ylib.doubleParse(mScript.getValueToken(arg.mValue).mValue);
             mGraphFontSize = size;
         }
 
         /// <summary>
-        /// グラフデータの設定(X[], Y[][, Title])
+        /// グラフデータの設定(X[], Y[][, Title])(inner function)
         /// </summary>
         /// <param name="args">引数(x[],y[][,title]</param>
         public void graphSet(Token args)
@@ -247,7 +243,7 @@ namespace KScriptWin
                 return ;
             string title = "";
             if (2 < listArg.Count)
-                title = getValueToken(listArg[2]).mValue.Trim('"');
+                title = mScript.getValueToken(listArg[2]).mValue.Trim('"');
 
             if (mGraph != null)
                 mGraph.Close();
@@ -259,7 +255,7 @@ namespace KScriptWin
         }
 
         /// <summary>
-        /// 表示領域の設定(left,bottom,right,top)
+        /// 表示領域の設定(left,bottom,right,top)(inner function)
         /// </summary>
         /// <param name="args">left,bottom,right,top</param>
         public void plotWindow(Token args)
@@ -267,7 +263,7 @@ namespace KScriptWin
             List<string> listArg = mLexer.commaSplit(args.mValue);
             List<double> datas = new List<double>();
             for (int i = 0; i< listArg.Count; i++)
-                datas.Add(ylib.doubleParse(getValueToken(listArg[i]).mValue));
+                datas.Add(ylib.doubleParse(mScript.getValueToken(listArg[i]).mValue));
             if (mGraph != null)
                 mGraph.Close();
             mGraph = new GraphView();
@@ -277,67 +273,67 @@ namespace KScriptWin
         }
 
         /// <summary>
-        /// アスペクト比固定の設定
+        /// アスペクト比固定の設定(inner function)
         /// </summary>
         /// <param name="arg">0(非固定)/1(固定)</param>
         public void plotAspect(Token arg)
         {
-            int aspect = ylib.intParse(getValueToken(arg.mValue).mValue);
+            int aspect = ylib.intParse(mScript.getValueToken(arg.mValue).mValue);
             mGraph.setAspectFix(aspect);
         }
 
         /// <summary>
-        /// 要素の色設定
+        /// 要素の色設定(inner function)
         /// </summary>
         /// <param name="arg">色名</param>
         public void plotColor(Token arg)
         {
-            string colorName = mLexer.stripBracketString(getValueToken(arg.mValue).mValue, '\"');
+            string colorName = mLexer.stripBracketString(mScript.getValueToken(arg.mValue).mValue, '\"');
             mGraph.setColor(colorName);
         }
 
         /// <summary>
-        /// 点種の設定("dot", "cross", "plus", "box", "circle", "triangle")
+        /// 点種の設定("dot", "cross", "plus", "box", "circle", "triangle")(inner function)
         /// </summary>
         /// <param name="arg">点種</param>
         public void plotPointType(Token arg)
         {
-            string pointType = mLexer.stripBracketString(getValueToken(arg.mValue).mValue, '\"');
+            string pointType = mLexer.stripBracketString(mScript.getValueToken(arg.mValue).mValue, '\"');
             mGraph.setPointType(pointType);
         }
 
         /// <summary>
-        /// 線種の設定("solid", "dash", "center", "phantom")
+        /// 線種の設定("solid", "dash", "center", "phantom")(inner function)
         /// </summary>
         /// <param name="arg">線種</param>
         public void plotLineType(Token arg)
         {
-            string lineType = mLexer.stripBracketString(getValueToken(arg.mValue).mValue, '\"');
+            string lineType = mLexer.stripBracketString(mScript.getValueToken(arg.mValue).mValue, '\"');
             mGraph.setLineType(lineType);
         }
 
         /// <summary>
-        /// 点サイズの設定
+        /// 点サイズの設定(inner function)
         /// </summary>
         /// <param name="arg">サイズ</param>
         public void plotPointSize(Token arg)
         {
-            double pointSize = ylib.doubleParse(getValueToken(arg.mValue).mValue);
+            double pointSize = ylib.doubleParse(mScript.getValueToken(arg.mValue).mValue);
             mGraph.setPointSize(pointSize);
         }
 
         /// <summary>
-        /// 線の太さの設定
+        /// 線の太さの設定(inner function)
         /// </summary>
         /// <param name="arg">線の太さ</param>
         public void plotLineThickness(Token arg)
         {
-            double lineThickness = ylib.doubleParse(getValueToken(arg.mValue).mValue);
+            double lineThickness = ylib.doubleParse(mScript.getValueToken(arg.mValue).mValue);
             mGraph.setLineThickness(lineThickness);
         }
 
         /// <summary>
-        /// 点の表示
+        /// 点の表示(inner function)
         /// </summary>
         /// <param name="args">点座標x,y</param>
         public void plotPoint(Token args)
@@ -345,7 +341,7 @@ namespace KScriptWin
             List<string> listArg = mLexer.commaSplit(args.mValue);
             List<double> datas = new List<double>();
             for (int i = 0; i < listArg.Count; i++)
-                datas.Add(ylib.doubleParse(getValueToken(listArg[i]).mValue));
+                datas.Add(ylib.doubleParse(mScript.getValueToken(listArg[i]).mValue));
             if (1 < datas.Count) {
                 PointD point = new PointD(datas[0], datas[1]);
                 mGraph.plotPoint(point);
@@ -353,15 +349,15 @@ namespace KScriptWin
         }
 
         /// <summary>
-        /// 線分の表示(始点x,y、終点x,y)
+        /// 線分の表示(始点x,y、終点x,y)(inner function)
         /// </summary>
-        /// <param name="args"></param>
+        /// <param name="args">始終点座標</param>
         public void plotLine(Token args)
         {
             List<string> listArg = mLexer.commaSplit(args.mValue);
             List<double> datas = new List<double>();
             for (int i = 0; i < listArg.Count; i++)
-                datas.Add(ylib.doubleParse(getValueToken(listArg[i]).mValue));
+                datas.Add(ylib.doubleParse(mScript.getValueToken(listArg[i]).mValue));
             if (3 < datas.Count) {
                 LineD line = new LineD(datas[0], datas[1], datas[2], datas[3]);
                 mGraph.plotLine(line);
@@ -369,7 +365,7 @@ namespace KScriptWin
         }
 
         /// <summary>
-        /// 円弧の表示(中心x,y,半径、始角、終角)
+        /// 円弧の表示(中心x,y,半径、始角、終角)(inner function)
         /// </summary>
         /// <param name="args">円弧データ</param>
         public void plotArc(Token args)
@@ -377,7 +373,7 @@ namespace KScriptWin
             List<string> listArg = mLexer.commaSplit(args.mValue);
             List<double> datas = new List<double>();
             for (int i = 0; i < listArg.Count; i++)
-                datas.Add(ylib.doubleParse(getValueToken(listArg[i]).mValue));
+                datas.Add(ylib.doubleParse(mScript.getValueToken(listArg[i]).mValue));
             ArcD arc;
             if (datas.Count == 3) {
                 arc = new ArcD(datas[0], datas[1], datas[2]);
@@ -391,16 +387,16 @@ namespace KScriptWin
         }
 
         /// <summary>
-        /// 文字列の表示(文字列,座標x,座標y,サイズ,回転角,水平アライメント,垂直アライメント)
+        /// 文字列の表示(文字列,座標x,座標y,サイズ,回転角,水平アライメント,垂直アライメント)(inner function)
         /// </summary>
         /// <param name="args"></param>
         public void plotText(Token args)
         {
             List<string> listArg = mLexer.commaSplit(args.mValue);
             List<double> datas = new List<double>();
-            string str = mLexer.stripBracketString(getValueToken(listArg[0]).mValue, '"');
+            string str = mLexer.stripBracketString(mScript.getValueToken(listArg[0]).mValue, '"');
             for (int i = 1; i < listArg.Count; i++)
-                datas.Add(ylib.doubleParse(getValueToken(listArg[i]).mValue));
+                datas.Add(ylib.doubleParse(mScript.getValueToken(listArg[i]).mValue));
             TextD text;
             if (datas.Count == 2) {
                 //  文字列と座標
@@ -427,14 +423,14 @@ namespace KScriptWin
 
 
         /// <summary>
-        /// 文字列入力ダイヤログボックス(ダイヤログタイトル)
+        /// 文字列入力ダイヤログボックス(ダイヤログタイトル)(inner function)
         /// </summary>
         /// <returns>入力文字</returns>
         public Token inputBox(Token args)
         {
             List<string> listArg = mLexer.commaSplit(args.mValue);
             InputBox dlg = new InputBox();
-            dlg.Title = listArg.Count < 1 ? "入力" : getValueToken(listArg[0]).mValue.Trim('"');
+            dlg.Title = listArg.Count < 1 ? "入力" : mScript.getValueToken(listArg[0]).mValue.Trim('"');
             if (dlg.ShowDialog() == true) {
                 if (ylib.IsNumberString(dlg.mEditText.ToString(), true))
                     return new Token(dlg.mEditText.ToString(), TokenType.LITERAL);
@@ -445,7 +441,7 @@ namespace KScriptWin
         }
 
         /// <summary>
-        /// 文字列表示ダイヤログ(出力文字列[,タイトル])
+        /// 文字列表示ダイヤログ(出力文字列[,タイトル])(inner function)
         /// </summary>
         /// <param name="args">出力文字列[,タイトル]</param>
         public void messageBox(Token args)
@@ -453,7 +449,7 @@ namespace KScriptWin
             List<string> listArg = mLexer.commaSplit(args.mValue);
             List<string> datas = new List<string>();
             for (int i = 0; i < listArg.Count; i++)
-                datas.Add(getValueToken(listArg[i]).mValue);
+                datas.Add(mScript.getValueToken(listArg[i]).mValue);
             if (listArg.Count ==1) {
                 MessageBox.Show(datas[0]);
             } else if (listArg.Count == 2) {
@@ -543,7 +539,7 @@ namespace KScriptWin
         }
 
         /// <summary>
-        /// 配列の圧縮(未使用インデックス削除))
+        /// 配列の圧縮(未使用インデックス削除)(inner function)
         /// </summary>
         /// <param name="arg">配列名</param>
         public void squeeze(Token arg)
@@ -568,7 +564,7 @@ namespace KScriptWin
         }
 
         /// <summary>
-        /// ソート
+        /// ソート(inner function)
         /// </summary>
         /// <param name="arg">配列名</param>
         public void sort(Token arg)
@@ -592,7 +588,7 @@ namespace KScriptWin
         }
 
         /// <summary>
-        /// 配列を逆順にする
+        /// 配列を逆順にする(inner function)
         /// </summary>
         /// <param name="arg">配列名</param>
         public void reverse(Token arg)
@@ -614,7 +610,7 @@ namespace KScriptWin
         }
 
         /// <summary>
-        /// 最大値を求める(a[], a[,], a[x,])
+        /// 最大値を求める(a[], a[,], a[x,])(inner function)
         /// </summary>
         /// <param name="arg">配列名</param>
         /// <returns>最大値</returns>
@@ -639,7 +635,7 @@ namespace KScriptWin
         }
 
         /// <summary>
-        /// 最小値を求める(a[], a[,], a[x,])
+        /// 最小値を求める(a[], a[,], a[x,])(inner function)
         /// </summary>
         /// <param name="arg">配列名</param>
         /// <returns>最小値</returns>
@@ -664,7 +660,7 @@ namespace KScriptWin
         }
 
         /// <summary>
-        /// 配列の合計
+        /// 配列の合計(inner function)
         /// </summary>
         /// <param name="arg">配列名</param>
         /// <returns>合計</returns>
@@ -681,7 +677,7 @@ namespace KScriptWin
         }
 
         /// <summary>
-        /// 平均値を求める
+        /// 平均値を求める(inner function)
         /// </summary>
         /// <param name="arg">配列名</param>
         /// <returns>平均値</returns>
@@ -698,7 +694,7 @@ namespace KScriptWin
         }
 
         /// <summary>
-        /// 分散
+        /// 分散(inner function)
         /// </summary>
         /// <param name="arg">配列</param>
         /// <returns>分散値</returns>
@@ -716,7 +712,7 @@ namespace KScriptWin
         }
 
         /// <summary>
-        /// 標準偏差
+        /// 標準偏差(inner function)
         /// </summary>
         /// <param name="arg">配列</param>
         /// <returns>標準偏差</returns>
@@ -730,7 +726,7 @@ namespace KScriptWin
         }
 
         /// <summary>
-        /// 共分散(a[],b[])
+        /// 共分散(a[],b[])(inner function)
         /// </summary>
         /// <param name="args">配列</param>
         /// <returns>共分散</returns>
@@ -753,7 +749,7 @@ namespace KScriptWin
         }
 
         /// <summary>
-        /// 相関係数(x[],y[])
+        /// 相関係数(x[],y[])(inner function)
         /// </summary>
         /// <param name="args">配列</param>
         /// <returns>相関係数</returns>
@@ -940,7 +936,7 @@ namespace KScriptWin
         }
 
         /// <summary>
-        /// 行列のコピー
+        /// 行列のコピー(inner function)
         /// </summary>
         /// <param name="args">引数(行列A)</param>
         /// <param name="ret">戻り変数</param>
@@ -1184,40 +1180,6 @@ namespace KScriptWin
             else if (0 < sp)
                 arrayName = args.mValue.Substring(0, sp);
             return (arrayName, dimNo);
-        }
-
-        /// <summary>
-        /// 引数の変数または配列変数を数値に変換
-        /// m + 2 →  3 + 2 → 5
-        /// a[m, n+1] → a[2,3+1] → a[2,4] → 5
-        /// </summary>
-        /// <param name="value">変数または配列変数</param>
-        /// <returns>数値</returns>
-        public Token getValueToken(string value)
-        {
-            string buf = "";
-            int sp = value.IndexOf("[");
-            if (0 <= sp) {
-                //  配列引数
-                List<Token> tokens = mLexer.splitArgList(value);
-                buf = tokens[0].mValue;
-                for (int i = 1; i < tokens.Count; i++) {
-                    if (tokens[i].mType == TokenType.VARIABLE ||
-                        tokens[i].mType == TokenType.EXPRESS) {
-                        buf += mScript.express(tokens[i]).mValue;
-                    } else {
-                        buf += tokens[i].mValue;
-                    }
-                }
-            } else {
-                //  通常の引数
-                buf = mScript.express(mLexer.string2Token(value)).mValue.Trim();
-            }
-
-            if (mVariables.ContainsKey(buf))
-                return mVariables[buf];
-            else
-                return new Token(buf, TokenType.LITERAL);
         }
     }
 }

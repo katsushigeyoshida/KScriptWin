@@ -4,17 +4,19 @@ println("ソートデータ");
 arrayPrint(data[]);
 menu[] = {
 	"単純選択法", "バブルソート", "単純挿入法",
-	"シェーカーソート", "単純挿入法2", "シェルソート"
+	"シェーカーソート", "単純挿入法2", "シェルソート",
+	"クイックソート"
 };
 title = "ソートの種類";
 menuNo = menuSelect(menu[], title);
 println(menuNo);
-if (sortNo == 0) simpleSelect(data[]);
-if (sortNo == 1) bubleSort(data[]);
-if (sortNo == 2) simpleInsert(data[]);
-if (sortNo == 3) shakerSort(data[]);
-if (sortNo == 4) simpleInsert2(data[]);
-if (sortNo == 5) shellSort(data[]);
+if (menuNo == 0) simpleSelect(data[]);
+else if (menuNo == 1) bubleSort(data[]);
+else if (menuNo == 2) simpleInsert(data[]);
+else if (menuNo == 3) shakerSort(data[]);
+else if (menuNo == 4) simpleInsert2(data[]);
+else if (menuNo == 5) shellSort(data[]);
+else if (menuNo == 6) quickSort(data[]);
 
 
 simpleSelect(a[]) {
@@ -154,6 +156,36 @@ shellSort(a[]) {
         }
         gap = floor(gap / 2);
     }
+}
+
+quickSort(a[]) {
+    println("クイックソート");
+	n = count(a[]) - 1;
+	a[] = quick(a[], 0, n);
+}
+
+quick(a[], left, right) {
+	if (left < right) {
+		print(left, " ", right, " : ");
+		arrayPrint(a[]);
+		s = a[left];
+		i = left;
+		j = right + 1;
+		while (1) {
+			while (a[++i] < s) ;
+			while (a[--j] > s) ;
+			if (i >= j) break;
+			t = a[i];
+			a[i] = a[j];
+			a[j] = t;
+		}
+		a[left] = a[j];
+		a[j] = s;
+		
+		a[] = quick(a[], left, j - 1);
+		a[] = quick(a[], j + 1, right);
+	}
+	return a[];
 }
 
 arrayPrint(b[]) {
