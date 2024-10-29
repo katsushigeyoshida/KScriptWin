@@ -161,6 +161,7 @@ namespace KScriptWin
             ent.mSize = mPointSize;
             ent.mPointType = mPointType;
             mEntityList.Add(ent);
+            ent.draw(ydraw);
         }
 
         /// <summary>
@@ -175,6 +176,7 @@ namespace KScriptWin
             ent.mThickness = mThickness;
             ent.mLineType = mLineType;
             mEntityList.Add(ent);
+            ent.draw(ydraw);
         }
 
         /// <summary>
@@ -189,6 +191,7 @@ namespace KScriptWin
             ent.mThickness = mThickness;
             ent.mLineType = mLineType;
             mEntityList.Add(ent);
+            ent.draw(ydraw);
         }
 
         /// <summary>
@@ -203,6 +206,7 @@ namespace KScriptWin
             ent.mThickness = mThickness;
             ent.mLineType = mLineType;
             mEntityList.Add(ent);
+            ent.draw(ydraw);
         }
 
         /// <summary>

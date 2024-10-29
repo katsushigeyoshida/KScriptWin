@@ -1,5 +1,4 @@
 ﻿using CoreLib;
-using Microsoft.WindowsAPICodePack.Shell;
 using System.IO;
 using System.Security.Cryptography;
 using System.Text;
@@ -31,7 +30,7 @@ namespace KScriptWin
         private string mFolderListPath = "FolderList.csv";
 
         private RingBuffer<string> mOutBuffer = new RingBuffer<string>(2000);   //  出力表示のバッファ
-        private GraphView mGraph;
+        private GraphView mGraph;               //  グラフィックWindow
         private KScript mScript;                //  スクリプト本体
         private List<string> mKeyWordList = new List<string>(); //  入力候補リスト
         private string mHelpFile = "KScriptWinManual.pdf";      //  マニュアルファイル
@@ -57,6 +56,7 @@ namespace KScriptWin
             //  KScriptの設定
             mScript = new KScript();
             mScript.printCallback = outputDisp;      //  出力表示先の設定
+            mScript.mGraph = mGraph;
 
             WindowFormLoad();
         }
@@ -86,6 +86,9 @@ namespace KScriptWin
 
         private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
         {
+            if (mGraph != null)
+                mGraph.Close();
+
             closeCheck();
             saveFolderLis();
             WindowFormSave();
@@ -211,14 +214,12 @@ namespace KScriptWin
                 saveAs();
             } else if (menuItem.Name.CompareTo("fileCloseMenu") == 0) {
                 Close();
-            } else if (menuItem.Name.CompareTo("editCopyMenu") == 0) {
-
-            } else if (menuItem.Name.CompareTo("editPasteMenu") == 0) {
-
             } else if (menuItem.Name.CompareTo("editSearchMenu") == 0) {
-
+                search();
             } else if (menuItem.Name.CompareTo("editReplaceMenu") == 0) {
 
+            } else if (menuItem.Name.CompareTo("editToCommentMenu") == 0) {
+                toComment();
             } else if (menuItem.Name.CompareTo("GraphViewMenu") == 0) {
                 if (mGraph != null) {
                     mGraph.Close();
@@ -298,6 +299,7 @@ namespace KScriptWin
         {
             closeCheck();
             avalonEditor.Text = "";
+            mFilePath = "";
             setTitle();
         }
 
@@ -312,8 +314,71 @@ namespace KScriptWin
             mScript.mScriptFolder = mDataFolder;
             mScript.setScript(avalonEditor.Text);
             mScript.execute("main");
+            mGraph = mScript.mGraph;
             outMessage($"End : [{Path.GetFileNameWithoutExtension(mFilePath)}]");
         }
+
+        /// <summary>
+        /// コメントの追加/解除
+        /// </summary>
+        private void toComment()
+        {
+            bool remove = false;
+            string text = avalonEditor.Text;
+            int selSp = avalonEditor.SelectionStart;
+            int selEp = selSp + avalonEditor.SelectionLength;
+            //  改行位置と選択行位置を求める
+            int stLine = -1;
+            int endLine = -1;
+            List<int> crList = new List<int>() { 0 };
+            for (int i = 0; i < text.Length; i++) {
+                if (text[i] == '\n')
+                    crList.Add(i + 1);
+            }
+            crList.Add(text.Length);
+            for (int i = 0; i < crList.Count - 1; i++) {
+                if (crList[i] <= selSp && selSp < crList[i + 1])
+                    stLine = i;
+                if (crList[i] <= selEp && selEp < crList[i + 1])
+                    endLine = i;
+            }
+            if (stLine < 0) stLine = crList.Count - 2;
+            if (endLine < 0) endLine = crList.Count - 2;
+            //  選択開始行のコメントの有無を確認
+            string strLine = text.Substring(crList[stLine],
+                stLine < crList.Count - 1 ? crList[stLine + 1] - crList[stLine] : text.Length - crList[stLine]);
+            if (0 <= strLine.IndexOf("//"))
+                remove = true;
+            //  コメント化/コメント解除
+            for (int i = crList.Count - 2; 0 <= i; i--) {
+                if ((selSp < crList[i + 1] || selSp == avalonEditor.Document.TextLength)
+                    && crList[i] <= selEp) {
+                    if (remove)
+                        removeComment(crList[i], selEp);
+                    else
+                        avalonEditor.Document.Insert(crList[i], "//");
+                }
+            }
+            selSp = Math.Max(0, Math.Min(selSp, avalonEditor.Document.TextLength));
+            avalonEditor.Select(selSp, 0);
+        }
+
+        /// <summary>
+        /// 指定位置のコメント解除
+        /// </summary>
+        /// <param name="text">テキスト</param>
+        /// <param name="sp">位置</param>
+        /// <returns>解除後のテキスト</returns>
+        private void removeComment(int sp, int ep)
+        {
+            for (int i = sp; i <= ep && i < avalonEditor.Document.Text.Length - 1; i++) {
+                if (avalonEditor.Document.Text[i] == '/' && avalonEditor.Document.Text[i + 1] == '/') {
+                    avalonEditor.Document.Remove(i, 2);
+                    break;
+                }
+            }
+        }
+
 
         /// <summary>
         /// 検索
@@ -374,7 +439,7 @@ namespace KScriptWin
             closeCheck();
             List<string[]> filters = new List<string[]>() { new string[] { "scファイル", "*.sc" } };
             string path = ylib.fileOpenSelectDlg("ファイル選択", mDataFolder, filters);
-            if (path != null || 0 < path.Length) {
+            if (path != null && 0 < path.Length) {
                 mDataFolder = Path.GetDirectoryName(path);
                 mFilePath = path;
                 string text = ylib.loadTextFile(path);
@@ -474,16 +539,19 @@ namespace KScriptWin
         {
             if (control) {
                 switch (key) {
+                    case Key.F: search(); break;
                     case Key.N: newScript(); break;
                     case Key.O: selectLoad(); break;
                     case Key.S: save(); break;
+                    case Key.Divide: toComment(); break;
+                    case Key.OemQuestion: toComment(); break;
                     default: return false; ;
                 }
             } else {
                 switch (key) {
                     case Key.F5: exeute(); break;
                     case Key.F8:
-                    case Key.Apps: snippet(); break;
+                    case Key.Apps: snippet(); break;    //  入力候補
                     default: return false;;
                 }
             }
@@ -531,35 +599,9 @@ namespace KScriptWin
                 else if (0 <= funcName.IndexOf(' '))
                     funcName = funcName.Substring(0, funcName.IndexOf(' '));
                 funcName = funcName.Trim();
-                avalonEditor.Text = avalonEditor.Text.Remove(start + 1, cursorPos - start).Insert(start + 1, funcName);
+                avalonEditor.Document.Text = avalonEditor.Document.Text.Remove(start + 1, cursorPos - start).Insert(start + 1, funcName);
                 avalonEditor.Select(start + 1 + funcName.Length, 0);
             }
-        }
-
-        /// <summary>
-        /// 線種名リストの取得
-        /// </summary>
-        /// <returns>線種名リスト</returns>
-        private string[] getLineTypeName()
-        {
-            List<string> lineTypeName = new List<string>();
-            for (int i = 0; i < System.Enum.GetValues(typeof(LineType)).Length; i++) {
-                lineTypeName.Add(((LineType)Enum.ToObject(typeof(LineType), i)).ToString());
-            }
-            return lineTypeName.ToArray();
-        }
-
-        /// <summary>
-        /// 点種名リストの取得
-        /// </summary>
-        /// <returns>点種名リスト</returns>
-        private string[] getPointTypeName()
-        {
-            List<string> pointTypeName = new List<string>();
-            for (int i = 0; i < System.Enum.GetValues(typeof(PointType)).Length; i++) {
-                pointTypeName.Add(((PointType)Enum.ToObject(typeof(PointType), i)).ToString());
-            }
-            return pointTypeName.ToArray();
         }
 
         /// <summary>

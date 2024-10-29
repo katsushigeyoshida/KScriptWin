@@ -34,6 +34,7 @@
 
     public class KParse
     {
+        public Dictionary<string, Token> mGlobalVar = new Dictionary<string, Token>();  //  変数リスト(変数名,値)
         public Dictionary<string, Token> mVariables = new Dictionary<string, Token>();  //  変数リスト(変数名,値)
         public Dictionary<string, Token> mFunctions = new Dictionary<string, Token>();  //  関数リスト(関数名,(関数式))
 
@@ -116,6 +117,7 @@
                         } else if (tokens[i].mValue == "return" ||
                             tokens[i].mValue == "break" ||
                             tokens[i].mValue == "continue" ||
+                            tokens[i].mValue == "exit" ||
                             tokens[i].mValue == "#include") {
                             //  return 文,break文,continue文,#include文
                             List<Token> stateList = getStatement(tokens, ++i);
@@ -176,11 +178,48 @@
         /// <param name="value">数値/数式(トークン)</param>
         public void addVariable(Token key, Token value = null)
         {
-            if (!mVariables.ContainsKey(key.mValue)) {
-                mVariables.Add(key.mValue, value);
+            if (0 == key.mValue.IndexOf("g_")) {
+                //  グローバル変数
+                if (!mGlobalVar.ContainsKey(key.mValue)) {
+                    mGlobalVar.Add(key.mValue, value);
+                } else {
+                    mGlobalVar[key.mValue] = value;
+                }
             } else {
-                mVariables[key.mValue] = value;
+                //  ローカル変数
+                if (!mVariables.ContainsKey(key.mValue)) {
+                    mVariables.Add(key.mValue, value);
+                } else {
+                    mVariables[key.mValue] = value;
+                }
             }
+        }
+
+        /// <summary>
+        /// 変数の値の取得
+        /// </summary>
+        /// <param name="key"></param>
+        /// <returns></returns>
+        public Token getVariable(string key)
+        {
+            return getVariable(new Token(key, TokenType.VARIABLE));
+        }
+
+        /// <summary>
+        /// 変数の値の取得
+        /// </summary>
+        /// <param name="key">変数名</param>
+        /// <returns>値</returns>
+        public Token getVariable(Token key)
+        {
+            if (0 == key.mValue.IndexOf("g_")) {
+                if (mGlobalVar.ContainsKey(key.mValue))
+                    return mGlobalVar[key.mValue];
+            } else {
+                if (mVariables.ContainsKey(key.mValue))
+                    return mVariables[key.mValue];
+            }
+            return new Token(key.mValue, TokenType.LITERAL);
         }
 
         /// <summary>

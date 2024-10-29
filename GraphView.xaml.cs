@@ -247,7 +247,6 @@ namespace KScriptWin
         public void plotPoint(PointD point)
         {
             mDraw.plotPoint(point);
-            plotDraw();
         }
 
         /// <summary>
@@ -257,7 +256,6 @@ namespace KScriptWin
         public void plotLine(LineD line)
         {
             mDraw.plotLine(line);
-            plotDraw();
         }
 
         /// <summary>
@@ -267,7 +265,6 @@ namespace KScriptWin
         public void plotArc(ArcD arc)
         {
             mDraw.plotArc(arc);
-            plotDraw();
         }
 
         /// <summary>
@@ -277,7 +274,6 @@ namespace KScriptWin
         public void plotText(TextD text)
         {
             mDraw.plotText(text);
-            mDraw.plotDraw();
         }
     }
 }

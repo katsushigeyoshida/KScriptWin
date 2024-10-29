@@ -40,7 +40,7 @@ namespace KScriptWin
         public static char[] skipChar = { ' ', '\t', '\r', '\n' };
         public static string[] statement = {
             "let", "while", "if", "else", "for", "return", "break", "continue",
-            "print", "println", "using", "#include",
+            "print", "println", "exit", "#include",
         };
         public static string[] constatnt = { "PI", "E" };
 
@@ -129,10 +129,9 @@ namespace KScriptWin
                 } else if (Char.IsLetter(str[i]) || str[i] == '#') { //  アルファベットの確認(a-z,A-Z,全角も)
                     //  変数名、予約語
                     while (i < str.Length && Array.IndexOf(Token.operators, str[i]) < 0
-                             && Array.IndexOf(Token.delimiter, str[i]) < 0) {
-                        if (Array.IndexOf(Token.skipChar, str[i]) < 0)
-                            buf += str[i];
-                        i++;
+                             && Array.IndexOf(Token.delimiter, str[i]) < 0
+                             && Array.IndexOf(Token.skipChar, str[i]) < 0) {
+                        buf += str[i++];
                     }
                     while (i < str.Length && str[i] == ' ') i++;    //  空白削除
                     if (Token.statement.Contains(buf)) {
@@ -260,6 +259,9 @@ namespace KScriptWin
             int count = 1;
             pos++;
             while (pos < str.Length && 0 < count) {
+                if (bracket != '"' && str[pos] == '"') {
+                    while (pos + 1 < str.Length && str[++pos] != '"') ;
+                }
                 if (str[pos] == '\\') pos++;
                 else if (str[pos] == mBrackets[offset + 1]) count--;
                 else if (str[pos] == mBrackets[offset]) count++;
@@ -382,6 +384,8 @@ namespace KScriptWin
         /// <returns>Token</returns>
         public Token string2Token(string str)
         {
+            if (str[0] == '"')
+                return new Token(stripBracketString(str, '"'), TokenType.STRING);
             if (0 <= str.IndexOf(','))
                 return new Token(str, TokenType.VARIABLE);
             foreach (var func in YCalc.mKeyWord) {

@@ -24,3 +24,5 @@ size = 4;
 plotText(text, x, 8, size);
 print(RAD(90), "\n");
 plotText("Yタイトル", 5, 50, size, RAD(90));
+
+plotDisp();

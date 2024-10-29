@@ -20,10 +20,12 @@
                         <MenuItem Name="fileCloseMenu" Header="閉じる" Click="Menu_Click" />
                     </MenuItem>
                     <MenuItem Header="編集">
-                        <MenuItem Name="editCopyMenu" Header="コピー" Click="Menu_Click" />
-                        <MenuItem Name="editPasteMenu" Header="貼付け" Click="Menu_Click" />
-                        <MenuItem Name="editSeachMenu" Header="検索" Click="Menu_Click" />
+                        <MenuItem Header="切取り" Command="Cut" />
+                        <MenuItem Header="コピー" Command="Copy" />
+                        <MenuItem Header="貼付け" Command="Paste" />
+                        <MenuItem Name="editSearchMenu" Header="検索" Click="Menu_Click" />
                         <MenuItem Name="editReplaceMenu" Header="置換え" Click="Menu_Click" />
+                        <MenuItem Name="editToCommentMenu" Header="コメント追加/解除" Click="Menu_Click" />
                     </MenuItem>
                     <!--<MenuItem Header="TEST">
                         <MenuItem Name="GraphViewMenu" Header="グラフ" Click="Menu_Click" />
@@ -31,7 +33,13 @@
                 </Menu>
                 <ToolBarTray>
                     <ToolBar Height="30">
-                        <ComboBox Name="cbFontFamily" Width="100" SelectionChanged="cbFontFamily_SelectionChanged">
+                        <CheckBox IsChecked="{Binding ElementName=avalonEditor,Path=ShowLineNumbers}" ToolTip="行番号の有無">
+                            <TextBlock Width="16" TextAlignment="Center">#</TextBlock>
+                        </CheckBox>
+                        <CheckBox IsChecked="{Binding ElementName=avalonEditor,Path=Options.ShowEndOfLine}" ToolTip="行末記号の有無">
+                            <TextBlock Width="16" TextAlignment="Center">¶</TextBlock>
+                        </CheckBox>
+                        <ComboBox Name="cbFontFamily" Width="100" ToolTip="エディタのフォント選択" SelectionChanged="cbFontFamily_SelectionChanged">
                         </ComboBox>
                         <Button x:Name="btFontUp" ToolTip="文字拡大" Width="25" Height="25" Click="Button_Click"   >
                             <Image Source="Icon\charactergrowfont.png" ></Image>
@@ -76,7 +84,7 @@
                 </Button>
                 <ComboBox Name="cbSearchWord" Width="100" IsEditable="True" >
                 </ComboBox>
-                <Button x:Name="btSearch" ToolTip="検索" Width="22" Height="22" Click="Button_Click"   >
+                <Button x:Name="btSearch" ToolTip="検索 (Ctrl+F)" Width="22" Height="22" Click="Button_Click"   >
                     <Image Source="Icon\Search.png" ></Image>
                 </Button>
 

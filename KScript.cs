@@ -95,25 +95,29 @@ namespace KScriptWin
             "print(出力); : 値の出力",
             "println(出力); : 値の出力(末尾に改行追加)",
             "#include \"ファイル\"; : ファイル読込による機能追加",
+            "exit; : プログラムの終了",
         };
 
         public enum RETURNTYPE { NORMAL, CONTINUE, BREAK, RETURN, ERROR }
 
-        public List<Token> mTokenList = new List<Token>();
-        public List<List<Token>> mStatements = new List<List<Token>>();
+        public List<Token> mTokenList = new List<Token>();              //  字句解析リスト
+        public List<List<Token>> mStatements = new List<List<Token>>(); //  構文リスト
 
-        public KParse mParse = new KParse();
-        public KLexer mLexer = new KLexer();
-        public ScriptLib mScriptLib;
-        public string mScriptFolder = "";
+        public GraphView mGraph;                                //  グラフィックWindow
+        public KParse mParse = new KParse();                    //  構文解析
+        public KLexer mLexer = new KLexer();                    //  字句解析
+        public ScriptLib mScriptLib;                            //  内部関数ライブラリ
+        public string mScriptFolder = "";                       //  プログラムファイルフォルダ
+
         public bool mDebug = false;
         public bool mDebugConsole = false;
 
         public Action printCallback;                            //  print文のコールバック関数
         public ControlData mControlData = new ControlData();    //  データを参照渡しするため
 
-        private YCalc mCalc = new YCalc();
-        private YLib ylib = new YLib();
+        private string mFuncName = "";                          //  実行中の関数名
+        private YCalc mCalc = new YCalc();                      //  数式処理
+        private YLib ylib = new YLib();                         //  汎用関数
 
         /// <summary>
         /// コンストラクタ
@@ -127,10 +131,11 @@ namespace KScriptWin
         /// コンストラクタ(スクリプト文の設定)
         /// </summary>
         /// <param name="script">スクリプト文</param>
-        public KScript(string script)
+        public KScript(string script, GraphView graph)
         {
             //  初期化
             clear();
+            mGraph = graph;
             mScriptLib = new ScriptLib(this);
             //  字句解析・ スクリプト登録(mFunctionsに登録)
             mTokenList = mLexer.tokenList(script);
@@ -143,8 +148,12 @@ namespace KScriptWin
         public void clear()
         {
             mStatements.Clear();
+            mTokenList.Clear();
+            mParse.mGlobalVar.Clear();
             mParse.mVariables.Clear();
             mParse.mFunctions.Clear();
+            if (mGraph != null)
+                mGraph.Close();
         }
 
         /// <summary>
@@ -174,26 +183,33 @@ namespace KScriptWin
         /// <param name="arg">引数</param>
         public void execute(string funcName, List<Token> arg = null)
         {
-            //  スクリプト関数処理部の抽出・登録
-            List<List<Token>> funcStatement = null;
-            if (mParse.mFunctions.ContainsKey(funcName)) {
-                //  関数指定
-                Token func = mParse.mFunctions[funcName];
-                List<Token> funcList = mParse.getStatement(mLexer.tokenList(func.mValue));
-                funcStatement = mParse.getStatements(mLexer.tokenList(mLexer.stripBracketString(funcList[2].mValue, funcList[2].mValue[0])));
-                //  引数の登録
-                if (arg != null) {
-                    string[] funcargs = mLexer.stripBracketString(funcList[1].mValue, '(').Split(',');
-                    for (int i = 0; i < funcargs.Length; i++)
-                        mParse.addVariable(new Token(funcargs[i].Trim(), TokenType.VARIABLE), arg[i]);
+            try {
+                //  スクリプト関数処理部の抽出・登録
+                mFuncName = funcName;
+                List<List<Token>> funcStatement = null;
+                if (mParse.mFunctions.ContainsKey(funcName)) {
+                    //  関数指定
+                    Token func = mParse.mFunctions[funcName];
+                    List<Token> funcList = mParse.getStatement(mLexer.tokenList(func.mValue));
+                    funcStatement = mParse.getStatements(mLexer.tokenList(mLexer.stripBracketString(funcList[2].mValue, funcList[2].mValue[0])));
+                    //  引数の登録
+                    if (arg != null) {
+                        string[] funcargs = mLexer.stripBracketString(funcList[1].mValue, '(').Split(',');
+                        for (int i = 0; i < funcargs.Length; i++)
+                            mParse.addVariable(new Token(funcargs[i].Trim(), TokenType.VARIABLE), arg[i]);
+                    }
                 }
-            }
-            //  構文実行
-            if (funcStatement == null)
-                funcStatement = mStatements;
-            foreach (List<Token> statement in funcStatement) {
-                if (exeStatement(statement) != RETURNTYPE.NORMAL)
-                    break;
+                //  構文実行
+                if (funcStatement == null)
+                    funcStatement = mStatements;
+                foreach (List<Token> statement in funcStatement) {
+                    if (exeStatement(statement) != RETURNTYPE.NORMAL)
+                        break;
+                }
+            } catch (Exception e) {
+                System.Diagnostics.Debug.WriteLine($"{funcName} [{e.ToString()}]");
+                if (funcName != "" && funcName != "main")
+                    throw new Exception(e.Message);
             }
         }
 
@@ -250,6 +266,8 @@ namespace KScriptWin
                     return RETURNTYPE.BREAK;
                 } else if (tokens[0].mValue == "continue") {
                     return RETURNTYPE.CONTINUE;
+                } else if (tokens[0].mValue == "exit") {
+                    throw new Exception($"exit [{mFuncName}]");
                 } else if (tokens[0].mValue == "#include") {
                     return includeStatemant(tokens);
                 } else {
@@ -521,6 +539,8 @@ namespace KScriptWin
                 }
                 return result;
             } catch (Exception e) {
+                if (0 <= e.Message.IndexOf("exit"))
+                    throw new Exception(e.Message);
                 outputString($"Error: not found function [{funcName.mValue}]\n");
                 return new Token(funcName.mValue, TokenType.ERROR);
             }
@@ -535,14 +555,16 @@ namespace KScriptWin
         /// <returns>戻り値(関数側の変数名)</returns>
         private Token programFunc(string funcName, Token arg, Token ret)
         {
-            KScript script = new KScript(mParse.mFunctions[funcName].mValue);
+            KScript script = new KScript(mParse.mFunctions[funcName].mValue, mGraph);
             script.mControlData = mControlData;
             script.printCallback = printCallback;
+            script.mParse.mGlobalVar = mParse.mGlobalVar;       //  グローバル変数
             script.mParse.mFunctions = mParse.mFunctions;       //  参照関数の設定
             List<Token> callArgs = getFuncArgs(arg.mValue);     //  呼出し側引数の取得(配列以外は数値に変換)
             List<Token> funcArgs = getFuncArgNames(mParse.mFunctions[funcName].mValue, 1);  //  関数側引数名の取得
             setFuncArg(callArgs, funcArgs, script);             //  呼出し側から関数側に値を渡す
             script.execute(funcName, null);                     //  関数の実行
+            mGraph = script.mGraph;
             //  戻り値の設定
             if (script.mParse.mVariables.ContainsKey("return")) {
                 getFuncArray(script.mParse.mVariables["return"], ret, script);
@@ -598,6 +620,8 @@ namespace KScriptWin
                 }
                 return false;
             } catch (Exception e) {
+                if (0 <= e.Message.IndexOf("exit"))
+                    throw new Exception(e.Message);
                 outputString($"ERROR: conditional Statement [{e.Message}]\n");
                 return false;
             }
@@ -690,13 +714,17 @@ namespace KScriptWin
                     buf.mType = TokenType.EXPRESS;
                 } else {
                     buf.mValue += token.mValue;
-                    buf.mValue = mCalc.expression(buf.mValue).ToString();
-                    buf.mType = TokenType.LITERAL;
+                    //buf.mValue = mCalc.expression(buf.mValue).ToString();
+                    //buf.mType = TokenType.LITERAL;
                 }
             }
-            if (buf != null)
+            if (buf != null && buf.mType != TokenType.STRING) {
+                buf.mValue = mCalc.expression(buf.mValue).ToString();
+                buf.mType = TokenType.LITERAL;
                 return buf.copy();
-            else
+            } else if (buf != null && buf.mType == TokenType.STRING) {
+                return buf.copy();
+            } else
                 return new Token("Error: express", TokenType.ERROR);
         }
 
@@ -740,7 +768,9 @@ namespace KScriptWin
             } else {
                 List<string> args = mLexer.commaSplit(mLexer.stripBracketString(arg.mValue, '('));
                 for (int i = 0; i < args.Count; i++) {
-                    if (0 <= args[i].IndexOf("["))
+                    if (0 <= args[i].IndexOf("[@]") || 0 <= args[i].IndexOf("[%]"))
+                        argValue.Add(new Token(args[i].Trim(), TokenType.STRING));
+                    else if (0 <= args[i].IndexOf("["))
                         argValue.Add(new Token(args[i].Trim(), TokenType.VARIABLE));
                     else
                         argValue.Add(express(new Token(args[i].Trim(), TokenType.EXPRESS)));
@@ -756,7 +786,7 @@ namespace KScriptWin
         /// <param name="func">引数文字列</param>
         /// <param name="sp">開始位置</param>
         /// <returns>引数リスト</returns>
-        private List<Token> getFuncArgs(string func, int sp = 0)
+        public List<Token> getFuncArgs(string func, int sp = 0)
         {
             List<Token> args = new List<Token>();
             List<Token> funcList = mParse.getStatement(mLexer.tokenList(func));
@@ -772,7 +802,7 @@ namespace KScriptWin
         /// <param name="func">関数スクリプト</param>
         /// <param name="sp">引数の位置</param>
         /// <returns>引数名リスト</returns>
-        private List<Token> getFuncArgNames(string func, int sp = 0)
+        public List<Token> getFuncArgNames(string func, int sp = 0)
         {
             List<Token> args = new List<Token>();
             List<Token> funcList = mParse.getStatement(mLexer.tokenList(func));
@@ -816,11 +846,7 @@ namespace KScriptWin
         /// <returns>数値(トークン)</returns>
         private Token getVariable(Token token)
         {
-            if (mParse.mVariables.ContainsKey(token.mValue)) {
-                return mParse.mVariables[token.mValue];
-            } else {
-                return token.copy();
-            }
+            return mParse.getVariable(token);
         }
 
         /// <summary>
@@ -851,10 +877,7 @@ namespace KScriptWin
                 buf = express(mLexer.string2Token(value)).mValue.Trim();
             }
 
-            if (mParse.mVariables.ContainsKey(buf))
-                return mParse.mVariables[buf];
-            else
-                return new Token(buf, TokenType.LITERAL);
+            return mParse.getVariable(buf);
         }
 
         /// <summary>
