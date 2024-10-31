@@ -23,3 +23,39 @@ printArray2(array[,]) {
         i++;
     }
 }
+
+
+//	タートルグラフィック
+turtleSetpoint(x, y) {
+	g_TurtleLPX = x;
+	g_TurtleLPY = y;
+}
+
+turtleSetAngle(ang) {
+	g_TurtleAngle = ang;
+}
+
+turtleMoveto(x, y) {
+	plotLine(g_TurtleLPX, g_TurtleLPY, x, y);
+	g_TurtleLPX = x;
+	g_TurtleLPY = y;
+}
+
+turtleMove(l) {
+	ang = RAD(g_TurtleAngle);
+	x = g_TurtleLPX + l * cos(ang);
+	y = g_TurtleLPY + l * sin(ang);
+	plotLine(g_TurtleLPX, g_TurtleLPY, x, y);
+	g_TurtleLPX = x;
+	g_TurtleLPY = y;
+}
+
+turtleTurn(angle) {
+	g_TurtleAngle = (g_TurtleAngle + angle) % 360;
+}
+
+turtleInit(){
+	g_TurtleAngle = 0;	//	degree
+	g_TurtleLPX = 0;
+	g_TurtleLPY = 0;
+}

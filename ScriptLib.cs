@@ -30,7 +30,7 @@ namespace KScriptWin
     ///     matrixMulti     : c[,] = matrixMulti(a[,], b[,]);   行列の積 AxB
     ///     matrixAdd       : c[,] = matrixAdd(a[,], b[,]);     行列の和 A+B
     ///     matrixInverse   : b[,] = matrixInverse(a[,]);       逆行列 A^-1
-    ///     copyMatrix      : b[,] = copyMatrix(a[,]);          行列のコピー
+    ///     matrixCopy      : b[,] = matrixCopy(a[,]);          行列のコピー
     ///     
     /// Windows用関数
     ///     inputBox    : a = inputBox();                       文字入力ダイヤログ
@@ -106,7 +106,7 @@ namespace KScriptWin
             "matrixMulti(a[,], b[,]); 行列の積 AxB (c[,]=...)",
             "matrixAdd(a[,], b[,]); 行列の和 A+B c[,]=...)",
             "matrixInverse(a[,]); 逆行列 A^-1 (b[,]=...)",
-            "copyMatrix(a[,]); 行列のコピー(b[,]=...)",
+            "matrixCopy(a[,]); 行列のコピー(b[,]=...)",
             "plotWindow(left,bottom,right,top); 表示領域の設定",
             "plotDisp(); グラフィックデータの再表示",
             "plotAspect(1); アスペクト比固定の設定(0(非固定)/1(固定))",
@@ -183,7 +183,7 @@ namespace KScriptWin
                 case "matrixMulti": return matrixMulti(args, ret);
                 case "matrixAdd": return matrixAdd(args, ret);
                 case "matrixInverse": return matrixInverse(args, ret);
-                case "copyMatrix": return copyMatrix(args, ret);
+                case "matrixCopy": return matrixCopy(args, ret);
                 case "plotWindow": plotWindow(args); break;
                 case "plotDisp": plotDisp(); break;
                 case "plotAspect": plotAspect(args); break;
@@ -359,7 +359,7 @@ namespace KScriptWin
         /// <param name="args">色名</param>
         public void plotColor(List<Token> args)
         {
-            string colorName = args[0].mValue;
+            string colorName = ylib.stripBracketString(args[0].mValue, '"');
             mGraph.setColor(colorName);
         }
 
@@ -369,7 +369,7 @@ namespace KScriptWin
         /// <param name="args">点種</param>
         public void plotPointType(List<Token> args)
         {
-            string pointType = args[0].mValue;
+            string pointType = ylib.stripBracketString(args[0].mValue, '"');
             mGraph.setPointType(pointType);
         }
 
@@ -379,7 +379,7 @@ namespace KScriptWin
         /// <param name="args">線種</param>
         public void plotLineType(List<Token> args)
         {
-            string lineType = args[0].mValue;
+            string lineType = ylib.stripBracketString(args[0].mValue, '"');
             mGraph.setLineType(lineType);
         }
 
@@ -855,7 +855,7 @@ namespace KScriptWin
 
             //  戻り値の設定
             setReturnArray(matrix, ret);
-            mScript.mParse.addVariable(new Token("return", TokenType.VARIABLE), ret);
+            mScript.mParse.setVariable(new Token("return", TokenType.VARIABLE), ret);
             return mScript.mParse.mVariables["return"];
         }
 
@@ -869,11 +869,12 @@ namespace KScriptWin
         {
             //  2D配列を実数配列に変換
             double[,]? a = cnvArrayDouble2(args[0]);
+            if (a == null) return new Token("", TokenType.ERROR);
             //  行列演算
             double[,] c = ylib.matrixTranspose(a);
             //  戻り値の設定
             setReturnArray(c, ret);
-            mScript.mParse.addVariable(new Token("return", TokenType.VARIABLE), ret);
+            mScript.mParse.setVariable(new Token("return", TokenType.VARIABLE), ret);
             return mScript.mParse.mVariables["return"];
         }
 
@@ -889,12 +890,14 @@ namespace KScriptWin
         {
             //  2D配列を実数配列に変換
             double[,]? a = cnvArrayDouble2(args[0]);
+            if (a == null) return new Token("", TokenType.ERROR);
             double[,]? b = cnvArrayDouble2(args[1]);
+            if (b == null) return new Token("", TokenType.ERROR);
             //  行列演算
             double[,] c = ylib.matrixMulti(a, b);
             //  戻り値の設定
             setReturnArray(c, ret);
-            mScript.mParse.addVariable(new Token("return", TokenType.VARIABLE), ret);
+            mScript.mParse.setVariable(new Token("return", TokenType.VARIABLE), ret);
             return mScript.mParse.mVariables["return"];
         }
 
@@ -909,12 +912,14 @@ namespace KScriptWin
         {
             //  2D配列を実数配列に変換
             double[,]? a = cnvArrayDouble2(args[0]);
+            if (a == null) return new Token("", TokenType.ERROR);
             double[,]? b = cnvArrayDouble2(args[1]);
+            if (b == null) return new Token("", TokenType.ERROR);
             //  行列演算
             double[,] c = ylib.matrixAdd(a, b);
             //  戻り値の設定
             setReturnArray(c, ret);
-            mScript.mParse.addVariable(new Token("return", TokenType.VARIABLE), ret);
+            mScript.mParse.setVariable(new Token("return", TokenType.VARIABLE), ret);
             return mScript.mParse.mVariables["return"];
         }
 
@@ -928,11 +933,12 @@ namespace KScriptWin
         {
             //  2D配列を実数配列に変換
             double[,]? a = cnvArrayDouble2(args[0]);
+            if (a == null) return new Token("", TokenType.ERROR);
             //  行列演算
             double[,] c = ylib.matrixInverse(a);
             //  戻り値の設定
             setReturnArray(c, ret);
-            mScript.mParse.addVariable(new Token("return", TokenType.VARIABLE), ret);
+            mScript.mParse.setVariable(new Token("return", TokenType.VARIABLE), ret);
             return mScript.mParse.mVariables["return"];
         }
 
@@ -942,15 +948,16 @@ namespace KScriptWin
         /// <param name="args">引数(行列A)</param>
         /// <param name="ret">戻り変数</param>
         /// <returns>戻り変数</returns>
-        private Token copyMatrix(List<Token> args, Token ret)
+        private Token matrixCopy(List<Token> args, Token ret)
         {
             //  2D配列を実数配列に変換
             double[,]? a = cnvArrayDouble2(args[0]);
+            if (a == null) return new Token("", TokenType.ERROR);
             //  行列演算
             double[,] c = ylib.copyMatrix(a);
             //  戻り値の設定
             setReturnArray(c, ret);
-            mScript.mParse.addVariable(new Token("return", TokenType.VARIABLE), ret);
+            mScript.mParse.setVariable(new Token("return", TokenType.VARIABLE), ret);
             return mScript.mParse.mVariables["return"];
         }
 
@@ -984,7 +991,7 @@ namespace KScriptWin
             foreach (var variable in mVariables) {
                 if (0 <= variable.Key.IndexOf(arrayName)) {
                     if (variable.Value.mType == TokenType.STRING)
-                        listData.Add(variable.Value.mValue);
+                        listData.Add(variable.Value.getValue());
                 }
             }
             return listData;
@@ -1127,7 +1134,7 @@ namespace KScriptWin
             string destName = dest.mValue.Substring(0, dp);
             for (int i = 0; i < src.Length; i++) {
                 Token key = new Token($"{destName}[{i}]", TokenType.VARIABLE);
-                mScript.mParse.addVariable(key, src[i].copy());
+                mScript.mParse.setVariable(key, src[i].copy());
             }
         }
 
@@ -1145,7 +1152,7 @@ namespace KScriptWin
             for (int i = 0; i < src.GetLength(0); i++) {
                 for (int j = 0; j < src.GetLength(1); j++) {
                     Token key = new Token($"{destName}[{i},{j}]", TokenType.VARIABLE);
-                    mScript.mParse.addVariable(key, new Token(src[i, j].ToString(), TokenType.LITERAL));
+                    mScript.mParse.setVariable(key, new Token(src[i, j].ToString(), TokenType.LITERAL));
                 }
             }
         }
@@ -1163,7 +1170,7 @@ namespace KScriptWin
             string destName = dest.mValue.Substring(0, dp);
             for (int i = 0; i < src.Length; i++) {
                 Token key = new Token($"{destName}[{i}]", TokenType.VARIABLE);
-                mScript.mParse.addVariable(key, new Token(src[i].ToString(), TokenType.LITERAL));
+                mScript.mParse.setVariable(key, new Token(src[i].ToString(), TokenType.LITERAL));
             }
         }
 
@@ -1180,7 +1187,7 @@ namespace KScriptWin
             string destName = dest.mValue.Substring(0, dp);
             for (int i = 0; i < src.Length; i++) {
                 Token key = new Token($"{destName}[{i}]", TokenType.VARIABLE);
-                mScript.mParse.addVariable(key, new Token(src[i].ToString(), TokenType.LITERAL));
+                mScript.mParse.setVariable(key, new Token(src[i].ToString(), TokenType.LITERAL));
             }
         }
 

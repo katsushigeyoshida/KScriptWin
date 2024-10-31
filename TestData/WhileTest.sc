@@ -15,13 +15,13 @@ println();
 //  while Test
 print("while Test\n");
 a[] = { 6, 9, 12, 7, 2, 23, 10, 4 };
-s = 10;
+s = 15;
 n = 0;
-while (a[++n] < s) ;
+while ((n < count(a[])) && (a[n++] < s)) ;
 println(n, " ", a[n]);
 
-n = 0;
-while (a[n++] < s) ;
+n = -1;
+while ((n < count(a[])) && (a[++n] < s)) ;
 println(n, " ", a[n]);
 
 n++;

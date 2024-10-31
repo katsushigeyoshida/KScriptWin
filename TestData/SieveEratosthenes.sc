@@ -1,15 +1,15 @@
 ﻿//	SieveEratosthenes
-n = inputBox("素数チェック");
+max = inputBox("素数の最大値");
 
-for (i = 2; i <= n; i++) {
-	m = 2^i +1;
-	if (primeChk(m) ==1)
-		println(i, " ", m, " is prime");
+println("素数の単純チェック");
+for (i = 2; i <= max; i++) {
+	if (primeChk(i) ==1)
+		print(i, " ");
 }
+print();
 //exit;
 
 print("エラトステネスの篩\n");
-max = inputBox("素数の最大値");
 maxprime = floor(sqrt(max));
 print("素数の最大値 = ", max, "  最大篩値 = ", maxprime, "\n");
 print("素数テーブル", "\n");
@@ -17,7 +17,7 @@ for (n = 2; n < max; n = n + 1)
     a[n] = 1;
 
 m = 2;
-while (m < maxprime) {
+while (m <= maxprime) {
     if (a[m] == 1) {
         print(m," : ");
         for (n = m + m; n < max; n += m)

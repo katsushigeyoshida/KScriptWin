@@ -30,6 +30,28 @@ Editorの機能(AvalonEditor)
 ・フォントの種類の変更 (2024/09/30)
 ・検索・置換え (検索のみ 2024/09/30)
 ・関数名や定数の入力候補機能(コードスニペット snippets) Apps/F8キー (2024/10/10)
+・タブをスペースに変換
+・ユーザー関数の入力候補
+
+KScriptの特徴
+・インタプリタであること
+・記述は C に近く、文法はシンプルでわかりやすい
+・変数、配列の宣言は不要
+・変数で数字との文字列の区別をしない
+・配列は２次元まで
+・配列の値に数値と文字列の混在か可能
+・配列のインデックスに文字列か使用できる
+・変数名、配列名、配列のインデックスに日本語が使用できる
+・グローバル変数とローカル変数を名前の指定で使い分けられる
+・#include文で関数の汎用化ができる
+
+KScriptWinの特徴
+・コーディング(エディタ)と実行環境がセットとなっている
+・同じ環境でテキストファイルの参照ができコーディングの参考にできる
+・エディタでは関数名などを入力候補から選択できる
+・おなじ環境でグラフィック機能が使える
+・グラフィック機能が簡単に使用できる(直接ワールド座標が使えスクリーン座標を考慮する必要がない)
+
 
 Win版用の関数
     a = inputBox(title);                    文字入力ダイヤログ
@@ -85,6 +107,21 @@ ScriptLibの追加関数の引数の処理方法
         if (2 < listArg.Count)
             title = getValueToken(listArg[2]).mValue.Trim('"');
 
+変数から値の取得
+    a = 2;
+    b = a;
+    b = c[1];
+    b = c[a];
+    b = d[c[1]];
+    b = d[c[a]];
+    b = e[1, 2];
+    b = e[a, 1];
+
+    value = getVariableValue(Token variable)
+        value = variable.TokenType.LITERAL
+                                   STRING
+                                   VARIABLE   ←　mParse.getVriable()
+                                   ARRAY      ← Index ←  variables, array
 
 機能追加
 ・exit を例外処理(throw)で組み込む (2024/10/23)
@@ -93,13 +130,20 @@ ScriptLibの追加関数の引数の処理方法
 ・ダイヤログ関数(xxxDlg関数) input,message (2024/10/06) menuSlelct
 ・グラフ機能(散布図,折線,棒グラフ)
 ・他のソースの参照機能　(2024/10/13)
-・乱数、時刻・時間関数
-・ファイルの読込保存
 ・システム設定(フォントファミリ・サイズ、)
 ・else if のサポート (2024/10/18)
-・条件文の true/false は現状は
+・条件文の true/false は現状は 数値/!数値 で対応
+・2Dグラフィック: plotXXXXX()
 ・3Dグラフィック
-・エディタで選択行のコメント追加/解除
+・エディタで選択行のコメント追加/解除 (2024/10/24)
+・ファイルの読込保存 load, save
+・数値: format/toString,
+・時刻・時間関数 (2024/10/24) 乱数()
+・配列関数: clear, sort, reverse, remove, copy, add, insert
+            find, findAll, findIndex, findLast,findLastIndex, indexOf, lastIndexOf
+・文字列関数: char取出, substring,replace,insert,remove,trim,toString,length,indexof,join,split,compare
+・数式: 3次/4次関数追加,4元数,
+        統計(average,variance,stdDeviation,covariance,corrCoeff),最小二乗法,多変量解析
 
 機能制限
 ・関数は値渡しのみでアドレス渡しは不可
@@ -110,7 +154,7 @@ ScriptLibの追加関数の引数の処理方法
 ・デリミタのつけ忘れの対応(例外処理?)
 ・println("DEG(atan2 = ", DEG(atan2(1,1))); ← string内の括弧が認識される (2024/10/23)
 ・グラフィックウィンドウのクローズができない
-・コメント追加/解除するとundoがリセットされる
+・コメント追加/解除するとundoがリセットされる (2024/10/23 AvalonEditor.Documentで対応)
 
 ■開発環境
 開発ソフト : Microsoft Visual Studio 2022  

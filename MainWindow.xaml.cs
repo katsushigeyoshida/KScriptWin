@@ -537,8 +537,17 @@ namespace KScriptWin
         /// <param name="shift">Shiftの有無</param>
         private bool keyCommand(Key key, bool control, bool shift)
         {
-            if (control) {
+            if (control && shift) {
                 switch (key) {
+                    case Key.S: saveAs(); break;
+                    default: return false; ;
+                }
+            } else if (control) {
+                switch (key) {
+                    case Key.D:
+                        mScript.mControlData.mPause = !mScript.mControlData.mPause;
+                        outMessage("Pause\n");
+                        break;
                     case Key.F: search(); break;
                     case Key.N: newScript(); break;
                     case Key.O: selectLoad(); break;

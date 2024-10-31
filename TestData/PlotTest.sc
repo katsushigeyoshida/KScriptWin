@@ -1,8 +1,13 @@
 ﻿//	グラフィックテスト
-//	KIRA func 0.78, 2.62
-//	SH
-//	func    : 3.9, 8.2
-//	no func : 2.9, 6.4
+//	KIRA    func 0.78,  2.62
+//		         4.86  10.30
+//	10/30版 func 0.25   1.35
+//		 no func 0.13   0.57
+//	SH67	func 3.9    8.2
+//		 no func 2.9    6.4
+//	10/30版 func 0.13   0.53
+//		 no func 0.09   0.47
+//
 xmin  = -2 * PI;
 xmax  =  2 * PI;
 xstep = (xmax - xmin) / 200;

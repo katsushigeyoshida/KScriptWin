@@ -49,13 +49,13 @@
                         </Button>
                     </ToolBar>
                     <ToolBar>
-                        <Button x:Name="btNew" ToolTip="新規 Ctrol+N" Width="25" Height="25" Click="Button_Click"   >
+                        <Button x:Name="btNew" ToolTip="新規 Ctrl+N" Width="25" Height="25" Click="Button_Click"   >
                             <Image Source="Icon\Document.png" ></Image>
                         </Button>
-                        <Button x:Name="btOpen" ToolTip="開く Ctrol+O" Width="25" Height="25" Click="Button_Click"   >
+                        <Button x:Name="btOpen" ToolTip="開く Ctrl+O" Width="25" Height="25" Click="Button_Click"   >
                             <Image Source="Icon\FolderOpened.png" ></Image>
                         </Button>
-                        <Button x:Name="btSave" ToolTip="保存 Ctrol+S" Width="25" Height="25" Click="Button_Click"   >
+                        <Button x:Name="btSave" ToolTip="保存 Ctrl+S" Width="25" Height="25" Click="Button_Click"   >
                             <Image Source="Icon\Save.png" ></Image>
                         </Button>
                         <Button x:Name="btSaveAs" ToolTip="名前を付けて保存" Width="25" Height="25" Click="Button_Click"   >
@@ -63,13 +63,13 @@
                         </Button>
                     </ToolBar>
                     <ToolBar Height="30">
-                        <Button x:Name="btExecute" VerticalAlignment="Top" ToolTip="開始" Click="Button_Click" HorizontalAlignment="Right" Width="25" Height="25">
+                        <Button x:Name="btExecute" VerticalAlignment="Top" ToolTip="開始 F5" Click="Button_Click" HorizontalAlignment="Right" Width="25" Height="25">
                             <Path Fill="DarkGreen" Margin="2" Width="15" Height="15" Data="M 0,0 L 1,1 L 0,2 Z" Stretch="Fill" StrokeLineJoin="Round"/>
                         </Button>
                         <Button x:Name="btAbort" ToolTip="停止" HorizontalAlignment="Right" VerticalAlignment="Top" Click="Button_Click" Height="25" Width="25">
                             <Rectangle Fill="DarkBlue" Width="15" Height="15" Margin="2" RadiusX="2" RadiusY="2"/>
                         </Button>
-                        <Button x:Name="btPause" ToolTip="一時停止" VerticalAlignment="Top" Click="Button_Click" HorizontalAlignment="Right" Width="25" Height="25">
+                        <Button x:Name="btPause" ToolTip="一時停止 Ctrl+D" VerticalAlignment="Top" Click="Button_Click" HorizontalAlignment="Right" Width="25" Height="25">
                             <Path Fill="Maroon" Width="15" Height="15" Margin="2" Data="M 0,0 h 1 v 1 h -1 Z M 2,0 h 1 v 1 h -1 Z" Stretch="Fill" StrokeLineJoin="Round"/>
                         </Button>
 

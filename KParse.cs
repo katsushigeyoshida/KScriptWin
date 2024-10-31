@@ -1,4 +1,6 @@
-﻿namespace KScriptWin
+﻿using CoreLib;
+
+namespace KScriptWin
 {
     /// <summary>
     /// 構文解析()
@@ -40,6 +42,8 @@
 
         public KParse() { }
 
+        private YLib ylib = new YLib();
+
         /// <summary>
         /// ステートメントごとにトークンリストを抽出
         /// </summary>
@@ -55,6 +59,7 @@
                     case TokenType.VARIABLE:
                     case TokenType.ARRAY:
                     case TokenType.CONSTANT:
+                    case TokenType.ASSIGNMENT:
                     case TokenType.EXPRESS:
                         //  代入文 (変数 = 数式 ;) 条件文 (変数/式 条件演算子 変数/式)
                         while (i < tokens.Count && tokens[i].mValue != ";" && 0 > tokens[i].mValue.IndexOf("}")) i++;
@@ -176,7 +181,7 @@
         /// </summary>
         /// <param name="key">変数名(トークン)</param>
         /// <param name="value">数値/数式(トークン)</param>
-        public void addVariable(Token key, Token value = null)
+        public void setVariable(Token key, Token value = null)
         {
             if (0 == key.mValue.IndexOf("g_")) {
                 //  グローバル変数
@@ -198,16 +203,6 @@
         /// <summary>
         /// 変数の値の取得
         /// </summary>
-        /// <param name="key"></param>
-        /// <returns></returns>
-        public Token getVariable(string key)
-        {
-            return getVariable(new Token(key, TokenType.VARIABLE));
-        }
-
-        /// <summary>
-        /// 変数の値の取得
-        /// </summary>
         /// <param name="key">変数名</param>
         /// <returns>値</returns>
         public Token getVariable(Token key)
@@ -219,7 +214,7 @@
                 if (mVariables.ContainsKey(key.mValue))
                     return mVariables[key.mValue];
             }
-            return new Token(key.mValue, TokenType.LITERAL);
+            return new Token(key.mValue, (0 < key.mValue.Length && key.mValue[0] == '"') ? TokenType.STRING : TokenType.LITERAL);
         }
 
         /// <summary>
