@@ -124,6 +124,9 @@ namespace KScriptWin
             "dateTimeNow(type); 現在の時刻を文字列で取得(0:\"HH:mm:ss 1:yyyy/MM/dd HH:mm:ss 2:yyyy/MM/dd 3:HH時mm分ss秒 4:yyyy年MM月dd日 HH時mm分ss秒 5:yyyy年MM月dd日",
             "startTime(); 時間計測の開始",
             "lapTime(); 経過時間の取得(秒)",
+            "solveQuadraticEquation(a,b,c); 2次方程式の解(y = a*x^2+b*x+c)(y[] = solv..) ",
+            "solveCubicEquation(a,b,c,d); 3次方程式の解(y = a*x^3+b*x^2+c*x+d)(y[] = solv..) ",
+            "solveQuarticEquation(a,b,c,d,e); 4次方程式の解(y = a*x^4+b*x^3+c*x^2+d*x+e)(y[] = solv..) ",
         };
 
         //  共有クラス
@@ -133,6 +136,7 @@ namespace KScriptWin
 
         private DateTime mStartTime;
         private double mGraphFontSize = 12;
+        private bool mAspectFix = true;
 
         private KLexer mLexer = new KLexer();
         private YCalc mCalc = new YCalc();
@@ -202,6 +206,9 @@ namespace KScriptWin
                 case "dateTimeNow": return dateTimeNow(args);
                 case "startTime": starTime(); break;
                 case "lapTime": return lapTime();
+                case "solveQuadraticEquation": return solveQuadraticEquation(args, ret);
+                case "solveCubicEquation": return solveCubicEquation(args, ret);
+                case "solveQuarticEquation": return solveQuarticEquation(args, ret);
                 default: return new Token("not found func", TokenType.ERROR);
             }
             return new Token("", TokenType.EMPTY);
@@ -329,6 +336,7 @@ namespace KScriptWin
             if (mGraph != null)
                 mGraph.Close();
             mGraph = new GraphView();
+            mGraph.mAspectFix = mAspectFix;
             mScript.mGraph = mGraph;
             mGraph.Show();
             if (3 < datas.Count)
@@ -350,7 +358,8 @@ namespace KScriptWin
         public void plotAspect(List<Token> args)
         {
             int aspect = ylib.intParse(args[0].mValue);
-            mGraph.setAspectFix(aspect);
+            mAspectFix = aspect == 1 ? true : false;
+            //mGraph.setAspectFix(aspect);
         }
 
         /// <summary>
@@ -844,6 +853,69 @@ namespace KScriptWin
         }
 
         /// <summary>
+        /// 2次方程式の解を求める
+        /// result[] = a * x^2 + b * x + c
+        /// </summary>
+        /// <param name="args">a,b,c</param>
+        /// <param name="ret"></param>
+        /// <returns></returns>
+        private Token solveQuadraticEquation(List<Token> args, Token ret)
+        {
+            if (args.Count < 3) return new Token("", TokenType.ERROR);
+            double a = ylib.doubleParse(args[0].mValue);
+            double b = ylib.doubleParse(args[1].mValue);
+            double c = ylib.doubleParse(args[2].mValue);
+            double[] result = ylib.solveQuadraticEquation(a, b, c).ToArray();
+            //  戻り値の設定
+            setReturnArray(result, ret);
+            mScript.mParse.setVariable(new Token("return", TokenType.VARIABLE), ret);
+            return mScript.mParse.mVariables["return"];
+        }
+
+        /// <summary>
+        /// 3次方程式の解を求める
+        /// result[] = a * x^3 + b * x^2 + c * x + d
+        /// </summary>
+        /// <param name="args">a,b,c,d</param>
+        /// <param name="ret"></param>
+        /// <returns></returns>
+        private Token solveCubicEquation(List<Token> args, Token ret)
+        {
+            if (args.Count < 4) return new Token("", TokenType.ERROR);
+            double a = ylib.doubleParse(args[0].mValue);
+            double b = ylib.doubleParse(args[1].mValue);
+            double c = ylib.doubleParse(args[2].mValue);
+            double d = ylib.doubleParse(args[3].mValue);
+            double[] result = ylib.solveCubicEquation(a, b, c, d).ToArray();
+            //  戻り値の設定
+            setReturnArray(result, ret);
+            mScript.mParse.setVariable(new Token("return", TokenType.VARIABLE), ret);
+            return mScript.mParse.mVariables["return"];
+        }
+
+        /// <summary>
+        /// 4次方程式の解を求める
+        /// result[] = a * x^4 + b * x^3 + c * x^2 + d * x + e
+        /// </summary>
+        /// <param name="args">a,b,c,d,e</param>
+        /// <param name="ret"></param>
+        /// <returns></returns>
+        private Token solveQuarticEquation(List<Token> args, Token ret)
+        {
+            if (args.Count < 5) return new Token("", TokenType.ERROR);
+            double a = ylib.doubleParse(args[0].mValue);
+            double b = ylib.doubleParse(args[1].mValue);
+            double c = ylib.doubleParse(args[2].mValue);
+            double d = ylib.doubleParse(args[3].mValue);
+            double e = ylib.doubleParse(args[4].mValue);
+            double[] result = ylib.solveQuarticEquation(a, b, c, d, e).ToArray();
+            //  戻り値の設定
+            setReturnArray(result, ret);
+            mScript.mParse.setVariable(new Token("return", TokenType.VARIABLE), ret);
+            return mScript.mParse.mVariables["return"];
+        }
+
+        /// <summary>
         /// 単位行列の作成(n x n)
         /// </summary>
         /// <param name="size">行列の大きさ</param>
@@ -971,7 +1043,7 @@ namespace KScriptWin
             List<double> listData = new List<double>();
             string arrayName = getSearchName(arg);
             foreach (var variable in mVariables) {
-                if (0 <= variable.Key.IndexOf(arrayName)) {
+                if (0 == variable.Key.IndexOf(arrayName)) {
                     if (variable.Value.mType != TokenType.STRING)
                         listData.Add(ylib.doubleParse(variable.Value.mValue));
                 }
@@ -989,7 +1061,7 @@ namespace KScriptWin
             List<string> listData = new List<string>();
             string arrayName = getSearchName(arg);
             foreach (var variable in mVariables) {
-                if (0 <= variable.Key.IndexOf(arrayName)) {
+                if (0 == variable.Key.IndexOf(arrayName)) {
                     if (variable.Value.mType == TokenType.STRING)
                         listData.Add(variable.Value.getValue());
                 }

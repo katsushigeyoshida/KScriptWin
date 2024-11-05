@@ -58,6 +58,7 @@ for (i = 0; i < count(fruitValue[]); i++) print(fruitValue[i]," ");
 print();
 
 println("== 統計計算 ==");
+clear(a[]);
 a[] = { 1, 2, 3, 4, 5 };
 b[] = { 2, -2, 13, -4, 5 };
 print("配列 a[] = "); printArray(a[]);

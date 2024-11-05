@@ -7,7 +7,7 @@ for (i = 2; i <= max; i++) {
 		print(i, " ");
 }
 print();
-//exit;
+exit;
 
 print("エラトステネスの篩\n");
 maxprime = floor(sqrt(max));

@@ -370,7 +370,7 @@ namespace KScriptWin
                     } else {
                         while (n < str.Length && str[n] != mBrackets[offset + 1]) {
                             if (str[n++] == '"') {
-                                while (n < str.Length && str[n] != '"') n++;
+                                while (n < str.Length && str[n++] != '"') ;
                             }
                         }
                     }

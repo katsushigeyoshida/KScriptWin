@@ -108,14 +108,9 @@ ScriptLibの追加関数の引数の処理方法
             title = getValueToken(listArg[2]).mValue.Trim('"');
 
 変数から値の取得
-    a = 2;
-    b = a;
-    b = c[1];
-    b = c[a];
-    b = d[c[1]];
-    b = d[c[a]];
-    b = e[1, 2];
-    b = e[a, 1];
+    a = 2; b = a; b = a- 1;
+    b = c[1]; b = c[a]; b = c[a -2]; b = d[c[1]]; b = d[c[a]]; b = c["string"];
+    b = e[1, 2]; b = e[a, 1]; b = e[a - 1,1];
 
     value = getVariableValue(Token variable)
         value = variable.TokenType.LITERAL
@@ -126,31 +121,36 @@ ScriptLibの追加関数の引数の処理方法
 機能追加
 ・exit を例外処理(throw)で組み込む (2024/10/23)
 ・グローバル変数は変数名の先頭に「g_」をつけることで対応 (2024/10/20)
-・グラフィック関数 (2024/10/06)
+・2Dグラフィック: plotXXXXX() (2024/10/06)
+・追加グラフィック関数 plotRect(),plotPolyline(a[,]),plotPolygon(a[,]),plotFIllColor()
+・グラフ機能 散布図,(折線,棒グラフ)
+・3Dグラフィック
 ・ダイヤログ関数(xxxDlg関数) input,message (2024/10/06) menuSlelct
-・グラフ機能(散布図,折線,棒グラフ)
 ・他のソースの参照機能　(2024/10/13)
 ・システム設定(フォントファミリ・サイズ、)
 ・else if のサポート (2024/10/18)
 ・条件文の true/false は現状は 数値/!数値 で対応
-・2Dグラフィック: plotXXXXX()
-・3Dグラフィック
+・swtch文、do while()
 ・エディタで選択行のコメント追加/解除 (2024/10/24)
-・ファイルの読込保存 load, save
+・エディタでのタブ・スペース変換(2024/11/03)
+・ファイルの読込保存 a=loadText(), saveText(a),a[]=loadLine(),saveLine(a[]),a[,]=loadCsv(),savCsv(a[,]);
 ・数値: format/toString,
-・時刻・時間関数 (2024/10/24) 乱数()
-・配列関数: clear, sort, reverse, remove, copy, add, insert
-            find, findAll, findIndex, findLast,findLastIndex, indexOf, lastIndexOf
+・時刻・時間関数: startTime,lapTime,dateTimeNow (2024/10/24)
+・乱数()
+・配列関数: clear, sort, reverse, remove,
+            copy, add, insert, find, findAll, findIndex, findLast,findLastIndex,
+            indexOf, lastIndexOf
 ・文字列関数: char取出, substring,replace,insert,remove,trim,toString,length,indexof,join,split,compare
-・数式: 3次/4次関数追加,4元数,
-        統計(average,variance,stdDeviation,covariance,corrCoeff),最小二乗法,多変量解析
+・数式: 3次/4次関数追加(2024/11/03),4元数,
+        統計(average,variance,stdDeviation,covariance,corrCoeff) (2024/10/20)
+        最小二乗法,多変量解析
 
 機能制限
 ・関数は値渡しのみでアドレス渡しは不可
 
 問題点
 ・代入文で演算の優先順位がつけられず左から処理される (20024/10/23)
-・有効桁の末尾の誤差のまるめが必要
+・有効桁の末尾の誤差のまるめが必要 (roundRound関数をスクリプトで作成 2024/11/02)
 ・デリミタのつけ忘れの対応(例外処理?)
 ・println("DEG(atan2 = ", DEG(atan2(1,1))); ← string内の括弧が認識される (2024/10/23)
 ・グラフィックウィンドウのクローズができない
@@ -165,6 +165,8 @@ NuGetライブラリ : AvalonEditor
 
 
 履歴
+2024/11/03 参照ファイルのファイル操作を追加、タブをスペースに変換を追加
+2024/11/02 #include のファイルの関数をsnippet 表示できるように改善
 2024/10/24 コメント追加/解除(ctrl+/)
 2024/10/23 exit を例外処理(throw)で組み込む 
 2024/10/20 グローバル変数は変数名の先頭に「g_」をつけることで対応

@@ -46,15 +46,15 @@ namespace KScriptWin
         /// <summary>
         /// 描画領域の初期化
         /// </summary>
-        public void drawInit()
+        public void drawInit(bool aspectFix = true)
         {
             ydraw.clear();
             ydraw.mFillColor = mBaseBackColor;
             ydraw.mBrush = Brushes.Black;
             //  View初期化
+            ydraw.mAspectFix = aspectFix;       //  アスペクト比保持
             ydraw.setViewArea(0.0, 0.0, mCanvas.ActualWidth, mCanvas.ActualHeight);
             ydraw.setWorldWindow(mDispArea.Left, mDispArea.Bottom, mDispArea.Right, mDispArea.Top);
-            //ydraw.mAspectFix = false;         //  アスペクト比保持
             ydraw.mClipping = true;             //  クリッピング可
         }
 

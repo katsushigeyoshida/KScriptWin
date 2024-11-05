@@ -6,9 +6,9 @@ menu[] = {
 	"樹木曲線"
 };
 
+plotAspect(1);
 plotWindow(0, 0, 400, 400);
 turtleInit();
-plotAspect(1);
 plotColor("Green");
 
 title = "図形の種類";

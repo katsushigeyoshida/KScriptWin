@@ -299,6 +299,8 @@ namespace KScriptWin
                 List<string> scriptData = ylib.loadListData(scriptPath);
                 string code = string.Join("\n", scriptData);
                 addScript(code);
+
+
                 return RETURNTYPE.NORMAL;
             } else {
                 outputString($"Error: not exists file [{scriptPath}]\n");

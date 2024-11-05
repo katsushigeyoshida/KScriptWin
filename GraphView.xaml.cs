@@ -22,6 +22,7 @@ namespace KScriptWin
         public MODE mGraphMode = MODE.GRAPH;
         public enum GRAPHTYPE { non, scatter, line, bar }
         public GRAPHTYPE mGraphType = GRAPHTYPE.scatter;
+        public bool mAspectFix = true;
 
         private GraphDraw mDraw;
         private YLib ylib = new YLib();
@@ -129,7 +130,7 @@ namespace KScriptWin
         /// </summary>
         public void plotDraw()
         {
-            mDraw.drawInit();
+            mDraw.drawInit(mAspectFix);
             mDraw.plotDraw();
         }
 
@@ -138,7 +139,7 @@ namespace KScriptWin
         /// </summary>
         public void graphDraw()
         {
-            mDraw.drawInit();
+            mDraw.drawInit(mAspectFix);
             mDraw.setGraphWindow();
             mDraw.drawGraph();
         }
@@ -155,7 +156,7 @@ namespace KScriptWin
             mDraw.mY = y;
             mGraphMode = MODE.GRAPH;
 
-            mDraw.drawInit();
+            mDraw.drawInit(mAspectFix);
             mDraw.setGraphWindow();
             mDraw.drawGraph();
         }
@@ -172,7 +173,7 @@ namespace KScriptWin
             Title = $"PlotView [{title}]";
             mGraphMode = MODE.PLOT;
             mDraw.setWindow(left, bottom, right, top);
-            mDraw.drawInit();
+            mDraw.drawInit(mAspectFix);
             mDraw.plotClear();
         }
 

@@ -26,6 +26,7 @@
                         <MenuItem Name="editSearchMenu" Header="検索" Click="Menu_Click" />
                         <MenuItem Name="editReplaceMenu" Header="置換え" Click="Menu_Click" />
                         <MenuItem Name="editToCommentMenu" Header="コメント追加/解除" Click="Menu_Click" />
+                        <MenuItem Name="editTab2SpaceMenu" Header="タブ→スペース" Click="Menu_Click" />
                     </MenuItem>
                     <!--<MenuItem Header="TEST">
                         <MenuItem Name="GraphViewMenu" Header="グラフ" Click="Menu_Click" />
@@ -122,7 +123,16 @@
                         </Grid.ColumnDefinitions>
                         <Grid Grid.Column="0">
                             <ComboBox Name="cbFolderList" Height="25" VerticalAlignment="Top" SelectionChanged="cbFolderList_SelectionChanged" MouseDoubleClick="cbFolderList_MouseDoubleClick" />
-                            <ListBox x:Name="lbFileList" Margin="0,25,0,0" SelectionChanged="lbFileList_SelectionChanged" />
+                            <ListBox x:Name="lbFileList" Margin="0,25,0,0" SelectionChanged="lbFileList_SelectionChanged" >
+                                <ListBox.ContextMenu>
+                                    <ContextMenu>
+                                        <MenuItem Header="コピー" Name="lbFileListCopyMenu" Click="lbFileListMenu_Click" />
+                                        <MenuItem Header="移動" Name="lbFileListmoveMenu" Click="lbFileListMenu_Click" />
+                                        <MenuItem Header="削除" Name="lbFileListRemoveMenu" Click="lbFileListMenu_Click" />
+                                        <MenuItem Header="名前の変更" Name="lbFileListRenameMenu" Click="lbFileListMenu_Click" />
+                                    </ContextMenu>
+                                </ListBox.ContextMenu>
+                            </ListBox>
                         </Grid>
                         <GridSplitter Grid.Column="1" HorizontalAlignment="Stretch" />
                         <TextBox x:Name="tbReference" IsReadOnly="True"  Grid.Column="2" Margin="0,0,0,0"
