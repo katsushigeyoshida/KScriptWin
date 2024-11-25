@@ -30,6 +30,7 @@ namespace KScriptWin
         private string mFolderListPath = "FolderList.csv";
 
         private RingBuffer<string> mOutBuffer = new RingBuffer<string>(2000);   //  出力表示のバッファ
+        private Plot3DView mPlot3D;             //  3Dグラフィック
         private GraphView mGraph;               //  グラフィックWindow
         private KScript mScript;                //  スクリプト本体
         private List<string> mKeyWordList = new List<string>(); //  入力候補リスト
@@ -51,6 +52,8 @@ namespace KScriptWin
             mScript = new KScript();
             mScript.printCallback = outputDisp;      //  出力表示先の設定
             mScript.mGraph = mGraph;
+            mScript.mPlot3D = mPlot3D;
+            setTitle();
 
             WindowFormLoad();
         }
@@ -82,9 +85,11 @@ namespace KScriptWin
         {
             if (mGraph != null)
                 mGraph.Close();
+            if (mPlot3D != null)
+                mPlot3D.Close();
 
             closeCheck();
-            saveFolderLis();
+            saveFolderList();
             WindowFormSave();
         }
 
@@ -217,11 +222,9 @@ namespace KScriptWin
             } else if (menuItem.Name.CompareTo("editTab2SpaceMenu") == 0) {
                 tab2space();
             } else if (menuItem.Name.CompareTo("GraphViewMenu") == 0) {
-                if (mGraph != null) {
-                    mGraph.Close();
-                }
-                mGraph = new GraphView();
-                mGraph.Show();
+                graphView();
+            } else if (menuItem.Name.CompareTo("Plot3DViewMenu") == 0) {
+                plot3DView();
             }
         }
 
@@ -248,13 +251,17 @@ namespace KScriptWin
                 mFontSize -= 1;
                 avalonEditor.FontSize = mFontSize;
             } else if (button.Name.CompareTo("btExecute") == 0) {
-                exeute();
+                if (mScript.mControlData.mPause)
+                    mScript.mControlData.mPause = false;
+                else
+                    exeute();
             } else if (button.Name.CompareTo("btAbort") == 0) {
                 mScript.mControlData.mAbort = true;
                 outMessage("Abort\n");
             } else if (button.Name.CompareTo("btPause") == 0) {
                 mScript.mControlData.mPause = !mScript.mControlData.mPause;
-                outMessage("Pause\n");
+                if (mScript.mControlData.mPause)
+                    outMessage("Pause\n");
             } else if (button.Name.CompareTo("btSearch") == 0) {
                 search();
             } else if (button.Name.CompareTo("btHelp") == 0) {
@@ -399,6 +406,7 @@ namespace KScriptWin
             mScript.setScript(avalonEditor.Text);
             mScript.execute("main");
             mGraph = mScript.mGraph;
+            mPlot3D = mScript.mPlot3D;
             outMessage($"End : [{Path.GetFileNameWithoutExtension(mFilePath)}]");
         }
 
@@ -563,13 +571,21 @@ namespace KScriptWin
                 avalonEditor.Text = text;
                 setHash(text);
                 setTitle();
-
-                List<string> paths = getIncludeFilePath(text);
-                if (0 < paths.Count)
-                    setSnippetKeyword(paths);
-                else
-                    setSnippetKeyword();
+                updateSnippetKeyWird(text);
             }
+        }
+
+        /// <summary>
+        /// 入力候補のデータを更新する
+        /// </summary>
+        /// <param name="text">スクリプトコード</param>
+        private void updateSnippetKeyWird(string text)
+        {
+            List<string> paths = getIncludeFilePath(text);
+            if (0 < paths.Count)
+                setSnippetKeyword(paths);
+            else
+                setSnippetKeyword();
         }
 
         /// <summary>
@@ -704,6 +720,7 @@ namespace KScriptWin
                     case Key.F5: exeute(); break;
                     case Key.F8:
                     case Key.Apps: snippet(); break;    //  入力候補
+                    case Key.F12: updateSnippetKeyWird(avalonEditor.Text); break;
                     default: return false;;
                 }
             }
@@ -720,6 +737,9 @@ namespace KScriptWin
             //  snippetの予約語
             mKeyWordList.AddRange(KScript.mStatmantHelp);
             mKeyWordList.AddRange(ScriptLib.mFuncNames);
+            mKeyWordList.AddRange(FuncArray.mFuncNames);
+            mKeyWordList.AddRange(FuncPlot.mFuncNames);
+            mKeyWordList.AddRange(FuncPlot3D.mFuncNames);
             mKeyWordList.AddRange(YCalc.mFuncList);
             mKeyWordList.AddRange(YDraw.mLineTypeHelp);
             mKeyWordList.AddRange(YDraw.mPointTypeHelp);
@@ -817,7 +837,7 @@ namespace KScriptWin
             string word = "";
             int start = cursorPos;
             for (; 0 <= start; start--) {
-                if (!Char.IsLetterOrDigit(avalonEditor.Text[start]) || start == 0) {
+                if ((!Char.IsLetterOrDigit(avalonEditor.Text[start]) && avalonEditor.Text[start] != '.') || start == 0) {
                     if (start == 0) {
                         word = avalonEditor.Text.Substring(start, cursorPos - start + 1);
                         start--;
@@ -885,12 +905,30 @@ namespace KScriptWin
         /// <summary>
         /// 参照ファイルのフォルダリストの保存
         /// </summary>
-        private void saveFolderLis()
+        private void saveFolderList()
         {
             List<string> folderList = new List<string>();
             foreach (var folder in cbFolderList.Items)
                 folderList.Add(folder.ToString());
             ylib.saveListData(mFolderListPath, folderList);
+        }
+
+        private void graphView()
+        {
+            if (mGraph != null) {
+                mGraph.Close();
+            }
+            mGraph = new GraphView();
+            mGraph.Show();
+        }
+
+
+        private void plot3DView()
+        {
+            if (mPlot3D != null)
+                mPlot3D.Close();
+            mPlot3D = new Plot3DView();
+            mPlot3D.Show();
         }
     }
 }

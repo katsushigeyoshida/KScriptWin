@@ -23,22 +23,22 @@ for (x = xmin; x <= xmax; x += xstep) {
 }
 println(lapTime()," s");
 
-plotWindow(xmin, ymin, xmax, ymax);
-plotAspect(1);
-plotColor("Green");
+plot.Aspect(1);
+plot.Window(xmin, ymin, xmax, ymax);
+plot.Color("Green");
 y = func(xmin);
 for (x = xmin; x < xmax; x += xstep) {
 	xn = x + xstep;
 	yn = func(xn);
 //	yn = sin(xn) + cos(xn * 2) + cos(xn * 4);
-	plotLine(x, y, xn, yn);
+	plot.Line(x, y, xn, yn);
 	y= yn;
 }
 println(lapTime()," s");
 
-plotColor("Brown");
-plotLine(xmin, 0, xmax, 0);
-plotLine(0, ymin, 0, ymax);
+plot.Color("Brown");
+plot.Line(xmin, 0, xmax, 0);
+plot.Line(0, ymin, 0, ymax);
 
 
 func(x) {

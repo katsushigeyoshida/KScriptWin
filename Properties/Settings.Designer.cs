@@ -154,5 +154,53 @@ namespace KScriptWin.Properties {
                 this["GraphViewHeight"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("0")]
+        public double Plot3DViewTop {
+            get {
+                return ((double)(this["Plot3DViewTop"]));
+            }
+            set {
+                this["Plot3DViewTop"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("0")]
+        public double Plot3DViewLeft {
+            get {
+                return ((double)(this["Plot3DViewLeft"]));
+            }
+            set {
+                this["Plot3DViewLeft"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("0")]
+        public double Plot3DViewWidth {
+            get {
+                return ((double)(this["Plot3DViewWidth"]));
+            }
+            set {
+                this["Plot3DViewWidth"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("0")]
+        public double Plot3DViewHeight {
+            get {
+                return ((double)(this["Plot3DViewHeight"]));
+            }
+            set {
+                this["Plot3DViewHeight"] = value;
+            }
+        }
     }
 }

@@ -40,7 +40,7 @@ namespace KScriptWin
         public static char[] skipChar = { ' ', '\t', '\r', '\n' };
         public static string[] statement = {
             "let", "while", "if", "else", "for", "return", "break", "continue",
-            "print", "println", "exit", "#include",
+            "print", "println", "exit", "pause", "#include",
         };
         public static string[] constatnt = { "PI", "E" };
         public char[] mBrackets = { '(', ')', '{', '}', '[', ']', '\"', '\"' };
@@ -94,7 +94,7 @@ namespace KScriptWin
 
         public override string ToString()
         {
-            return $"{mValue}[{mType.ToString()}]";
+            return $" {mValue} [{mType.ToString()}]";
         }
 
         /// <summary>
@@ -242,7 +242,7 @@ namespace KScriptWin
                     //  区切文字
                     tokens.Add(new Token(str[i].ToString(), TokenType.DELIMITER));
                 } else {
-                    System.Diagnostics.Debug.WriteLine($"tokenList: {i} {str.Substring(i)}");
+                    tokens.Add(new Token(str[i].ToString(), TokenType.ERROR));
                 }
             }
             return tokens;

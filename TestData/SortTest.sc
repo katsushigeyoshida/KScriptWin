@@ -1,11 +1,11 @@
-﻿//	ソートテスト
+﻿//  ソートテスト
 data[] = { 6, 9, 12, 7, 2, 23, 10, 4 };
 println("ソートデータ");
 arrayPrint(data[]);
 menu[] = {
-	"単純選択法", "バブルソート", "単純挿入法",
-	"シェーカーソート", "単純挿入法2", "シェルソート",
-	"クイックソート"
+    "単純選択法", "バブルソート", "単純挿入法",
+    "シェーカーソート", "単純挿入法2", "シェルソート",
+    "クイックソート"
 };
 title = "ソートの種類";
 menuNo = menuSelect(menu[], title);
@@ -21,7 +21,7 @@ else if (menuNo == 6) quickSort(data[]);
 
 simpleSelect(a[]) {
     sp = 0;
-    ep = count(a[]);
+    ep = array.count(a[]);
     println("単純選択法 ",ep);
     count = 0;
     n = ep;
@@ -41,7 +41,7 @@ simpleSelect(a[]) {
 bubleSort(a[]) {
     println("バブルソート");
     sp = 0;
-    ep = count(a[]);
+    ep = array.count(a[]);
     count = 0;
     for ( i = sp; i < ep; i = i +1){
         for ( j = sp; j < ep - 1; j = j + 1) {
@@ -60,7 +60,7 @@ bubleSort(a[]) {
 simpleInsert(a[]) {
     println("単純挿入法(1列目作業データ)");
     sp = 0;
-    ep = count(a[]);
+    ep = array.count(a[]);
     count = 0;
     for ( i = sp; i < ep; i = i +1){
         count++;
@@ -79,7 +79,7 @@ simpleInsert(a[]) {
 
 shakerSort(a[]) {
     println("シェーカーソート");
-    n = count(a[]);
+    n = array.count(a[]);
     count = 0;
     shift = 0;
     left = 0;
@@ -114,7 +114,7 @@ shakerSort(a[]) {
 
 simpleInsert2(a[]) {
     println("単純挿入ソート");
-    n = count(a[]) - 1;
+    n = array.count(a[]) - 1;
     count = 0;
     for (i = 1; i < n; i++) {
         for (j = i - 1; j >= 0; j--) {
@@ -134,7 +134,7 @@ simpleInsert2(a[]) {
 
 shellSort(a[]) {
     println("シェルソート");
-    n = count(a[]) - 1;
+    n = array.count(a[]) - 1;
     gap = floor(n / 2);
     count = 0;
     while (gap > 0) {
@@ -160,37 +160,37 @@ shellSort(a[]) {
 
 quickSort(a[]) {
     println("クイックソート");
-	n = count(a[]) - 1;
-	a[] = quick(a[], 0, n);
+    n = array.count(a[]) - 1;
+    a[] = quick(a[], 0, n);
 }
 
 quick(a[], left, right) {
-	if (left < right) {
-		print(left, " ", right, " : ");
-		arrayPrint(a[]);
-		s = a[left];
-		i = left;
-		j = right + 1;
-		while (1) {
-			while (a[++i] < s) ;
-			while (a[--j] > s) ;
-			if (i >= j) break;
-			t = a[i];
-			a[i] = a[j];
-			a[j] = t;
-		}
-		a[left] = a[j];
-		a[j] = s;
-		
-		a[] = quick(a[], left, j - 1);
-		a[] = quick(a[], j + 1, right);
-	}
-	return a[];
+    if (left < right) {
+        print(left, " ", right, " : ");
+        arrayPrint(a[]);
+        s = a[left];
+        i = left;
+        j = right + 1;
+        while (1) {
+            while (a[++i] < s) ;
+            while (a[--j] > s) ;
+            if (i >= j) break;
+            t = a[i];
+            a[i] = a[j];
+            a[j] = t;
+        }
+        a[left] = a[j];
+        a[j] = s;
+        
+        a[] = quick(a[], left, j - 1);
+        a[] = quick(a[], j + 1, right);
+    }
+    return a[];
 }
 
 arrayPrint(b[]) {
     i = 0;
-    ep = count(b[]);
+    ep = array.count(b[]);
     while (i < ep) {
         print(b[i], " ");
         i = i + 1;

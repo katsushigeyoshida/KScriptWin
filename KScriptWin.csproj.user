@@ -10,12 +10,18 @@
     <Compile Update="GraphView.xaml.cs">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Update="Plot3DView.xaml.cs">
+      <SubType>Code</SubType>
+    </Compile>
   </ItemGroup>
   <ItemGroup>
     <Page Update="GraphView.xaml">
       <SubType>Designer</SubType>
     </Page>
     <Page Update="MainWindow.xaml">
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Update="Plot3DView.xaml">
       <SubType>Designer</SubType>
     </Page>
   </ItemGroup>

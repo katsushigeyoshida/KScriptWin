@@ -6,10 +6,10 @@ menu[] = {
 	"樹木曲線"
 };
 
-plotAspect(1);
-plotWindow(0, 0, 400, 400);
+plot.Aspect(1);
+plot.Window(0, 0, 400, 400);
+plot.Color("Green");
 turtleInit();
-plotColor("Green");
 
 title = "図形の種類";
 menuNo = menuSelect(menu[], title);

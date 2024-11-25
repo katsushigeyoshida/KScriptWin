@@ -56,17 +56,40 @@ KScriptWinの特徴
 Win版用の関数
     a = inputBox(title);                    文字入力ダイヤログ
     messageBox(outString[, title]);         文字列のダイヤログ表示
-    plotWindowSet(left,bottom,right,top);   表示領域の設定
-    plotAspect(1);                          アスペクト比固定の設定(0(非固定)/1(固定))
-    plotColor("Blue");                      要素の色設定
-    plotPointType("cross");                 点種の設定("dot", "cross", "plus", "box", "circle", "triangle")
-    plotLineType("dash");                   線種の設定("solid", "dash", "center", "phantom")
-    plotPointSize(3);                       点サイズの設定
-    plotLineThickness(2);                   線の太さの設定
-    plotPoint(x, y);                        点の表示
-    plotLine(sx, sy, ex, ey);               線分の表示(始点x,y、終点x,y)
-    plotArc(cx, cy, r[, sa][, ea]);         円弧の表示(中心x,中心y,半径[,始角[,終角]])
-    plotText(text,x,y,size,rotate,ha,va);   文字列表示(文字列,座標[,大きさ[,回転角[,水平アライメント[,垂直アライメント]]]])
+    plot関数(2Dグラフィック)
+        plot.WindowSet(left,bottom,right,top);   表示領域の設定
+        plot.Aspect(1);                          アスペクト比固定の設定(0(非固定)/1(固定))
+        plot.Color("Blue");                      要素の色設定
+        plot.PointType("cross");                 点種の設定("dot", "cross", "plus", "box", "circle", "triangle")
+        plot.LineType("dash");                   線種の設定("solid", "dash", "center", "phantom")
+        plot.PointSize(3);                       点サイズの設定
+        plot.LineThickness(2);                   線の太さの設定
+        plot.Point(x, y);                        点の表示
+        plot.Line(sx, sy, ex, ey);               線分の表示(始点x,y、終点x,y)
+        plot.Arc(cx, cy, r[, sa][, ea]);         円弧の表示(中心x,中心y,半径[,始角[,終角]])
+        plot.Text(text,x,y,size,rotate,ha,va);   文字列表示(文字列,座標[,大きさ[,回転角[,水平アライメント[,垂直アライメント]]]])
+    plot3D関数(3Dグラフィック)
+        plot3D.setArea(min[],max[]);             3DViewの初期化",
+        plot3D.setAxisFrame(axis,frame);         軸とフレームの表示(0:非表示/1:表示)",
+        plot3D.disp();                           要素の表示",
+        plot3D.setColor(\"Blue\");               色の設定",
+        plot3D.plotTranslate(vec[]);             要素の移動(移動量 vec[x/y/z])",
+        plot3D.plotRotate(angle,\"X\");          要素の回転(回転角度,回転軸 X/Y/Z軸)",
+        plot3D.plotScale(scale[]);               要素の縮小拡大 (拡大率 scale[x/y/z])",
+        plot3D.plotReset();                      座標変換をクリアする",
+        plot3D.plotLine(sp[x/y/z],ep[x/y/z]);    線分の設定()",
+        plot3D.plotLines(plist[n,x/y/z]);        複数線分(plits[,])",
+        plot3D.plotPolyline(plist[n,x/y/z]);     ポリライン",
+        plot3D.plotPolyloop(plist[n,x/y/z]);     ポリラインループ",
+        plot3D.plotPolygon(plist[n,x/y/z]);　    ポリゴン(塗潰し)",
+        plot3D.plotTrianges(plist[n,x/y/z]);     複数三角形(塗潰し)",
+        plot3D.plotTriangeStrip(plist[n,x/y/z]); 連続三角形",
+        plot3D.plotQuads(plist[n,x/y/z]);        複数四角形",
+        plot3D.plotQuadeStrip(plist[n,x/y/z]);   連続四角形",
+        plot3D.plotTriangeFan(plist[n,x/y/z]);   扇形の連続三角形",
+        plot3D.translate(pos[],vec[]);           3D座標の移動(3D座標,移動量)",
+        plot3D.rotate(pos[],cp[],angle,face);    3D座標の回転(3D座標,回転中心,回転角,回転軸)",
+        plot3D.scale(pos[],cp[],scale);          3D座標の拡大縮小(3D座標,拡大中心,拡大率)",
 
 ScriptLibの追加関数の引数の処理方法
     配列以外の引数は値で渡す
@@ -119,31 +142,35 @@ ScriptLibの追加関数の引数の処理方法
                                    ARRAY      ← Index ←  variables, array
 
 機能追加
-・exit を例外処理(throw)で組み込む (2024/10/23)
-・グローバル変数は変数名の先頭に「g_」をつけることで対応 (2024/10/20)
+・多次元配列対応(インデックスなしの場合) 3次元以上  a[,,],a[,,,] ...の時
 ・2Dグラフィック: plotXXXXX() (2024/10/06)
 ・追加グラフィック関数 plotRect(),plotPolyline(a[,]),plotPolygon(a[,]),plotFIllColor()
 ・グラフ機能 散布図,(折線,棒グラフ)
 ・3Dグラフィック
 ・ダイヤログ関数(xxxDlg関数) input,message (2024/10/06) menuSlelct
-・他のソースの参照機能　(2024/10/13)
 ・システム設定(フォントファミリ・サイズ、)
-・else if のサポート (2024/10/18)
 ・条件文の true/false は現状は 数値/!数値 で対応
 ・swtch文、do while()
-・エディタで選択行のコメント追加/解除 (2024/10/24)
-・エディタでのタブ・スペース変換(2024/11/03)
 ・ファイルの読込保存 a=loadText(), saveText(a),a[]=loadLine(),saveLine(a[]),a[,]=loadCsv(),savCsv(a[,]);
 ・数値: format/toString,
 ・時刻・時間関数: startTime,lapTime,dateTimeNow (2024/10/24)
 ・乱数()
-・配列関数: clear, sort, reverse, remove,
-            copy, add, insert, find, findAll, findIndex, findLast,findLastIndex,
+・配列関数: copy, add, insert, find, findAll, findIndex, findLast,findLastIndex,
             indexOf, lastIndexOf
 ・文字列関数: char取出, substring,replace,insert,remove,trim,toString,length,indexof,join,split,compare
-・数式: 3次/4次関数追加(2024/11/03),4元数,
-        統計(average,variance,stdDeviation,covariance,corrCoeff) (2024/10/20)
-        最小二乗法,多変量解析
+・数式: 4元数, 最小二乗法,多変量解析
+
+・pause の追加 pause("message"); (2024/11/17)
+・exit を例外処理(throw)で組み込む (2024/10/23)
+・グローバル変数は変数名の先頭に「g_」をつけることで対応 (2024/10/20)
+・他のソースの参照機能　(2024/10/13)
+・else if のサポート (2024/10/18)
+・エディタで選択行のコメント追加/解除 (2024/10/24)
+・エディタでのタブ・スペース変換(2024/11/03)
+・数式: 3次/4次関数追加(2024/11/03)
+・配列関数(array.): contains, count, clear, remove, squeez, sort, reverse, 
+    統計 max, min, sum, average, variance, stdDeviation, covariance, corrCoeff (2024/10/20)
+    マトリックス関数(matrix.): unit,transpose,multi, add, inverse, copy
 
 機能制限
 ・関数は値渡しのみでアドレス渡しは不可
@@ -165,6 +192,10 @@ NuGetライブラリ : AvalonEditor
 
 
 履歴
+2024/11/17 pause();ステートメント追加
+2024/11/10 関数名の表記を分類+関数名とした(分類: array,solve,plot,plot3D)
+2024/11/10 3Dグラフィック機能追加(plot3D.xxxx)
+2024/11/06 拡張関数名の変更 plotXXXX → plot.XXXX
 2024/11/03 参照ファイルのファイル操作を追加、タブをスペースに変換を追加
 2024/11/02 #include のファイルの関数をsnippet 表示できるように改善
 2024/10/24 コメント追加/解除(ctrl+/)

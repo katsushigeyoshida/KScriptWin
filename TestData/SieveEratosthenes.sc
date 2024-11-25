@@ -1,13 +1,13 @@
-﻿//	SieveEratosthenes
+﻿//  SieveEratosthenes
 max = inputBox("素数の最大値");
 
 println("素数の単純チェック");
 for (i = 2; i <= max; i++) {
-	if (primeChk(i) ==1)
-		print(i, " ");
+    if (primeChk(i) ==1)
+        print(i, " ");
 }
 print();
-exit;
+
 
 print("エラトステネスの篩\n");
 maxprime = floor(sqrt(max));
@@ -33,14 +33,14 @@ while (m <= maxprime) {
 
 
 primeChk(n) {
-	if (2 <= n) {
-		limit = floor(sqrt(n));
-		for (i = limit; i > 1; i--) {
-			if (n % i == 0) break;
-		}
-		if (i == 1)
-			return 1;
-		else
-			return 0;
-	}
+    if (2 <= n) {
+        limit = floor(sqrt(n));
+        for (i = limit; i > 1; i--) {
+            if (n % i == 0) break;
+        }
+        if (i == 1)
+            return 1;
+        else
+            return 0;
+    }
 }

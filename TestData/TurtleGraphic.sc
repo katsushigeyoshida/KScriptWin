@@ -15,9 +15,9 @@ else if (menuNo == 6) spiralPlot(145, 4);
 println(lapTime());
 
 spiralPlot(ang, step) {
-	plotWindow(-200, -200, 200, 200);
-	plotAspect(1);
-	plotColor("Green");
+	plot.Aspect(1);
+	plot.Window(-200, -200, 200, 200);
+	plot.Color("Green");
 	turtleInit();
 	leng = 200;		//	辺の初期値
 //	step = 1;		//	辺の減少値
@@ -35,9 +35,9 @@ spiralPlot(ang, step) {
 
 
 polygonPlot() {
-	plotWindow(-20, -40, 100, 300);
-	plotAspect(1);
-	plotColor("Green");
+	plot.Aspect(1);
+	plot.Window(-20, -40, 100, 300);
+	plot.Color("Green");
 	turtleInit();
 	for (n = 3; n < 10; n++) {
 		for (j = 1; j <= n; j++) {
@@ -62,7 +62,7 @@ turtleMove(l) {
 	ang = RAD(g_TurtleAngle);
 	x = g_TurtleLPX + l * cos(ang);
 	y = g_TurtleLPY + l * sin(ang);
-	plotLine(g_TurtleLPX, g_TurtleLPY, x, y);
+	plot.Line(g_TurtleLPX, g_TurtleLPY, x, y);
 	g_TurtleLPX = x;
 	g_TurtleLPY = y;
 }

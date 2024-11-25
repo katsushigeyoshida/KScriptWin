@@ -22,11 +22,11 @@ else if (menuNo == 2) geometric(patC_x[], patC_y[]);
 println(lapTime());
 
 geometric(x[], y[]) {
-    n = count(x[]);
+    n = array.count(x[]);
     m = 70;                 // 正三角形の辺の長さ
     h = m * sqrt(3) / 2;    // 正三角形の辺の高さ
     println(n, " , ",m, " , ", h);
-    plotWindow(-m / 2, -h, m / 2 + 500, h * 2 / 3 + 330);
+    plot.Window(-m / 2, -h, m / 2 + 500, h * 2 / 3 + 330);
     turtleInit();
     b = 1;
     for (vy = 0; vy <= 330; vy += h) {

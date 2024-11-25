@@ -11,7 +11,7 @@ fruit["Apple"] = 20;
 fruit["Orenge"] = 50;
 println("Orenge", " ", fruit["Orenge"], " ", "Apple", " ", fruit["Apple"]);
 name[] = {"Orenge", "Apple" };
-for (i = 0; i < count(name[]); i++)
+for (i = 0; i < array.count(name[]); i++)
 	println(name[i], " = ", fruit[name[i]]);
 
 
@@ -26,7 +26,7 @@ println(a[1]);
 
 
 a[2,] = { 100, 200, 300 };
-for (i = 0; i < count(a[2,]); i++)
+for (i = 0; i < array.count(a[2,]); i++)
 	print(a[2,i], ", ");
 print();
 
@@ -39,7 +39,7 @@ person["山田", "性別"] = "男";
 println(person["山田", "名"]);
 
 item[] = { "名", "年齢", "性別" };
-for (i = 0; i < count(item[]); i++) {
+for (i = 0; i < array.count(item[]); i++) {
 	print(person["山田",item[i]], " ");
 }
 print();
@@ -54,26 +54,35 @@ printArray(data[]);
 
 println("== 文字列と数値の混在配列 ==");
 fruitValue[] = { "Apple", 20, "Orenge", 50 };
-for (i = 0; i < count(fruitValue[]); i++) print(fruitValue[i]," ");
+for (i = 0; i < array.count(fruitValue[]); i++) print(fruitValue[i]," ");
 print();
 
 println("== 統計計算 ==");
-clear(a[]);
+array.clear(a[]);
 a[] = { 1, 2, 3, 4, 5 };
 b[] = { 2, -2, 13, -4, 5 };
 print("配列 a[] = "); printArray(a[]);
 print("配列 b[] = "); printArray(b[]);
-println("配列 a[] の数と合計 = ", count(a[]), ", ", sum(a[]));
-println("配列 b[] の数と合計 = ", count(b[]), ", ", sum(b[]));
-println("配列 a[] の最小最大 = ", min(a[]), ", ", max(a[]));
-println("配列 b[] の最小最大 = ", min(b[]), ", ", max(b[]));
-println("配列 a[] の平均 = ", average(a[]));
-println("配列 b[] の平均 = ", average(b[]));
-println("配列 a[] の分散 = ", variance(a[]));
-println("配列 b[] の分散 = ", variance(b[]), " ", round(variance(b[])));
-println("配列 a[] の標準偏差 = ", stdDeviation(a[]));
-println("配列 b[] の標準偏差 = ", stdDeviation(b[]));
-b[]= sort(b[]);
+println("配列 a[] の数と合計 = ", array.count(a[]), ", ", array.sum(a[]));
+println("配列 b[] の数と合計 = ", array.count(b[]), ", ", array.sum(b[]));
+println("配列 a[] の最小最大 = ", array.min(a[]), ", ", array.max(a[]));
+println("配列 b[] の最小最大 = ", array.min(b[]), ", ", array.max(b[]));
+println("配列 a[] の平均 = ", array.average(a[]));
+println("配列 b[] の平均 = ", array.average(b[]));
+println("配列 a[] の分散 = ", array.variance(a[]));
+println("配列 b[] の分散 = ", array.variance(b[]), " ", round(array.variance(b[])));
+println("配列 a[] の標準偏差 = ", array.stdDeviation(a[]));
+println("配列 b[] の標準偏差 = ", array.stdDeviation(b[]));
+b[]= array.sort(b[]);
 print("配列b[]をソート = "); printArray(b[]);
-b[] = reverse(b[]);
+b[] = array.reverse(b[]);
 print("配列b[]を逆順 = "); printArray(b[]);
+println("== 2次元配列 ==");
+array.clear(a[]);
+a[,] = {{ 1, 2, 3, 4}, {2, 3, 4, 5}, {3, 4, 5, 6 }};
+println("配列 a[,] = "); printArray2(a[,]);
+println("配列 a[,] の数と合計 = ", array.count(a[,]), ", ", array.sum(a[,]));
+println("配列2行目 a[1,] の数と合計 = ", array.count(a[1,]), ", ", array.sum(a[1,]));
+println("配列 a[,] の最小最大 = ", array.min(a[,]), ", ", array.max(a[,]));
+println("配列2行目 a[1,] の最小最大 = ", array.min(a[1,]), ", ", array.max(a[1,]));
+

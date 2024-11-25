@@ -2,7 +2,7 @@
 //  1次元配列表示
 printArray(array[]) {
     start = 0;
-    size = count(array[]);
+    size = array.count(array[]);
     for (i = start; i < size; i = i + 1) {
         print(array[i], " ");
     }
@@ -11,11 +11,11 @@ printArray(array[]) {
 
 //  2次元配列表示
 printArray2(array[,]) {
-    size = count(array[,]);
+    size = array.count(array[,]);
     count = 0;
     i = 0;
     while (count < size) {
-        rowsize = count(array[i,]);
+        rowsize = array.count(array[i,]);
         for (j = 0; j < rowsize; j++) {
             print(array[i,j], " ");
             count++;
@@ -55,7 +55,7 @@ turtleSetAngle(ang) {
 
 //  起点から指定点まで線分表示
 turtleMoveto(x, y) {
-    plotLine(g_TurtleLPX, g_TurtleLPY, x, y);
+    plot.Line(g_TurtleLPX, g_TurtleLPY, x, y);
     g_TurtleLPX = x;
     g_TurtleLPY = y;
 }
@@ -65,7 +65,7 @@ turtleMove(length) {
     ang = RAD(g_TurtleAngle);
     x = g_TurtleLPX + length * cos(ang);
     y = g_TurtleLPY + length * sin(ang);
-    plotLine(g_TurtleLPX, g_TurtleLPY, x, y);
+    plot.Line(g_TurtleLPX, g_TurtleLPY, x, y);
     g_TurtleLPX = x;
     g_TurtleLPY = y;
 }

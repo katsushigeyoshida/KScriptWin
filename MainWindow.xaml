@@ -30,6 +30,7 @@
                     </MenuItem>
                     <!--<MenuItem Header="TEST">
                         <MenuItem Name="GraphViewMenu" Header="グラフ" Click="Menu_Click" />
+                        <MenuItem Name="Plot3DViewMenu" Header="3D表示" Click="Menu_Click" />
                     </MenuItem>-->
                 </Menu>
                 <ToolBarTray>
