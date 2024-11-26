@@ -118,7 +118,7 @@ namespace KScriptWin
         public bool mDebugConsole = false;
 
         public Action printCallback;                            //  print文のコールバック関数
-        public ControlData mControlData = new ControlData();    //  データを参照渡しするため
+        public ControlData mControlData;                        //  データを参照渡しするため
 
         private string mFuncName = "";                          //  実行中の関数名
         private YCalc mCalc = new YCalc();                      //  数式処理
@@ -133,6 +133,7 @@ namespace KScriptWin
             mFuncArray  = new FuncArray(this);
             mFuncPlot   = new FuncPlot(this);
             mFuncPlot3D = new FuncPlot3D(this);
+            mControlData = new ControlData();
         }
 
         /// <summary>
@@ -149,6 +150,7 @@ namespace KScriptWin
             mFuncArray  = new FuncArray(this);
             mFuncPlot   = new FuncPlot(this);
             mFuncPlot3D = new FuncPlot3D(this);
+            mControlData = new ControlData();
 
             //  字句解析・ スクリプト登録(mFunctionsに登録)
             mTokenList  = mLexer.tokenList(script);

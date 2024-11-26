@@ -11,7 +11,8 @@ plot3D.setColor("Red");
 sp[] = { -1, -1, -1 };
 ep[] = {  1,  1,  1 };
 plot3D.plotLine(sp[],ep[]);
-pause("plotLine");
+
+//pause("plotLine");
 plot3D.setColor("Blue");
 circle(2,24);
 

@@ -117,14 +117,15 @@ holePlate(w, h, t, r, cx, cy) {
     array.clear(cp[,]);
     cp[,] = halfhollplate(r, w /2);
     v[] = { cx, cy, 0 };
-    cp[,] = plot3D.translate(cp[,], v[]);
-    plot3D.plotQuadeStrip(cp[,]);
-    v[] = { 0, 0, t};
     p[,] = plot3D.translate(cp[,], v[]);
+    plot3D.plotQuadeStrip(p[,]);
+    v[] = { 0, 0, t};
+    p[,] = plot3D.translate(p[,], v[]);
     plot3D.plotQuadeStrip(p[,]);
 
     v[] = { cx, cy, 0 };
-    p[,] = plot3D.rotate(cp[,], v[], RAD(180), "Z");
+    p[,] = plot3D.rotate(cp[,], RAD(180), "Z");
+    p[,] = plot3D.translate(p[,], v[]);
     plot3D.plotQuadeStrip(p[,]);
     v[] = { 0, 0, t};
     p[,] = plot3D.translate(p[,], v[]);

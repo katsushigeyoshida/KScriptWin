@@ -30,15 +30,44 @@ KScriptWin はWindows上でKScriptのコード作成とそれを実行する環�
 ・グラフィック機能が簡単に使用できる(直接ワールド座標が使えスクリーン座標を考慮する必要がない)  
 
 ### 画面
-メインウィンドウ    
+#### メインウィンドウ    
 <img src="Image/MainWindow.png" width="80%">  
 
-グラフィック表示  
+#### グラフィック表示  
 <img src="Image/MainWindow+Graph.png" width="80%">  
+
+#### 3Dグラフィック表示
+<img src="Image/3DGraphic.png" width="80%">  
+
+#### プログラムコードサンプル 
+``` cpp
+a = 2;
+b = 3;
+while (a <= b) {
+    print(a, " ", b, " → ");
+    if (a > b) println(a);
+    else println(b);
+    a++;
+}
+
+print(a, " ", b, " → ");
+if (a > b) println(a);
+```
+#### 実行結果  
+```
+[09:08:23] Start : [IfTest]
+2 3 → 3
+3 3 → 3
+4 3 → 4
+[09:08:23] End : [IfTest]
+```
 
 
 ### 履歴
-2024/11/03 参照ファイルのファイル操作を追加、タブをスペースに変換を追加  
+2024/11/17 pause();ステートメント追加  
+2024/11/10 関数名の表記を分類+関数名とした(分類: array,solve,plot,plot3D)  
+2024/11/10 3Dグラフィック機能追加(plot3D.xxxx)  
+2024/11/06 拡張関数名の変更 plotXXXX → plot.XXXX2024/11/03 参照ファイルのファイル操作を追加、タブをスペースに変換を追加  
 2024/11/02 #include のファイルの関数をsnippet 表示できるように改善  
 2024/10/24 コメント追加/解除(ctrl+/)  
 2024/10/23 exit を例外処理(throw)で組み込む   
