@@ -85,4 +85,10 @@ println("配列 a[,] の数と合計 = ", array.count(a[,]), ", ", array.sum(a[,
 println("配列2行目 a[1,] の数と合計 = ", array.count(a[1,]), ", ", array.sum(a[1,]));
 println("配列 a[,] の最小最大 = ", array.min(a[,]), ", ", array.max(a[,]));
 println("配列2行目 a[1,] の最小最大 = ", array.min(a[1,]), ", ", array.max(a[1,]));
-
+println("配列の結合");
+array.clear(a[,]);
+array.clear(b[,]);
+a[,] = {{ 1,2,3 },{2,3,4},{3,4,5}};
+b[,] = {{ 11,12,13 },{22,23,24},{33,34,35}};
+c[,] = array.add(a[,],b[,]);
+printArray2(c[,]);

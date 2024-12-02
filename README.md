@@ -64,6 +64,8 @@ if (a > b) println(a);
 
 
 ### 履歴
+2024/12/01 array.add()関数追加  
+2024/11/28 plot3D.holePlateQuads(),polygonSideQuadStrip()関数を追加  
 2024/11/17 pause();ステートメント追加  
 2024/11/10 関数名の表記を分類+関数名とした(分類: array,solve,plot,plot3D)  
 2024/11/10 3Dグラフィック機能追加(plot3D.xxxx)  

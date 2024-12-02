@@ -625,7 +625,7 @@ namespace KScriptWin
             } catch (Exception e) {
                 if (0 <= e.Message.IndexOf("exit"))
                     throw new Exception(e.Message);
-                outputString($"Error: not found function [{funcName.mValue}]\n");
+                outputString($"Error: function [{funcName.mValue}]\n {e.Message}\n");
                 return new Token(funcName.mValue, TokenType.ERROR);
             }
         }

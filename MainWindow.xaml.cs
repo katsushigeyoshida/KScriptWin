@@ -178,7 +178,7 @@ namespace KScriptWin
             int index = lbFileList.SelectedIndex;
             if (0 <= index) {
                 string path = Path.Combine(cbFolderList.Text, lbFileList.Items[index].ToString());
-                tbReference.Text = ylib.loadTextFile(path);
+                tbReference.Text = ylib.tab2space(ylib.loadTextFile(path));
             }
         }
 

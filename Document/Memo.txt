@@ -90,6 +90,8 @@ Win版用の関数
         plot3D.translate(pos[],vec[]);           3D座標の移動(3D座標,移動量)",
         plot3D.rotate(pos[],cp[],angle,face);    3D座標の回転(3D座標,回転中心,回転角,回転軸)",
         plot3D.scale(pos[],cp[],scale);          3D座標の拡大縮小(3D座標,拡大中心,拡大率)",
+        plot3D.holePlateQuads(outline[,],innerLine[,],,);   中抜きの平面データの作成",
+        plot3D.polygonSideQuadStrip(polygon[,],thicknes);   ポリゴンの側面データをQuadStripで作成",
 
 ScriptLibの追加関数の引数の処理方法
     配列以外の引数は値で渡す
@@ -146,7 +148,7 @@ ScriptLibの追加関数の引数の処理方法
 ・2Dグラフィック: plotXXXXX() (2024/10/06)
 ・追加グラフィック関数 plotRect(),plotPolyline(a[,]),plotPolygon(a[,]),plotFIllColor()
 ・グラフ機能 散布図,(折線,棒グラフ)
-・3Dグラフィック
+・3Dグラフィック  回転体の作成
 ・ダイヤログ関数(xxxDlg関数) input,message (2024/10/06) menuSlelct
 ・システム設定(フォントファミリ・サイズ、)
 ・条件文の true/false は現状は 数値/!数値 で対応
@@ -192,6 +194,8 @@ NuGetライブラリ : AvalonEditor
 
 
 履歴
+2024/12/01 array.add()関数追加
+2024/11/28 plot3D.holePlateQuads(),polygonSideQuadStrip()関数を追加
 2024/11/17 pause();ステートメント追加
 2024/11/10 関数名の表記を分類+関数名とした(分類: array,solve,plot,plot3D)
 2024/11/10 3Dグラフィック機能追加(plot3D.xxxx)

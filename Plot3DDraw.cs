@@ -71,7 +71,6 @@ namespace KScriptWin
         public void convPeekMulti()
         {
             mMatrix = ylib.matrixMulti(mMatrix, mMatrixStack.Peek());
-
         }
 
         /// <summary>

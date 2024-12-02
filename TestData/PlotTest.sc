@@ -17,7 +17,6 @@ ymax  = ymin;
 startTime();
 for (x = xmin; x <= xmax; x += xstep) {
 	fx = func(x);
-//	fx = sin(x) + cos(x * 2) + cos(x * 4);
 	if (ymin > fx) ymin = fx;
 	if (ymax < fx) ymax = fx;
 }
@@ -30,7 +29,6 @@ y = func(xmin);
 for (x = xmin; x < xmax; x += xstep) {
 	xn = x + xstep;
 	yn = func(xn);
-//	yn = sin(xn) + cos(xn * 2) + cos(xn * 4);
 	plot.Line(x, y, xn, yn);
 	y= yn;
 }

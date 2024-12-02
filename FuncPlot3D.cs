@@ -26,9 +26,12 @@ namespace KScriptWin
             "plot3D.plotQuads(plist[n,x/y/z]); 複数四角形",
             "plot3D.plotQuadeStrip(plist[n,x/y/z]); 連続四角形",
             "plot3D.plotTriangeFan(plist[n,x/y/z]); 扇形の連続三角形",
-            "plot3D.translate(pos[],vec[]); 3D座標の移動(3D座標,移動量)",
-            "plot3D.rotate(pos[],angle,axis); 3D座標の回転(3D座標,回転角,回転軸(X/Y/Z)",
-            "plot3D.scale(pos[],cp[],scale); 3D座標の拡大縮小(3D座標,拡大中心,拡大率)",
+            "plot3D.translate(pos[,],vec[]); 3D座標の移動(3D座標,移動量)",
+            "plot3D.rotate(pos[,],angle,axis); 3D座標の回転(3D座標,回転角,回転軸(X/Y/Z)",
+            "plot3D.scale(pos[,],cp[],scale); 3D座標の拡大縮小(3D座標,拡大中心,拡大率)",
+            "plot3D.holePlateQuads(outline[,],innerLine[,],,); 中抜きの平面データの作成",
+            "plot3D.polygonSideQuadStrip(polygon[,],thicknes); ポリゴンの側面データをQuadStripで作成",
+            "plot3D.polygonSideQuads(polygon[,],thicknes); ポリゴンの側面データをQuadStripで作成",
         };
 
         //  共有クラス
@@ -80,6 +83,9 @@ namespace KScriptWin
                 case "plot3D.translate"       : translate(args, ret); break;
                 case "plot3D.rotate"          : rotate(args, ret); break;
                 case "plot3D.scale"           : scale(args, ret); break;
+                case "plot3D.holePlateQuads"  : holePlate2Quads(args, ret); break;
+                case "plot3D.polygonSideQuadStrip"   : polygonSide2QuadStrip(args, ret); break;
+                case "plot3D.polygonSideQuads": polygonSide2Quads(args, ret); break;
                 default: return new Token("not found func", TokenType.ERROR);
             }
             return new Token("", TokenType.EMPTY);
@@ -196,6 +202,9 @@ namespace KScriptWin
             mPlot3D.convCoordinatePop();
         }
 
+        /// <summary>
+        /// スタックのマトリックスを現マトリックスと合わせる
+        /// </summary>
         private void plotConvMulti()
         {
             mPlot3D.convCoordinatePeekMulti();
@@ -351,6 +360,37 @@ namespace KScriptWin
         }
 
         /// <summary>
+        /// 3D配列をListに変換
+        /// </summary>
+        /// <param name="array">3D配列</param>
+        /// <returns>Point3Dリスト</returns>
+        private List<Point3D> point3DArray2List(double[,] array)
+        {
+            List<Point3D> list3D = new List<Point3D>();
+            if (array.GetLength(1) < 3) return list3D;
+            for (int i = 0; i < array.GetLength(0); i++) {
+                list3D.Add(new Point3D(array[i, 0], array[i, 1], array[i, 2]));
+            }
+            return list3D;
+        }
+
+        /// <summary>
+        /// Point3Dリストを3D配列に変換
+        /// </summary>
+        /// <param name="list3D">Point3Dリスト</param>
+        /// <returns>3D配列</returns>
+        private double[,] point3DList2Array(List<Point3D> list3D)
+        {
+            double[,] array = new double[list3D.Count, 3];
+            for(int i = 0; i < list3D.Count; i++) {
+                array[i, 0] = list3D[i].x;
+                array[i, 1] = list3D[i].y;
+                array[i, 2] = list3D[i].z;
+            }
+            return array;
+        }
+
+        /// <summary>
         /// 3Dデータの移動
         /// </summary>
         /// <param name="args">pos[x/y/z]|pos[n,x/y/z],v[x,y,z]</param>
@@ -448,6 +488,79 @@ namespace KScriptWin
                 }
                 mParse.setReturnArray(dest, ret);
             }
+            //  戻り値の設定
+            mParse.setVariable(new Token("return", TokenType.VARIABLE), ret);
+            return mParse.getVariable("return");
+        }
+
+        /// <summary>
+        /// 穴あき平面データの作成(QUADS データ)
+        /// outline[n,x/y/z],innerline1[n,x/y/z],innerline2[n,x/y/z]...
+        /// </summary>
+        /// <param name="args">outline[,],innerline[,]</param>
+        /// <param name="ret">pos[n,x/y/z]</param>
+        /// <returns></returns>
+        private Token holePlate2Quads(List<Token> args, Token ret)
+        {
+            (string arrayName, int no) = mParse.getArrayName(new Token(args[0].mValue, TokenType.VARIABLE));
+            if (no != 2) return new Token("", TokenType.EMPTY);
+            double[,] outLine = mParse.cnvArrayDouble2(args[0]);
+            Polygon3D outPolygon = new Polygon3D(point3DArray2List(outLine));
+
+            List<Polygon3D> innerPolygons = new List<Polygon3D>();
+            for (int i = 1; i < args.Count; i++) {
+                double[,] innerLine = mParse.cnvArrayDouble2(args[i]);
+                innerPolygons.Add(new Polygon3D(point3DArray2List(innerLine)));
+            }
+
+            List<Point3D> quadsList = outPolygon.holePlate2Quads(innerPolygons);
+            double[,] dest = point3DList2Array(quadsList);
+            mParse.setReturnArray(dest, ret);
+
+            //  戻り値の設定
+            mParse.setVariable(new Token("return", TokenType.VARIABLE), ret);
+            return mParse.getVariable("return");
+        }
+
+        /// <summary>
+        /// ポリゴンの側面データの作成
+        /// </summary>
+        /// <param name="args">polygon[,],thickness</param>
+        /// <param name="ret">pos[n,x/y/z](QUAD_STRIP)</param>
+        /// <returns></returns>
+        private Token polygonSide2QuadStrip(List<Token> args, Token ret)
+        {
+            (string arrayName, int no) = mParse.getArrayName(new Token(args[0].mValue, TokenType.VARIABLE));
+            if (no != 2) return new Token("", TokenType.EMPTY);
+            double[,] outLine = mParse.cnvArrayDouble2(args[0]);
+            Polygon3D polygon = new Polygon3D(point3DArray2List(outLine));
+            double t = ylib.doubleParse(args[1].mValue);
+            List<Point3D> quadsList = polygon.sideFace2QuadStrip(t);
+            double[,] dest = point3DList2Array(quadsList);
+            mParse.setReturnArray(dest, ret);
+
+            //  戻り値の設定
+            mParse.setVariable(new Token("return", TokenType.VARIABLE), ret);
+            return mParse.getVariable("return");
+        }
+
+        /// <summary>
+        /// ポリゴンの側面データの作成
+        /// </summary>
+        /// <param name="args">polygon[,],thickness</param>
+        /// <param name="ret">pos[n,x/y/z](QUADS)</param>
+        /// <returns></returns>
+        private Token polygonSide2Quads(List<Token> args, Token ret)
+        {
+            (string arrayName, int no) = mParse.getArrayName(new Token(args[0].mValue, TokenType.VARIABLE));
+            if (no != 2) return new Token("", TokenType.EMPTY);
+            double[,] outLine = mParse.cnvArrayDouble2(args[0]);
+            Polygon3D polygon = new Polygon3D(point3DArray2List(outLine));
+            double t = ylib.doubleParse(args[1].mValue);
+            List<Point3D> quadsList = polygon.sideFace2Quads(t);
+            double[,] dest = point3DList2Array(quadsList);
+            mParse.setReturnArray(dest, ret);
+
             //  戻り値の設定
             mParse.setVariable(new Token("return", TokenType.VARIABLE), ret);
             return mParse.getVariable("return");

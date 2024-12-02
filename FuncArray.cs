@@ -28,6 +28,8 @@ namespace KScriptWin
             "array.stdDeviation(a[]); 配列の標準偏差",
             "array.covariance(a[], b[]); 共分散",
             "array.corrCoeff(x[],y[]); 配列の相関係数",
+            "array.add(a[],b[]); 配列同士の結合c[]=array.add(a[],b[])",
+            "array.add(a[,],b[,]); 配列同士の結合c[,]=array.add(a[,],b[,])",
         };
 
         //  共有クラス
@@ -67,6 +69,7 @@ namespace KScriptWin
                 case "array.stdDeviation": return standardDeviation(args);
                 case "array.covariance": return covariance(args);
                 case "array.corrCoeff": return correlationCoefficient(args);
+                case "array.add": return add(args, ret);
                 default: return new Token("not found func", TokenType.ERROR);
             }
             return new Token("", TokenType.EMPTY);
@@ -221,7 +224,7 @@ namespace KScriptWin
         /// 配列を逆順にする(inner function)
         /// 配列のインデックスが0以上の数値のみに対応
         /// </summary>
-        /// <param name="args">配列名</param>
+        /// <param name="args">配列名[,colReverse]</param>
         public void reverse(List<Token> args)
         {
             (string arrayName, int no) = mParse.getArrayName(args[0]);
@@ -423,6 +426,46 @@ namespace KScriptWin
             double stdx = Math.Sqrt(x.Sum(p => (p - avex) * (p - avex)) / x.Count);
             double stdy = Math.Sqrt(y.Sum(p => (p - avey) * (p - avey)) / y.Count);
             return new Token((cov / (stdx * stdy)).ToString(), TokenType.LITERAL);
+        }
+
+        /// <summary>
+        /// 配列と配列を結合する
+        /// c[] = array.add(a[],b[]);
+        /// c[,] = array.add(a[,],b[,]);
+        /// </summary>
+        /// <param name="args"></param>
+        /// <param name="ret"></param>
+        /// <returns></returns>
+        public Token add(List<Token> args, Token ret)
+        {
+            if (args.Count < 2)
+                return new Token("", TokenType.ERROR);
+            (string arrayA, int noA) = mParse.getArrayName(new Token(args[0].mValue, TokenType.VARIABLE));
+            (string arrayB, int noB) = mParse.getArrayName(new Token(args[1].mValue, TokenType.VARIABLE));
+            if (noA == 1 && noB == 1) {
+                List<double> a = mParse.cnvListDouble(args[0]);
+                List<double> b = mParse.cnvListDouble(args[1]);
+                a.AddRange(b);
+                mParse.setReturnArray(a.ToArray(), ret);
+            } else if (noA ==2 && noB == 2) {
+                double[,] a = mParse.cnvArrayDouble2(args[0]);
+                double[,] b = mParse.cnvArrayDouble2(args[1]);
+                double[,] c = new double[a.GetLength(0) + b.GetLength(0), a.GetLength(1)];
+                for (int i = 0; i < a.GetLength(0); i++) {
+                    for (int j = 0; j < a.GetLength(1); j++)
+                        c[i, j] = a[i, j];
+                }
+                for (int i = 0; i < b.GetLength(0); i++) {
+                    for (int j = 0; j < Math.Min(a.GetLength(1),b.GetLength(1)); j++)
+                        c[i + a.GetLength(0), j] = b[i, j];
+                }
+                mParse.setReturnArray(c, ret);
+            } else
+                return new Token("", TokenType.EMPTY);
+
+            //  戻り値の設定
+            mParse.setVariable(new Token("return", TokenType.VARIABLE), ret);
+            return mParse.getVariable("return");
         }
     }
 }

@@ -211,7 +211,8 @@ namespace KScriptWin
                 } else if (Char.IsNumber(str[i]) || str[i] == '.' ||
                     (i == 0 && (str[i] == '-' || str[i] == '+'))) {
                     //  数値
-                    while (i < str.Length && (Char.IsNumber(str[i]) || str[i] == '.' || str[i] == '-')) {
+                    while (i < str.Length && (Char.IsNumber(str[i])
+                        || str[i] == '.' || str[i] == '-' || str[i] == 'E' || str[i] == 'e')) {
                         if (Array.IndexOf(Token.skipChar, str[i]) < 0)
                             buf += str[i];
                         i++;
