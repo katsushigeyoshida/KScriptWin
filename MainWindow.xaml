@@ -20,13 +20,17 @@
                         <MenuItem Name="fileCloseMenu" Header="閉じる" Click="Menu_Click" />
                     </MenuItem>
                     <MenuItem Header="編集">
-                        <MenuItem Header="切取り" Command="Cut" />
-                        <MenuItem Header="コピー" Command="Copy" />
-                        <MenuItem Header="貼付け" Command="Paste" />
-                        <MenuItem Name="editSearchMenu" Header="検索" Click="Menu_Click" />
+                        <MenuItem Header="切取り Ctrl+X" Command="Cut" />
+                        <MenuItem Header="コピー Ctrol+C" Command="Copy" />
+                        <MenuItem Header="貼付け Ctrol+V" Command="Paste" />
+                        <MenuItem Name="editSearchMenu" Header="検索 Ctrol+F" Click="Menu_Click" />
                         <MenuItem Name="editReplaceMenu" Header="置換え" Click="Menu_Click" />
-                        <MenuItem Name="editToCommentMenu" Header="コメント追加/解除" Click="Menu_Click" />
+                        <MenuItem Name="editToCommentMenu" Header="コメント追加/解除 Ctrl+/" Click="Menu_Click" />
                         <MenuItem Name="editTab2SpaceMenu" Header="タブ→スペース" Click="Menu_Click" />
+                    </MenuItem>
+                    <MenuItem Header="ツール">
+                        <MenuItem Name="UpdaterSnipptMenu" Header="入力候補更新 F12" Click="Menu_Click" />
+                        <!--<MenuItem Name="Plot3DViewMenu" Header="3D表示" Click="Menu_Click" />-->
                     </MenuItem>
                     <!--<MenuItem Header="TEST">
                         <MenuItem Name="GraphViewMenu" Header="グラフ" Click="Menu_Click" />

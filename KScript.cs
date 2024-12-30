@@ -1,13 +1,16 @@
 ﻿using CoreLib;
 using System.IO;
+using System.Windows.Input;
 
 namespace KScriptWin
 {
     public class ControlData
     {
         public string mOutputString = "";
+        public Key mKeyCode = Key.None;
         public bool mAbort = false;
         public bool mPause = false;
+        public bool mKey = false;
     }
 
     /// <summary>
@@ -669,7 +672,8 @@ namespace KScriptWin
         public bool conditinalStatement(List<Token> tokens, int sp = 0)
         {
             try {
-                if (2 < tokens.Count && tokens[1].mType != TokenType.CONDITINAL)
+                int cindex = tokens.FindIndex(p => p.mType == TokenType.CONDITINAL);
+                if (2 < tokens.Count && cindex < 1)
                     tokens = mLexer.tokenList(mLexer.stripBracketString(tokens[sp].mValue));
                 else if (tokens.Count == 1)
                     tokens = mLexer.tokenList(mLexer.stripBracketString(tokens[0].mValue));
@@ -694,13 +698,15 @@ namespace KScriptWin
                 Token aa = express(a, 0);
                 Token bb = express(b, 0);
                 if (aa.mType == TokenType.STRING || bb.mType == TokenType.STRING) {
+                    string aaa = ylib.stripBracketString(aa.mValue, '"');
+                    string bbb = ylib.stripBracketString(bb.mValue, '"');
                     switch (cond.mValue) {
-                        case "==": return aa.mValue.CompareTo(bb.mValue) == 0;
-                        case "!=": return aa.mValue.CompareTo(bb.mValue) != 0;
-                        case "<": return aa.mValue.CompareTo(bb.mValue) < 0;
-                        case ">": return aa.mValue.CompareTo(bb.mValue) > 0;
-                        case "<=": return aa.mValue.CompareTo(bb.mValue) <= 0;
-                        case ">=": return aa.mValue.CompareTo(bb.mValue) >= 0;
+                        case "==": return aaa.CompareTo(bbb) == 0;
+                        case "!=": return aaa.CompareTo(bbb) != 0;
+                        case "<": return aaa.CompareTo(bbb) < 0;
+                        case ">": return aaa.CompareTo(bbb) > 0;
+                        case "<=": return aaa.CompareTo(bbb) <= 0;
+                        case ">=": return aaa.CompareTo(bbb) >= 0;
                         default:    //  Error
                             outputString($"ERROR: not conditional code [{cond.mValue}]\n");
                             break;

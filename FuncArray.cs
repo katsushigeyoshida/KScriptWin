@@ -28,8 +28,8 @@ namespace KScriptWin
             "array.stdDeviation(a[]); 配列の標準偏差",
             "array.covariance(a[], b[]); 共分散",
             "array.corrCoeff(x[],y[]); 配列の相関係数",
-            "array.add(a[],b[]); 配列同士の結合c[]=array.add(a[],b[])",
-            "array.add(a[,],b[,]); 配列同士の結合c[,]=array.add(a[,],b[,])",
+            "array.concat(a[],b[]); 配列同士の結合c[]=array.add(a[],b[])",
+            "array.concat(a[,],b[,]); 配列同士の結合c[,]=array.add(a[,],b[,])",
         };
 
         //  共有クラス
@@ -69,7 +69,7 @@ namespace KScriptWin
                 case "array.stdDeviation": return standardDeviation(args);
                 case "array.covariance": return covariance(args);
                 case "array.corrCoeff": return correlationCoefficient(args);
-                case "array.add": return add(args, ret);
+                case "array.concat": return concat(args, ret);
                 default: return new Token("not found func", TokenType.ERROR);
             }
             return new Token("", TokenType.EMPTY);
@@ -430,13 +430,13 @@ namespace KScriptWin
 
         /// <summary>
         /// 配列と配列を結合する
-        /// c[] = array.add(a[],b[]);
-        /// c[,] = array.add(a[,],b[,]);
+        /// c[] = array.concat(a[],b[]);
+        /// c[,] = array.concat(a[,],b[,]);
         /// </summary>
         /// <param name="args"></param>
         /// <param name="ret"></param>
         /// <returns></returns>
-        public Token add(List<Token> args, Token ret)
+        public Token concat(List<Token> args, Token ret)
         {
             if (args.Count < 2)
                 return new Token("", TokenType.ERROR);

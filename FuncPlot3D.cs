@@ -8,6 +8,7 @@ namespace KScriptWin
             "plot3D.setArea(min[],max[]); 3DViewの初期化と領域設定",
             "plot3D.setAxisFrame(axis,frame); 軸とフレームの表示(0:非表示/1:表示)",
             "plot3D.disp(); 要素の表示",
+            "plot3D.dataClear(); 表示データのクリア",
             "plot3D.setColor(\"Blue\"); 色の設定",
             "plot3D.plotTranslate(vec[]); 移動(移動量 vec[x/y/z])",
             "plot3D.plotRotate(angle,\"X\"); 回転(回転角度,回転軸 X/Y/Z軸)",
@@ -16,22 +17,24 @@ namespace KScriptWin
             "plot3D.plotPush(); 座標変換マトリックスをスタックに保存",
             "plot3D.plotPop(); 座標変換マトリックスをスタックから戻す",
             "plot3D.plotPeekMulti(); 座標変換マトリックスにスタックの値をかける",
-            "plot3D.plotLine(sp[x/y/z],ep[x/y/z]); 線分の設定",
-            "plot3D.plotLines(plist[n,x/y/z]); 複数線分(plist :座標リスト)",
-            "plot3D.plotPolyline(plist[n,x/y/z]); ポリライン",
-            "plot3D.plotPolyloop(plist[n,x/y/z]); ポリラインループ",
-            "plot3D.plotPolygon(plist[n,x/y/z]); ポリゴン(塗潰し)",
-            "plot3D.plotTrianges(plist[n,x/y/z]); 複数三角形(塗潰し)",
-            "plot3D.plotTriangeStrip(plist[n,x/y/z]); 連続三角形",
-            "plot3D.plotQuads(plist[n,x/y/z]); 複数四角形",
-            "plot3D.plotQuadeStrip(plist[n,x/y/z]); 連続四角形",
-            "plot3D.plotTriangeFan(plist[n,x/y/z]); 扇形の連続三角形",
+            "plot3D.plotLine(sp[],ep[]); 線分の設定",
+            "plot3D.plotLines(plist[,]); 複数線分(plist :座標リスト)",
+            "plot3D.plotPolyline(plist[,]); ポリライン",
+            "plot3D.plotPolyloop(plist[,]); ポリラインループ",
+            "plot3D.plotPolygon(plist[,]); ポリゴン(塗潰し)",
+            "plot3D.plotTrianges(plist[,]); 複数三角形(塗潰し)",
+            "plot3D.plotTriangeStrip(plist[,]); 連続三角形",
+            "plot3D.plotQuads(plist[,]); 複数四角形",
+            "plot3D.plotQuadeStrip(plist[,]); 連続四角形",
+            "plot3D.plotTriangeFan(plist[,]); 扇形の連続三角形",
             "plot3D.translate(pos[,],vec[]); 3D座標の移動(3D座標,移動量)",
             "plot3D.rotate(pos[,],angle,axis); 3D座標の回転(3D座標,回転角,回転軸(X/Y/Z)",
+            "plot3D.rotateAxis(pos[,],angle,axis[]); 3D座標を指定軸で回転(3D座標,回転角,回転軸ベクトル",
             "plot3D.scale(pos[,],cp[],scale); 3D座標の拡大縮小(3D座標,拡大中心,拡大率)",
-            "plot3D.holePlateQuads(outline[,],innerLine[,],,); 中抜きの平面データの作成",
+            "plot3D.holePlateQuads(outPolygon[,],innerPolygon[,],,); 中抜きの平面データの作成",
             "plot3D.polygonSideQuadStrip(polygon[,],thicknes); ポリゴンの側面データをQuadStripで作成",
-            "plot3D.polygonSideQuads(polygon[,],thicknes); ポリゴンの側面データをQuadStripで作成",
+            "plot3D.polygonSideQuads(polygon[,],thicknes); ポリゴンの側面データをQuadsで作成",
+            "plot3D.polylinRotateQuads(polyline[,],centerline[,],divAng,sa,ea); ポリラインデーをセンタラインを中心に回転させたデータ",
         };
 
         //  共有クラス
@@ -62,6 +65,7 @@ namespace KScriptWin
                 case "plot3D.setArea"         : setArea(args); break;
                 case "plot3D.setAxisFrame"    : setAxisFrameDisp(args); break;
                 case "plot3D.disp"            : disp(); break;
+                case "plot3D.dataClear"       : dataClear(); break;
                 case "plot3D.setColor"        : setColor(args); break;
                 case "plot3D.plotTranslate"   : plotTranslate(args); break;
                 case "plot3D.plotRotate"      : plotRotate(args); break;
@@ -82,10 +86,12 @@ namespace KScriptWin
                 case "plot3D.plotTriangeFan"  : plotTriangleFan(args); break;
                 case "plot3D.translate"       : translate(args, ret); break;
                 case "plot3D.rotate"          : rotate(args, ret); break;
+                case "plot3D.rotateAxis"      : rotateAxis(args, ret); break;
                 case "plot3D.scale"           : scale(args, ret); break;
                 case "plot3D.holePlateQuads"  : holePlate2Quads(args, ret); break;
                 case "plot3D.polygonSideQuadStrip"   : polygonSide2QuadStrip(args, ret); break;
                 case "plot3D.polygonSideQuads": polygonSide2Quads(args, ret); break;
+                case "plot3D.polylinRotateQuads": polylineRotate2Quads(args, ret); break;
                 default: return new Token("not found func", TokenType.ERROR);
             }
             return new Token("", TokenType.EMPTY);
@@ -108,6 +114,14 @@ namespace KScriptWin
             mScript.mPlot3D = mPlot3D;
             mPlot3D.setArea(sp, ep);
             mPlot3D.Show();
+        }
+
+        /// <summary>
+        /// 表示テータのクリア
+        /// </summary>
+        private void dataClear()
+        {
+            mPlot3D.dataClear();
         }
 
         /// <summary>
@@ -432,8 +446,8 @@ namespace KScriptWin
         private Token rotate(List<Token> args, Token ret)
         {
             (string arrayName, int no) = mParse.getArrayName(new Token(args[0].mValue, TokenType.VARIABLE));
-            double ang = ylib.doubleParse(args[1].mValue);
-            string coord = args[2].getValue();
+            double ang = ylib.doubleParse(args[1].mValue);      //  回転角度
+            string coord = args[2].getValue();                  //  回転軸名
             FACE3D face = coord == "X" ? FACE3D.YZ : coord == "Y" ? FACE3D.ZX : coord == "Z" ? FACE3D.XY: FACE3D.NON;
             if (no == 1) {
                 double[] src = mParse.cnvListDouble(args[0]).ToArray();
@@ -457,6 +471,43 @@ namespace KScriptWin
             mParse.setVariable(new Token("return", TokenType.VARIABLE), ret);
             return mParse.getVariable("return");
         }
+
+        /// <summary>
+        /// 3Dデータを軸(ベクトル)を中心に回転
+        /// </summary>
+        /// <param name="args">pos[]/posLis[,],ang,axis[]</param>
+        /// <param name="ret">戻り変数名</param>
+        /// <returns></returns>
+        private Token rotateAxis(List<Token> args, Token ret)
+        {
+            (string arrayName, int no) = mParse.getArrayName(new Token(args[0].mValue, TokenType.VARIABLE));
+            double ang = ylib.doubleParse(args[1].mValue);          //  回転角度
+            double[] vec = mParse.cnvListDouble(args[2]).ToArray();
+            Point3D axis = new Point3D(vec[0], vec[1], vec[2]);     //  回転軸ベクトル
+            if (no == 1) {
+                double[] src = mParse.cnvListDouble(args[0]).ToArray(); //  対象データ
+                Point3D pos = new Point3D(src[0], src[1], src[2]);
+                pos.rotate(axis, ang);
+                double[] dest = new double[] { pos.x, pos.y, pos.z };
+                mParse.setReturnArray(dest, ret);
+            } else if (no == 2) {
+                double[,] src = mParse.cnvArrayDouble2(args[0]);    //  対象データリスト
+                double[,] dest = new double[src.GetLength(0), 3];
+                for (int i = 0; i < src.GetLength(0); i++) {
+                    Point3D pos = new Point3D(src[i, 0], src[i, 1], src[i, 2]);
+                    pos.rotate(axis, ang);
+                    dest[i, 0] = pos.x;
+                    dest[i, 1] = pos.y;
+                    dest[i, 2] = pos.z;
+                }
+                mParse.setReturnArray(dest, ret);
+            }
+
+            //  戻り値の設定
+            mParse.setVariable(new Token("return", TokenType.VARIABLE), ret);
+            return mParse.getVariable("return");
+        }
+
 
         /// <summary>
         /// 拡大縮小
@@ -523,7 +574,7 @@ namespace KScriptWin
         }
 
         /// <summary>
-        /// ポリゴンの側面データの作成
+        /// ポリゴンの側面データの作成(QUAD_STRIP)
         /// </summary>
         /// <param name="args">polygon[,],thickness</param>
         /// <param name="ret">pos[n,x/y/z](QUAD_STRIP)</param>
@@ -545,7 +596,7 @@ namespace KScriptWin
         }
 
         /// <summary>
-        /// ポリゴンの側面データの作成
+        /// ポリゴンの側面データの作成(QUADS)
         /// </summary>
         /// <param name="args">polygon[,],thickness</param>
         /// <param name="ret">pos[n,x/y/z](QUADS)</param>
@@ -558,6 +609,39 @@ namespace KScriptWin
             Polygon3D polygon = new Polygon3D(point3DArray2List(outLine));
             double t = ylib.doubleParse(args[1].mValue);
             List<Point3D> quadsList = polygon.sideFace2Quads(t);
+            double[,] dest = point3DList2Array(quadsList);
+            mParse.setReturnArray(dest, ret);
+
+            //  戻り値の設定
+            mParse.setVariable(new Token("return", TokenType.VARIABLE), ret);
+            return mParse.getVariable("return");
+        }
+
+        /// <summary>
+        /// ポリラインの回転データの作成(QUADS)
+        /// </summary>
+        /// <param name="args">poliline,centerline,divang,sang,eang</param>
+        /// <param name="ret"></param>
+        /// <returns></returns>
+        private Token polylineRotate2Quads(List<Token> args, Token ret)
+        {
+            (string arrayName, int no) = mParse.getArrayName(new Token(args[0].mValue, TokenType.VARIABLE));
+            if (no != 2) return new Token("", TokenType.EMPTY);
+            double[,] outLine = mParse.cnvArrayDouble2(args[0]);
+            Polyline3D polyline = new Polyline3D(point3DArray2List(outLine));
+            if (args.Count < 2) return new Token("", TokenType.EMPTY);
+            double[,] line = mParse.cnvArrayDouble2(args[1]);
+            Line3D centerLine = new Line3D(new Point3D(line[0, 0], line[0,1], line[0,2]), new Point3D(line[1, 0], line[1, 1], line[1, 2]));
+            double divAng = Math.PI / 6;
+            if (2 < args.Count)
+                divAng = ylib.doubleParse(args[2].mValue);
+            double sa = 0;
+            if (3 < args.Count)
+                sa = ylib.doubleParse(args[3].mValue);
+            double ea = Math.PI * 2;
+            if (4 < args.Count)
+                ea = ylib.doubleParse(args[4].mValue);
+            List<Point3D> quadsList = polyline.rotate2Quads(centerLine, divAng, sa, ea);
             double[,] dest = point3DList2Array(quadsList);
             mParse.setReturnArray(dest, ret);
 

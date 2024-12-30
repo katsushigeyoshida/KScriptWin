@@ -221,6 +221,8 @@ namespace KScriptWin
                 toComment();
             } else if (menuItem.Name.CompareTo("editTab2SpaceMenu") == 0) {
                 tab2space();
+            } else if (menuItem.Name.CompareTo("UpdaterSnipptMenu") == 0) {
+                updateSnippetKeyWird(avalonEditor.Text);
             } else if (menuItem.Name.CompareTo("GraphViewMenu") == 0) {
                 graphView();
             } else if (menuItem.Name.CompareTo("Plot3DViewMenu") == 0) {
@@ -392,6 +394,7 @@ namespace KScriptWin
             avalonEditor.Text = "";
             mFilePath = "";
             setTitle();
+            mSearchWordIndex = 0;
         }
 
         /// <summary>
@@ -509,6 +512,8 @@ namespace KScriptWin
         private void search()
         {
             string searchWord = cbSearchWord.Text;
+            if (avalonEditor.Text.Length <= mSearchWordIndex)
+                mSearchWordIndex = 0;
             int index = avalonEditor.Text.IndexOf(searchWord, mSearchWordIndex);
             if (index != -1) {
                 avalonEditor.Select(index, searchWord.Length);
@@ -571,6 +576,7 @@ namespace KScriptWin
                 avalonEditor.Text = text;
                 setHash(text);
                 setTitle();
+                mSearchWordIndex = 0;
                 updateSnippetKeyWird(text);
             }
         }
@@ -696,6 +702,11 @@ namespace KScriptWin
         /// <param name="shift">Shiftの有無</param>
         private bool keyCommand(Key key, bool control, bool shift)
         {
+            if (mScript.mControlData.mKey) {
+                mScript.mControlData.mKeyCode = key;
+                mScript.mControlData.mKey = false;
+                return true;
+            }
             if (control && shift) {
                 switch (key) {
                     case Key.S: saveAs(); break;
@@ -717,10 +728,10 @@ namespace KScriptWin
                 }
             } else {
                 switch (key) {
-                    case Key.F5: exeute(); break;
-                    case Key.F8:
-                    case Key.Apps: snippet(); break;    //  入力候補
+                    case Key.F5: exeute(); break;       //  実行
+                    case Key.F8: snippet(); break;      //  入力候補
                     case Key.F12: updateSnippetKeyWird(avalonEditor.Text); break;
+                    case Key.Apps: snippet(); break;    //  入力候補
                     default: return false;;
                 }
             }

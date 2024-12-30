@@ -239,6 +239,14 @@ namespace KScriptWin
         }
 
         /// <summary>
+        /// データクリア
+        /// </summary>
+        public void dataClear()
+        {
+            m3DDraw.dataClear();
+        }
+
+        /// <summary>
         /// 要素の色の設定
         /// </summary>
         /// <param name="color"></param>

@@ -8,7 +8,7 @@ plot3D.setArea(min[],max[]);
 plot3D.setAxisFrame(1,0);
 
 //	スピーカボックス
-w = 8;
+w = 10;
 h = 15;
 d = 8;
 r = 3;
@@ -21,31 +21,32 @@ v[] = { 0,0,5};
 plot3D.plotTranslate(v[]);
 plot3D.plotPush();
 //	前面
-holePlate(w,h,t,r,cx,cy);
+holePlateDisp(w,h,t,r,cx,cy);
 //	背面
 v[] = { 0,0,-d};
 plot3D.plotTranslate(v[]);
-plate(w,h,t);
+plateDisp(w,h,t);
 //	左側面
 plot3D.plotReset();
 plot3D.plotRotate(RAD(90),"Y");
 v[] = { -w/2,0,(-d+t)/2};
 plot3D.plotTranslate(v[]);
 plot3D.plotPeekMulti();
-plate(d+t,h,t);
+plateDisp(d+t,h,t);
 //	右側面
 v[] = { w+t,0,0};
 plot3D.plotTranslate(v[]);
-plate(d+t,h,t);
+plateDisp(d+t,h,t);
 //	天板
 plot3D.plotReset();
 plot3D.plotRotate(RAD(90),"X");
 v[] = { 0,h/2,(-d+t)/2};
 plot3D.plotTranslate(v[]);
 plot3D.plotPeekMulti();
-plate(w+2*t,d+t,t);
+plateDisp(w+2*t,d+t,t);
 //	底板
 v[] = { 0,-h-t,0};
 plot3D.plotTranslate(v[]);
-plate(w+2*t,d+t,t);
+plateDisp(w+2*t,d+t,t);
 
+plot3D.disp();

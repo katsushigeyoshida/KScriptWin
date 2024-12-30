@@ -52,10 +52,18 @@ KScriptWinの特徴
 ・おなじ環境でグラフィック機能が使える
 ・グラフィック機能が簡単に使用できる(直接ワールド座標が使えスクリーン座標を考慮する必要がない)
 
+システム関数
+    a = inKey();
+    sleep(n);
+    cmd(command);                           cmd(dir);
+	dateTime(type);
+    startTime();
+    s = lapTime();
 
 Win版用の関数
     a = inputBox(title);                    文字入力ダイヤログ
     messageBox(outString[, title]);         文字列のダイヤログ表示
+    n = menuSelect(menu[],title);
     plot関数(2Dグラフィック)
         plot.WindowSet(left,bottom,right,top);   表示領域の設定
         plot.Aspect(1);                          アスペクト比固定の設定(0(非固定)/1(固定))
@@ -69,30 +77,33 @@ Win版用の関数
         plot.Arc(cx, cy, r[, sa][, ea]);         円弧の表示(中心x,中心y,半径[,始角[,終角]])
         plot.Text(text,x,y,size,rotate,ha,va);   文字列表示(文字列,座標[,大きさ[,回転角[,水平アライメント[,垂直アライメント]]]])
     plot3D関数(3Dグラフィック)
-        plot3D.setArea(min[],max[]);             3DViewの初期化",
-        plot3D.setAxisFrame(axis,frame);         軸とフレームの表示(0:非表示/1:表示)",
-        plot3D.disp();                           要素の表示",
-        plot3D.setColor(\"Blue\");               色の設定",
-        plot3D.plotTranslate(vec[]);             要素の移動(移動量 vec[x/y/z])",
-        plot3D.plotRotate(angle,\"X\");          要素の回転(回転角度,回転軸 X/Y/Z軸)",
-        plot3D.plotScale(scale[]);               要素の縮小拡大 (拡大率 scale[x/y/z])",
-        plot3D.plotReset();                      座標変換をクリアする",
-        plot3D.plotLine(sp[x/y/z],ep[x/y/z]);    線分の設定()",
-        plot3D.plotLines(plist[n,x/y/z]);        複数線分(plits[,])",
-        plot3D.plotPolyline(plist[n,x/y/z]);     ポリライン",
-        plot3D.plotPolyloop(plist[n,x/y/z]);     ポリラインループ",
-        plot3D.plotPolygon(plist[n,x/y/z]);　    ポリゴン(塗潰し)",
-        plot3D.plotTrianges(plist[n,x/y/z]);     複数三角形(塗潰し)",
-        plot3D.plotTriangeStrip(plist[n,x/y/z]); 連続三角形",
-        plot3D.plotQuads(plist[n,x/y/z]);        複数四角形",
-        plot3D.plotQuadeStrip(plist[n,x/y/z]);   連続四角形",
-        plot3D.plotTriangeFan(plist[n,x/y/z]);   扇形の連続三角形",
-        plot3D.translate(pos[],vec[]);           3D座標の移動(3D座標,移動量)",
-        plot3D.rotate(pos[],cp[],angle,face);    3D座標の回転(3D座標,回転中心,回転角,回転軸)",
-        plot3D.scale(pos[],cp[],scale);          3D座標の拡大縮小(3D座標,拡大中心,拡大率)",
-        plot3D.holePlateQuads(outline[,],innerLine[,],,);   中抜きの平面データの作成",
-        plot3D.polygonSideQuadStrip(polygon[,],thicknes);   ポリゴンの側面データをQuadStripで作成",
-
+        plot3D.setArea(min[],max[]);             3DViewの初期化
+        plot3D.setAxisFrame(axis,frame);         軸とフレームの表示(0:非表示/1:表示)
+        plot3D.disp();                           要素の表示
+        plot3D.setColor(\"Blue\");               色の設定
+        plot3D.plotTranslate(vec[]);             要素の移動(移動量 vec[x/y/z])
+        plot3D.plotRotate(angle,\"X\");          要素の回転(回転角度,回転軸 X/Y/Z軸)
+        plot3D.plotScale(scale[]);               要素の縮小拡大 (拡大率 scale[x/y/z])
+        plot3D.plotReset();                      座標変換をクリアする
+        plot3D.plotLine(sp[x/y/z],ep[x/y/z]);    線分の設定()
+        plot3D.plotLines(plist[n,x/y/z]);        複数線分(plits[,])
+        plot3D.plotPolyline(plist[n,x/y/z]);     ポリライン
+        plot3D.plotPolyloop(plist[n,x/y/z]);     ポリラインループ
+        plot3D.plotPolygon(plist[n,x/y/z]);　    ポリゴン(塗潰し)
+        plot3D.plotTrianges(plist[n,x/y/z]);     複数三角形(塗潰し)
+        plot3D.plotTriangeStrip(plist[n,x/y/z]); 連続三角形
+        plot3D.plotQuads(plist[n,x/y/z]);        複数四角形
+        plot3D.plotQuadeStrip(plist[n,x/y/z]);   連続四角形
+        plot3D.plotTriangeFan(plist[n,x/y/z]);   扇形の連続三角形
+        plot3D.translate(pos[],vec[]);           3D座標の移動(3D座標,移動量)
+        plot3D.rotate(pos[],cp[],angle,face);    3D座標の回転(3D座標,回転中心,回転角,回転軸)
+        plot3D.rotateAxis(pos[,],angle,axis[]);  3D座標の指定軸で回転(3D座標,回転角,回転軸ベクトル
+        plot3D.scale(pos[],cp[],scale);          3D座標の拡大縮小(3D座標,拡大中心,拡大率)
+        plot3D.holePlateQuads(outline[,],innerLine[,],,);   中抜きの平面データの作成
+        plot3D.polygonSideQuadStrip(polygon[,],thicknes);   ポリゴンの側面データをQuadStripで作成
+        plot3D.polygonSideQuads(polygon[,],thicknes);       ポリゴンの側面データをQuadsで作成
+        plot3D.polylinRotateQuads(polyline[,],centerline[,],divAng,sa,ea); ポリラインデーをセンタラインを中心に回転させたデータ
+ 
 ScriptLibの追加関数の引数の処理方法
     配列以外の引数は値で渡す
     //  配列以外の引数 messageBox("メッセージ" [, title])
@@ -148,14 +159,15 @@ ScriptLibの追加関数の引数の処理方法
 ・2Dグラフィック: plotXXXXX() (2024/10/06)
 ・追加グラフィック関数 plotRect(),plotPolyline(a[,]),plotPolygon(a[,]),plotFIllColor()
 ・グラフ機能 散布図,(折線,棒グラフ)
-・3Dグラフィック  回転体の作成
+・3Dグラフィック  回転体の作成, dataClear()
 ・ダイヤログ関数(xxxDlg関数) input,message (2024/10/06) menuSlelct
 ・システム設定(フォントファミリ・サイズ、)
 ・条件文の true/false は現状は 数値/!数値 で対応
 ・swtch文、do while()
+・システム関数 win版inkey()
 ・ファイルの読込保存 a=loadText(), saveText(a),a[]=loadLine(),saveLine(a[]),a[,]=loadCsv(),savCsv(a[,]);
 ・数値: format/toString,
-・時刻・時間関数: startTime,lapTime,dateTimeNow (2024/10/24)
+・時刻・時間関数: startTime,lapTime,dateTimeNow (2024/10/24), sleep()
 ・乱数()
 ・配列関数: copy, add, insert, find, findAll, findIndex, findLast,findLastIndex,
             indexOf, lastIndexOf
@@ -178,6 +190,7 @@ ScriptLibの追加関数の引数の処理方法
 ・関数は値渡しのみでアドレス渡しは不可
 
 問題点
+・return で関数が使えない(return array.add();) 引数内で関数が使えない(holePlateQuads(array.reverse());)
 ・代入文で演算の優先順位がつけられず左から処理される (20024/10/23)
 ・有効桁の末尾の誤差のまるめが必要 (roundRound関数をスクリプトで作成 2024/11/02)
 ・デリミタのつけ忘れの対応(例外処理?)
@@ -194,6 +207,8 @@ NuGetライブラリ : AvalonEditor
 
 
 履歴
+2024/12/05 関数名変更 array.add()  →  array.concat()
+2024/12/02 inKey(),sleep(),plot3D.dataClear()追加 (アニメーション機能用)
 2024/12/01 array.add()関数追加
 2024/11/28 plot3D.holePlateQuads(),polygonSideQuadStrip()関数を追加
 2024/11/17 pause();ステートメント追加

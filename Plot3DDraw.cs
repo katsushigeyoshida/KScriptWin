@@ -23,6 +23,9 @@ namespace KScriptWin
         private YLib ylib = new YLib();
 
 
+        /// <summary>
+        /// コンストラクタ
+        /// </summary>
         public Plot3DDraw()
         {
             mSurfaceDataList = new List<SurfaceData>();
@@ -30,6 +33,15 @@ namespace KScriptWin
             mMatrix = ylib.unitMatrix(4);
             mMatrixStack = new Stack<double[,]>();
         }
+
+        /// <summary>
+        /// データクリア
+        /// </summary>
+        public void dataClear()
+        {
+            mSurfaceDataList.Clear();
+        }
+
 
         /// <summary>
         /// アフィン変換を反映させる

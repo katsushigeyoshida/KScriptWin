@@ -56,6 +56,8 @@ namespace KScriptWin
             "inputBox(); 文字入力ダイヤログ",
             "messageBox(outString[, title]); 文字列のダイヤログ表示",
             "menuSelect(menu[],title); メニューリストを表示して項目Noを返す",
+            "inKey(); キー入力",
+            "sleep(n); スリープ(n msec)",
             "cmd(command); Windowsコマンドの実行",
             "matrix.unit(size); 単位行列(2次元)の作成(a[,]=...)",
             "matrix.transpose(a[,]); 転置行列(2次元行列Aの転置(A^T) b[,]=...)",
@@ -100,7 +102,9 @@ namespace KScriptWin
             switch (funcName.mValue) {
                 //case "input"            : return new Token(Console.ReadLine(), TokenType.STRING);
                 case "inputBox"         : return inputBox(args);
+                case "inKey"            : return inKey();
                 case "messageBox"       : messageBox(args); break;
+                case "sleep"            : sleep(args); break;
                 case "cmd"              : cmd(args); break;
                 case "matrix.unit"      : return unitMatrix(args, ret);
                 case "matrix.transpose" : return matrixTranspose(args, ret);
@@ -213,6 +217,36 @@ namespace KScriptWin
         }
 
         /// <summary>
+        /// キー入力
+        /// </summary>
+        /// <returns>キーコード</returns>
+        public Token inKey()
+        {
+            mScript.mControlData.mKey = true;
+            while (mScript.mControlData.mKey) {
+                Thread.Sleep(100);
+                ylib.DoEvents();
+            }
+            return new Token(mScript.mControlData.mKeyCode.ToString(), TokenType.STRING);
+        }
+
+        /// <summary>
+        /// スリーブ(1/10s単位)
+        /// </summary>
+        /// <param name="args"></param>
+        public void sleep(List<Token> args)
+        {
+            if (0 < args.Count) {
+                int count = ylib.intParse(args[0].mValue);
+                while (0 < count) {
+                    Thread.Sleep(60);
+                    ylib.DoEvents();
+                    count--;
+                }
+            }
+        }
+
+        /// <summary>
         /// 文字列表示ダイヤログ(出力文字列[,タイトル])(inner function)
         /// </summary>
         /// <param name="args">出力文字列[,タイトル]</param>
@@ -231,7 +265,7 @@ namespace KScriptWin
         /// <param name="args"></param>
         private void cmd(List<Token> args)
         {
-            ylib.openUrl(args[0].mValue);
+            ylib.openUrl(ylib.stripBracketString(args[0].mValue,'"'));
         }
 
         /// <summary>
