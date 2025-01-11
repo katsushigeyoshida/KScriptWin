@@ -78,6 +78,7 @@ namespace KScriptWin
 
         private DateTime mStartTime;
         private KParse mParse;
+        private Variable mVar;
         private YLib ylib = new YLib();
 
         /// <summary>
@@ -88,6 +89,7 @@ namespace KScriptWin
         {
             mScript = script;
             mParse = script.mParse;
+            mVar = script.mVar;
         }
 
         /// <summary>
@@ -185,7 +187,7 @@ namespace KScriptWin
         {
             int no = -1;
             if (args != null && 1 < args.Count) {
-                List<string> menu = mParse.cnvListString(new Token(args[0].mValue, TokenType.ARRAY));
+                List<string> menu = mVar.cnvListString(new Token(args[0].mValue, TokenType.ARRAY));
                 MenuDialog dlg = new MenuDialog();
                 dlg.Title = args[1].mValue.Trim('"');
                 dlg.mOneClick = true;
@@ -283,9 +285,9 @@ namespace KScriptWin
             double c = ylib.doubleParse(args[2].mValue);
             double[] result = ylib.solveQuadraticEquation(a, b, c).ToArray();
             //  戻り値の設定
-            mParse.setReturnArray(result, ret);
-            mParse.setVariable(new Token("return", TokenType.VARIABLE), ret);
-            return mParse.getVariable("return");
+            mVar.setReturnArray(result, ret);
+            mVar.setVariable(new Token("return", TokenType.VARIABLE), ret);
+            return mVar.getVariable("return");
         }
 
         /// <summary>
@@ -304,9 +306,9 @@ namespace KScriptWin
             double d = ylib.doubleParse(args[3].mValue);
             double[] result = ylib.solveCubicEquation(a, b, c, d).ToArray();
             //  戻り値の設定
-            mParse.setReturnArray(result, ret);
-            mParse.setVariable(new Token("return", TokenType.VARIABLE), ret);
-            return mParse.getVariable("return");
+            mVar.setReturnArray(result, ret);
+            mVar.setVariable(new Token("return", TokenType.VARIABLE), ret);
+            return mVar.getVariable("return");
         }
 
         /// <summary>
@@ -326,9 +328,9 @@ namespace KScriptWin
             double e = ylib.doubleParse(args[4].mValue);
             double[] result = ylib.solveQuarticEquation(a, b, c, d, e).ToArray();
             //  戻り値の設定
-            mParse.setReturnArray(result, ret);
-            mParse.setVariable(new Token("return", TokenType.VARIABLE), ret);
-            return mParse.getVariable("return");
+            mVar.setReturnArray(result, ret);
+            mVar.setVariable(new Token("return", TokenType.VARIABLE), ret);
+            return mVar.getVariable("return");
         }
 
         /// <summary>
@@ -342,9 +344,9 @@ namespace KScriptWin
             double[,] matrix = ylib.unitMatrix(ylib.intParse(args[0].mValue));
 
             //  戻り値の設定
-            mParse.setReturnArray(matrix, ret);
-            mParse.setVariable(new Token("return", TokenType.VARIABLE), ret);
-            return mParse.getVariable("return");
+            mVar.setReturnArray(matrix, ret);
+            mVar.setVariable(new Token("return", TokenType.VARIABLE), ret);
+            return mVar.getVariable("return");
         }
 
         /// <summary>
@@ -356,14 +358,14 @@ namespace KScriptWin
         private Token matrixTranspose(List<Token> args, Token ret)
         {
             //  2D配列を実数配列に変換
-            double[,]? a = mParse.cnvArrayDouble2(args[0]);
+            double[,]? a = mVar.cnvArrayDouble2(args[0]);
             if (a == null) return new Token("", TokenType.ERROR);
             //  行列演算
             double[,] c = ylib.matrixTranspose(a);
             //  戻り値の設定
-            mParse.setReturnArray(c, ret);
-            mParse.setVariable(new Token("return", TokenType.VARIABLE), ret);
-            return mParse.getVariable("return");
+            mVar.setReturnArray(c, ret);
+            mVar.setVariable(new Token("return", TokenType.VARIABLE), ret);
+            return mVar.getVariable("return");
         }
 
         /// <summary>
@@ -377,16 +379,16 @@ namespace KScriptWin
         private Token matrixMulti(List<Token> args, Token ret)
         {
             //  2D配列を実数配列に変換
-            double[,]? a = mParse.cnvArrayDouble2(args[0]);
+            double[,]? a = mVar.cnvArrayDouble2(args[0]);
             if (a == null) return new Token("", TokenType.ERROR);
-            double[,]? b = mParse.cnvArrayDouble2(args[1]);
+            double[,]? b = mVar.cnvArrayDouble2(args[1]);
             if (b == null) return new Token("", TokenType.ERROR);
             //  行列演算
             double[,] c = ylib.matrixMulti(a, b);
             //  戻り値の設定
-            mParse.setReturnArray(c, ret);
-            mParse.setVariable(new Token("return", TokenType.VARIABLE), ret);
-            return mParse.getVariable("return");
+            mVar.setReturnArray(c, ret);
+            mVar.setVariable(new Token("return", TokenType.VARIABLE), ret);
+            return mVar.getVariable("return");
         }
 
         /// <summary>
@@ -399,16 +401,16 @@ namespace KScriptWin
         private Token matrixAdd(List<Token> args, Token ret)
         {
             //  2D配列を実数配列に変換
-            double[,]? a = mParse.cnvArrayDouble2(args[0]);
+            double[,]? a = mVar.cnvArrayDouble2(args[0]);
             if (a == null) return new Token("", TokenType.ERROR);
-            double[,]? b = mParse.cnvArrayDouble2(args[1]);
+            double[,]? b = mVar.cnvArrayDouble2(args[1]);
             if (b == null) return new Token("", TokenType.ERROR);
             //  行列演算
             double[,] c = ylib.matrixAdd(a, b);
             //  戻り値の設定
-            mParse.setReturnArray(c, ret);
-            mParse.setVariable(new Token("return", TokenType.VARIABLE), ret);
-            return mParse.getVariable("return");
+            mVar.setReturnArray(c, ret);
+            mVar.setVariable(new Token("return", TokenType.VARIABLE), ret);
+            return mVar.getVariable("return");
         }
 
         /// <summary>
@@ -420,14 +422,14 @@ namespace KScriptWin
         private Token matrixInverse(List<Token> args, Token ret)
         {
             //  2D配列を実数配列に変換
-            double[,]? a = mParse.cnvArrayDouble2(args[0]);
+            double[,]? a = mVar.cnvArrayDouble2(args[0]);
             if (a == null) return new Token("", TokenType.ERROR);
             //  行列演算
             double[,] c = ylib.matrixInverse(a);
             //  戻り値の設定
-            mParse.setReturnArray(c, ret);
-            mParse.setVariable(new Token("return", TokenType.VARIABLE), ret);
-            return mParse.getVariable("return");
+            mVar.setReturnArray(c, ret);
+            mVar.setVariable(new Token("return", TokenType.VARIABLE), ret);
+            return mVar.getVariable("return");
         }
 
         /// <summary>
@@ -439,14 +441,14 @@ namespace KScriptWin
         private Token matrixCopy(List<Token> args, Token ret)
         {
             //  2D配列を実数配列に変換
-            double[,]? a = mParse.cnvArrayDouble2(args[0]);
+            double[,]? a = mVar.cnvArrayDouble2(args[0]);
             if (a == null) return new Token("", TokenType.ERROR);
             //  行列演算
             double[,] c = ylib.copyMatrix(a);
             //  戻り値の設定
-            mParse.setReturnArray(c, ret);
-            mParse.setVariable(new Token("return", TokenType.VARIABLE), ret);
-            return mParse.getVariable("return");
+            mVar.setReturnArray(c, ret);
+            mVar.setVariable(new Token("return", TokenType.VARIABLE), ret);
+            return mVar.getVariable("return");
         }
     }
 }

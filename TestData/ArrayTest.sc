@@ -90,5 +90,5 @@ array.clear(a[,]);
 array.clear(b[,]);
 a[,] = {{ 1,2,3 },{2,3,4},{3,4,5}};
 b[,] = {{ 11,12,13 },{22,23,24},{33,34,35}};
-c[,] = array.add(a[,],b[,]);
+c[,] = array.concat(a[,],b[,]);
 printArray2(c[,]);

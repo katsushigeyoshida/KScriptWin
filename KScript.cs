@@ -78,7 +78,7 @@ namespace KScriptWin
     /// setArrayData(List<Token> tokens)                        配列の一括値設定(a[] = { 1,2,1,3} )
     /// setArrayData(Token name, Token data)                    1次元配列の一括値設定(a[] = { 1,2,1,3} )
     /// setArrayData2(Token name, Token data)                   2次元配列の一括値設定(a[,] = { { 1,2,1,3}, {2,3,4,5} } )
-    /// getFuncArray(Token src, Token dest, KScript parse)      プログラム関数の戻り値受け渡し
+    /// getFuncArray(Token src, Token dest, KScript script)      プログラム関数の戻り値受け渡し
     /// setFuncArray(Token src, Token dest, KScript script)     プログラム関数の引数受け渡し
     /// 
     /// outputString(string str = "\n")                         表示出力(callbackを呼び出す)
@@ -111,6 +111,7 @@ namespace KScriptWin
         public Plot3DView mPlot3D;                              //  3DグラフィックWindow
         public KParse mParse = new KParse();                    //  構文解析
         public KLexer mLexer = new KLexer();                    //  字句解析
+        public Variable mVar = new Variable();                  //  変数管理
         public ScriptLib mScriptLib;                            //  内部関数ライブラリ
         public FuncPlot mFuncPlot;                              //  グラフィック関数
         public FuncPlot3D mFuncPlot3D;                          //  3Dグラフィック関数
@@ -170,8 +171,8 @@ namespace KScriptWin
         {
             mStatements.Clear();
             mTokenList.Clear();
-            mParse.mGlobalVar.Clear();
-            mParse.mVariables.Clear();
+            mVar.mGlobalVar.Clear();
+            mVar.mVariables.Clear();
             mParse.mFunctions.Clear();
             if (mGraph != null) mGraph.Close();
             if (mPlot3D != null) mPlot3D.Close();
@@ -224,7 +225,7 @@ namespace KScriptWin
                     if (arg != null) {
                         string[] funcargs = mLexer.stripBracketString(funcList[1].mValue, '(').Split(',');
                         for (int i = 0; i < funcargs.Length; i++)
-                            mParse.setVariable(new Token(funcargs[i].Trim(), TokenType.VARIABLE), arg[i]);
+                            mVar.setVariable(new Token(funcargs[i].Trim(), TokenType.VARIABLE), arg[i]);
                     }
                 }
                 //  構文実行
@@ -352,10 +353,14 @@ namespace KScriptWin
             List<Token> expressList = new List<Token>();
             if (2 <= tokens.Count) {
                 if (0 <= tokens[0].mValue.IndexOf("[]") ||
-                        0 <= tokens[0].mValue.IndexOf(",]")) {
+                    0 <= tokens[0].mValue.IndexOf(",]")) {
                     //  配列一括設定
-                    if (tokens[2].mType == TokenType.STATEMENTS) {
-                        setArrayData(tokens);
+                    if (tokens[2].mType == TokenType.STATEMENTS ||
+                        tokens[2].mType == TokenType.ARRAY) {
+                        if (!setArrayData(tokens)) {
+                            outputString($"Error: {tokensString(tokens)}\n");
+                            return RETURNTYPE.ERROR;
+                        }
                     } else if (tokens[2].mType == TokenType.FUNCTION) {
                         return funcStatement(tokens, 2, tokens[0]);
                     } else {
@@ -380,7 +385,7 @@ namespace KScriptWin
                         variable = getVariableName(tokens[1]);
                         Token v = express(expressList);
                         if (v == null) return RETURNTYPE.ERROR;
-                        mParse.setVariable(variable, v);
+                        mVar.setVariable(variable, v);
                         return RETURNTYPE.NORMAL;
                     }
                 } else {
@@ -411,7 +416,7 @@ namespace KScriptWin
                 Token value = express(expressList);
                 if (value == null)
                     return RETURNTYPE.ERROR;
-                mParse.setVariable(variable, value);
+                mVar.setVariable(variable, value);
             }
             return RETURNTYPE.NORMAL;
         }
@@ -555,7 +560,7 @@ namespace KScriptWin
                 token = tokens[1].copy();
             else
                 token = express(tokens, 1);
-            mParse.setVariable(new Token("return", TokenType.VARIABLE), token);
+            mVar.setVariable(new Token("return", TokenType.VARIABLE), token);
 
             return RETURNTYPE.NORMAL;
         }
@@ -589,7 +594,7 @@ namespace KScriptWin
             Token result = function(funcName, arg, ret);
             if (result == null || result.mType == TokenType.ERROR)
                 return RETURNTYPE.ERROR;
-            mParse.setVariable(new Token("return", TokenType.VARIABLE), result);
+            mVar.setVariable(new Token("return", TokenType.VARIABLE), result);
             return RETURNTYPE.NORMAL;
         }
 
@@ -645,7 +650,7 @@ namespace KScriptWin
             KScript script = new KScript(mParse.mFunctions[funcName].mValue, mGraph, mPlot3D);
             script.mControlData = mControlData;
             script.printCallback = printCallback;
-            script.mParse.mGlobalVar = mParse.mGlobalVar;       //  グローバル変数
+            script.mVar.mGlobalVar = mVar.mGlobalVar;           //  グローバル変数
             script.mParse.mFunctions = mParse.mFunctions;       //  参照関数の設定
             List<Token> callArgs = getFuncArgs(arg.mValue);     //  呼出し側引数の取得(配列以外は数値に変換)
             List<Token> funcArgs = getFuncArgNames(mParse.mFunctions[funcName].mValue, 1);  //  関数側引数名の取得
@@ -656,9 +661,9 @@ namespace KScriptWin
             mPlot3D = script.mPlot3D;
 
             //  戻り値の設定
-            if (script.mParse.mVariables.ContainsKey("return")) {
-                getFuncArray(script.mParse.mVariables["return"], ret, script);
-                return script.mParse.mVariables["return"];
+            if (script.mVar.mVariables.ContainsKey("return")) {
+                getFuncArray(script.mVar.mVariables["return"], ret, script);
+                return script.mVar.mVariables["return"];
             } else
                 return new Token("", TokenType.LITERAL);
         }
@@ -809,7 +814,7 @@ namespace KScriptWin
                         i++;
                     } else if (tokens[i].mValue[1] == '=')
                         i++;
-                    mParse.setVariable(tmpKey, tmpValue);
+                    mVar.setVariable(tmpKey, tmpValue);
                 } else if (buf.mType == TokenType.STRING || token.mType == TokenType.STRING) {
                     if (0 < i && tokens[i - 1].mType == TokenType.OPERATOR)
                         buf.mValue = buf.mValue.Remove(buf.mValue.Length - 1);
@@ -932,7 +937,7 @@ namespace KScriptWin
                     setFuncArray(src[i], dest[i], script);
                 } else {
                     string buf = getVariableValue(src[i]).mValue;
-                    script.mParse.setVariable(dest[i], express(new Token(buf)));
+                    script.mVar.setVariable(dest[i], express(new Token(buf)));
                 }
             }
         }
@@ -947,7 +952,7 @@ namespace KScriptWin
             var v = getVariableName(token);
             if (v.mType == TokenType.EXPRESS)
                 v = express(v);
-            return mParse.getVariable(v);
+            return mVar.getVariable(v);
         }
 
         /// <summary>
@@ -1007,7 +1012,8 @@ namespace KScriptWin
         }
 
         /// <summary>
-        /// 配列の一括値設定(a[] = { 1,2,1,3} )
+        /// 配列の一括値設定(代入処理)(a[] = { 1,2,1,3} )
+        /// tokens[0] = tokens[2]   (tokens[1] = [=])
         /// </summary>
         /// <param name="tokens">設定文(トークンリスト)</param>
         /// <returns>可否</returns>
@@ -1016,31 +1022,48 @@ namespace KScriptWin
             Token name = tokens[0];
             Token data = tokens[2];
             if (0 <= name.mValue.IndexOf("[]"))
-                return setArrayData(name, data);
+                return setArrayData(name, data);    //  1次元配列
             else if (0 <= name.mValue.IndexOf(",]"))
-                return setArrayData2(name, data);
+                return setArrayData2(name, data);   //  2次元配列
             return false;
         }
 
         /// <summary>
-        /// 1次元配列の一括値設定(a[] = { 1,2,1,3} )
+        /// 1次元配列の代入処理(a[] = { 1,2,1,3}, a[] = b[], a[] = b[n,])
         /// </summary>
-        /// <param name="name">配列名</param>
-        /// <param name="data">設定値</param>
-        /// <returns></returns>
+        /// <param name="name">代入先配列名</param>
+        /// <param name="data">代入元設定値</param>
+        /// <returns>可否</returns>
         private bool setArrayData(Token name, Token data)
         {
-            if (0 > data.mValue.IndexOf("{"))
-                return false;
             string arrayName = name.mValue.Substring(0, name.mValue.IndexOf('['));
-            string str = mLexer.stripBracketString(data.mValue, '{');
-            List<Token> datas = mLexer.tokenList(str);
-            List<List<Token>> dataList = mLexer.tokensList(datas);
-            for (int i = 0; i < dataList.Count; i++) {
-                string buf = $"{arrayName}[{i}]";
-                mParse.setVariable(new Token(buf, TokenType.VARIABLE), express(dataList[i]));
+            mVar.clearVariables(name);
+            if (0 <= data.mValue.IndexOf("{")) {
+                // a[] = { 1,2,3..};
+                List<Token> dataList= getLiteralList(data);
+                for (int i = 0; i < dataList.Count; i++) {
+                    string buf = $"{arrayName}[{i}]";
+                    mVar.setVariable(new Token(buf, TokenType.VARIABLE), dataList[i]);
+                }
+                return true;
+            } else if (0 <= data.mValue.IndexOf("[]")) {
+                // a[] = b[];
+                Dictionary<string, Token> dataList = mVar.getVariables(data);
+                foreach (var vari in dataList) {
+                    string buf = $"{arrayName}{vari.Key.Substring(vari.Key.IndexOf('['))}";
+                    mVar.setVariable(new Token(buf, TokenType.ARRAY), vari.Value);
+                }
+                return true;
+            } else if (0 <= data.mValue.IndexOf(",]")) {
+                // a[] = b[n,];
+                Dictionary<string, Token> dataList = mVar.getVariables(data);
+                foreach (var vari in dataList) {
+                    string buf = $"{arrayName}[{vari.Key.Substring(vari.Key.LastIndexOf(",") + 1)}";
+                    mVar.setVariable(new Token(buf, TokenType.ARRAY), vari.Value);
+                }
+                return true;
             }
-            return true;
+            return false;
         }
 
         /// <summary>
@@ -1051,61 +1074,126 @@ namespace KScriptWin
         /// <returns></returns>
         private bool setArrayData2(Token name, Token data)
         {
-            if (0 > data.mValue.IndexOf("{"))
-                return false;
             string arrayName = name.mValue.Substring(0, name.mValue.IndexOf('['));
-            string str = mLexer.stripBracketString(data.mValue, '{');
-            List<string> strings = mLexer.getBracketStringList(str, 0, '{');
-            if (0 <= name.mValue.IndexOf("[,]")) {
-                for (int i = 0; i < strings.Count; i++) {
-                    List<Token> datas = mLexer.tokenList(mLexer.stripBracketString(strings[i], '{'));
-                    List<List<Token>> dataList = mLexer.tokensList(datas);
-                    for (int j = 0; j < dataList.Count; j++) {
-                        string buf = $"{arrayName}[{i},{j}]";
-                        mParse.setVariable(new Token(buf, TokenType.VARIABLE), express(dataList[j]));
+            mVar.clearVariables(name);
+            if (0 <= data.mValue.IndexOf("{")) {
+                //  一括設定(a[,] = {{1,2,3},{3,4,5}..};)
+                if (0 <= name.mValue.IndexOf("[,]")) {
+                    //  a[,] = {{1,2,3},{2,3,4}...};
+                    List<List<Token>> dataList = getLiteral2List(data);
+                    for (int i = 0; i < dataList.Count; i++) {
+                        for (int j = 0; j < dataList[i].Count; j++) {
+                            string buf = $"{arrayName}[{i},{j}]";
+                            mVar.setVariable(new Token(buf, TokenType.VARIABLE), express(dataList[i][j]));
+                        }
+                    }
+                } else {
+                    //  a[n,] = { 1,2,3 };
+                    arrayName = name.mValue.Substring(0, name.mValue.LastIndexOf(','));
+                    arrayName = arrayName.Replace(" ", "");
+                    List<Token> dataList = getLiteralList(data);
+                    for (int i = 0; i < dataList.Count; i++) {
+                        string buf = $"{arrayName},{i}]";
+                        mVar.setVariable(new Token(buf, TokenType.VARIABLE), express(dataList[i]));
                     }
                 }
-            } else {
-                int sp = name.mValue.IndexOf("[") + 1;
-                int ep = name.mValue.IndexOf(",]");
-                string index = name.mValue.Substring(sp, ep - sp);
-                List<Token> indexList = mLexer.tokenList(index);
-                Token indexToken = express(indexList[0]);
-                List<Token> datas = mLexer.tokenList(str);
-                List<List<Token>> dataList = mLexer.tokensList(datas);
-                for (int i = 0; i < dataList.Count; i++) {
-                    string buf = $"{arrayName}[{indexToken.mValue},{i}]";
-                    mParse.setVariable(new Token(buf, TokenType.VARIABLE), express(dataList[i]));
+                return true;
+            } else if (0 <= data.mValue.IndexOf("[,]")) {
+                //  a[,] = b[,];
+                if (0 <= name.mValue.IndexOf("[,]")) {
+                    Dictionary<string, Token> dataList = mVar.getVariables(data);
+                    foreach (var vari in dataList) {
+                        string buf = $"{arrayName}{vari.Key.Substring(vari.Key.IndexOf('['))}";
+                        mVar.setVariable(new Token(buf, TokenType.ARRAY), vari.Value);
+                    }
+                    return true;
                 }
+            } else if (0 <= data.mValue.IndexOf(",]")) {
+                //  a[n,] = b[n,];
+                arrayName = name.mValue.Substring(0, name.mValue.LastIndexOf(','));
+                Dictionary<string, Token> dataList = mVar.getVariables(data);
+                foreach (var vari in dataList) {
+                    string buf = $"{arrayName},{vari.Key.Substring(vari.Key.LastIndexOf(",") + 1)}";
+                    mVar.setVariable(new Token(buf, TokenType.ARRAY), vari.Value);
+                }
+                return true;
+            } else if (0 <= data.mValue.IndexOf("[]")) {
+                //  a[n,] = b[];
+                arrayName = name.mValue.Substring(0, name.mValue.LastIndexOf(','));
+                Dictionary<string, Token> dataList = mVar.getVariables(data);
+                foreach (var vari in dataList) {
+                    string buf = $"{arrayName},{vari.Key.Substring(vari.Key.LastIndexOf("[") + 1)}";
+                    mVar.setVariable(new Token(buf, TokenType.ARRAY), vari.Value);
+                }
+                return true;
             }
-            return true;
+            return false;
+        }
+
+        /// <summary>
+        /// 配列のリテラル値の取得({ 1,2,3}) Tokenリストに変換
+        /// </summary>
+        /// <param name="data">リテラルリスト</param>
+        /// <returns>Tokenリスト</returns>
+        private List<Token> getLiteralList(Token data)
+        {
+            string str = mLexer.stripBracketString(data.mValue, '{');
+            List<Token> datas = mLexer.tokenList(str);
+            List<List<Token>> dataList = mLexer.tokensList(datas);
+            List<Token> literalData = new List<Token>();
+            for (int i = 0; i < dataList.Count; i++) {
+                literalData.Add(express(dataList[i]));
+            }
+            return literalData;
+        }
+
+        /// <summary>
+        /// 二次元配列のリテラル値の取得({{1,2,3},{4,5,6},..}) Tokenリストに変換
+        /// </summary>
+        /// <param name="data"></param>
+        /// <returns></returns>
+        private List<List<Token>> getLiteral2List(Token data)
+        {
+            string str = mLexer.stripBracketString(data.mValue, '{');
+            List<string> strings = mLexer.getBracketStringList(str, 0, '{');
+            List<List<Token>> literalDatas = new List<List<Token>>();
+            for (int i = 0; i < strings.Count; i++) {
+                List<Token> datas = mLexer.tokenList(mLexer.stripBracketString(strings[i], '{'));
+                List<List<Token>> dataList = mLexer.tokensList(datas);
+                List<Token> buf = new List<Token>();
+                for (int j = 0; j < dataList.Count; j++) {
+                    buf.Add(express(dataList[j]));
+                }
+                literalDatas.Add(buf);
+            }
+            return literalDatas;
         }
 
         /// <summary>
         /// プログラム関数の戻り値受け渡し
-        /// 関数の戻り値(f配列)を呼出し側の変数にコピー
+        /// 関数の戻り値(配列)を呼出し側の変数にコピー(script.src → dest)
         /// </summary>
         /// <param name="src">関数側の戻り値</param>
         /// <param name="dest">呼出し側の変数</param>
-        /// <param name="parse">関数 KScript</param>
-        private void getFuncArray(Token src, Token dest, KScript parse)
+        /// <param name="script">関数 KScript</param>
+        private void getFuncArray(Token src, Token dest, KScript script)
         {
-            if (src == null || dest == null || parse == null) return;
+            if (src == null || dest == null || script == null) return;
             int sp = src.mValue.IndexOf("[");
             int dp = dest.mValue.IndexOf("[");
             if (sp < 0 || dp < 0) return;
             string srcName = src.mValue.Substring(0, sp);
             string destName = dest.mValue.Substring(0, dp);
-            foreach (var variable in parse.mParse.getVariables(src)) {
+            foreach (var variable in script.mVar.getVariableList(src)) {
                 if (variable.Key.IndexOf(srcName) >= 0) {
                     string key = variable.Key.Replace(srcName, destName);
-                    mParse.setVariable(new Token(key, TokenType.VARIABLE), variable.Value);
+                    mVar.setVariable(new Token(key, TokenType.VARIABLE), variable.Value);
                 }
             }
         }
 
         /// <summary>
-        /// プログラム関数の配列引数受け渡し
+        /// プログラム関数の配列引数受け渡し(src → script.dest)
         /// </summary>
         /// <param name="src">呼出し元引数</param>
         /// <param name="dest">関数側引数</param>
@@ -1117,10 +1205,10 @@ namespace KScriptWin
             if (sp < 0 || dp < 0) return;
             string srcName = src.mValue.Substring(0, sp);
             string destName = dest.mValue.Substring(0, dp);
-            foreach (var variable in mParse.getVariables(srcName)) {
+            foreach (var variable in mVar.getVariableList(srcName)) {
                 if (variable.Key.IndexOf(srcName) >= 0) {
                     string key = variable.Key.Replace(srcName, destName);
-                    script.mParse.setVariable(new Token(key, TokenType.VARIABLE), variable.Value);
+                    script.mVar.setVariable(new Token(key, TokenType.VARIABLE), variable.Value);
                 }
             }
         }
@@ -1133,7 +1221,6 @@ namespace KScriptWin
         {
             mControlData.mOutputString = str;
             printCallback();
-            //Console.Write(str);
         }
 
         /// <summary>

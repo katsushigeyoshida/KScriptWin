@@ -35,6 +35,7 @@ namespace KScriptWin
         //  共有クラス
         public KScript mScript;
         private KParse mParse;
+        private Variable mVar;
 
         private YLib ylib = new YLib();
 
@@ -42,6 +43,7 @@ namespace KScriptWin
         {
             mScript = script;
             mParse = script.mParse;
+            mVar = script.mVar;
         }
 
         /// <summary>
@@ -84,7 +86,7 @@ namespace KScriptWin
         public Token contains(Token arg)
         {
             string str = ylib.stripBracketString(arg.mValue);
-            if (mParse.containsVariable(str))
+            if (mVar.containsVariable(str))
                 return new Token("1", TokenType.LITERAL);
             return new Token("0", TokenType.LITERAL);
         }
@@ -101,18 +103,18 @@ namespace KScriptWin
             string arrayName = "";
             int n = args[0].mValue.IndexOf("[");
             if (n < 0)
-                return new Token(mParse.countVariable(args[0].mValue).ToString(), TokenType.LITERAL);
+                return new Token(mVar.countVariable(args[0].mValue).ToString(), TokenType.LITERAL);
             //  全配列のデータ数
             if (0 < args[0].mValue.IndexOf("[]") || 0 < args[0].mValue.IndexOf("[,]")) {
                 arrayName = args[0].mValue.Substring(0, n + 1);
-                count = mParse.countVariable(arrayName);
+                count = mVar.countVariable(arrayName);
                 return new Token(count.ToString(), TokenType.LITERAL);
             }
             //  2次元配列の行ごとのデータ数(列数)
             int n2 = args[0].mValue.IndexOf(",]");
             if (0 < n2) {
                 arrayName = args[0].mValue.Substring(0, n2 + 1);
-                count = mParse.countVariable(arrayName);
+                count = mVar.countVariable(arrayName);
                 return new Token(count.ToString(), TokenType.LITERAL);
             }
             //  2次元配列の列ごとのデータ数(行数)
@@ -120,11 +122,11 @@ namespace KScriptWin
             if (0 < n3) {
                 arrayName = args[0].mValue.Substring(0, n + 1);
                 string last = args[0].mValue.Substring(n3);
-                count = mParse.countVariable(arrayName, last);
+                count = mVar.countVariable(arrayName, last);
                 return new Token(count.ToString(), TokenType.LITERAL);
             }
             //  その他
-            count = mParse.countVariable(args[0].mValue);
+            count = mVar.countVariable(args[0].mValue);
             return new Token(count.ToString(), TokenType.LITERAL);
         }
 
@@ -135,7 +137,7 @@ namespace KScriptWin
         public void clear(List<Token> args)
         {
             string arrayName = args[0].mValue.Substring(0, args[0].mValue.IndexOf("[") + 1);
-            mParse.clearArray(arrayName);
+            mVar.clearArray(arrayName);
         }
 
         /// <summary>
@@ -145,12 +147,12 @@ namespace KScriptWin
         public void remove(List<Token> args)
         {
             if (args.Count < 2) return;
-            (string arrayName, int no) = mParse.getArrayName(new Token(args[0].mValue, TokenType.VARIABLE));
+            (string arrayName, int no) = mVar.getArrayName(new Token(args[0].mValue, TokenType.VARIABLE));
             int st = ylib.intParse(args[1].mValue);
             int ed = args.Count > 2 ? ylib.intParse(args[2].mValue) : st;
             for (int i = st; i <= ed; i++) {
                 string key = $"{arrayName}[{i}]";
-                mParse.removeVariable(key);
+                mVar.removeVariable(key);
             }
             squeeze(args);
         }
@@ -161,21 +163,21 @@ namespace KScriptWin
         /// <param name="args">配列名</param>
         public void squeeze(List<Token> args)
         {
-            (string arrayName, int no) = mParse.getArrayName(args[0]);
+            (string arrayName, int no) = mVar.getArrayName(args[0]);
             if (no != 1)
                 return;
             List<Token> listToken = new();
-            int maxcol = mParse.getMaxArray(arrayName);
+            int maxcol = mVar.getMaxArray(arrayName);
             for (int i = 0; i < maxcol + 1; i++) {
                 string key = $"{arrayName}[{i}]";
-                if (mParse.containsVariable(key)) {
-                    listToken.Add(mParse.getVariable(key));
-                    mParse.removeVariable(key);
+                if (mVar.containsVariable(key)) {
+                    listToken.Add(mVar.getVariable(key));
+                    mVar.removeVariable(key);
                 }
             }
             for (int i = 0; i < listToken.Count; i++) {
                 string key = $"{arrayName}[{i}]";
-                mParse.setVariable(key, listToken[i]);
+                mVar.setVariable(new Token(key), listToken[i]);
             }
         }
 
@@ -187,35 +189,35 @@ namespace KScriptWin
         /// <param name="args">配列名</param>
         public void sort(List<Token> args)
         {
-            (string arrayName, int no) = mParse.getArrayName(args[0]);
+            (string arrayName, int no) = mVar.getArrayName(args[0]);
             if (no == 1) {
-                if (mParse.isStringArray(args[0])) {
+                if (mVar.isStringArray(args[0])) {
                     //  文字列のソート
-                    string[]? strArray = mParse.cnvListString(args[0]).ToArray();
+                    string[]? strArray = mVar.cnvListString(args[0]).ToArray();
                     Array.Sort(strArray);
                     clear(args);
-                    mParse.setReturnArray(strArray, args[0]);
+                    mVar.setReturnArray(strArray, args[0]);
                 } else {
                     //  実数のソート
-                    double[]? doubleArray = mParse.cnvListDouble(args[0]).ToArray();
+                    double[]? doubleArray = mVar.cnvListDouble(args[0]).ToArray();
                     Array.Sort(doubleArray);
                     clear(args);
-                    mParse.setReturnArray(doubleArray, args[0]);
+                    mVar.setReturnArray(doubleArray, args[0]);
                 }
             } else if (no == 2) {
-                (string name, string row, string col) = mParse.getArgArray2(args[0].mValue);
+                (string name, string row, string col) = mVar.getArgArray2(args[0].mValue);
                 string outname = name + "[,]";
                 int n = col == "" ? 0 : ylib.intParse(col);
-                if (mParse.isStringArray(args[0])) {
-                    string[,] stringArray = mParse.cnvArrayString2(args[0]);
+                if (mVar.isStringArray(args[0])) {
+                    string[,] stringArray = mVar.cnvArrayString2(args[0]);
                     stringArray = ylib.stringArray2Sort(stringArray, n);
                     clear(args);
-                    mParse.setReturnArray(stringArray, new Token(outname));
+                    mVar.setReturnArray(stringArray, new Token(outname));
                 } else {
-                    double[,] doubleArray = mParse.cnvArrayDouble2(args[0]);
+                    double[,] doubleArray = mVar.cnvArrayDouble2(args[0]);
                     doubleArray = ylib.doubleArray2Sort(doubleArray, n);
                     clear(args);
-                    mParse.setReturnArray(doubleArray, new Token(outname));
+                    mVar.setReturnArray(doubleArray, new Token(outname));
                 }
             }
         }
@@ -227,25 +229,25 @@ namespace KScriptWin
         /// <param name="args">配列名[,colReverse]</param>
         public void reverse(List<Token> args)
         {
-            (string arrayName, int no) = mParse.getArrayName(args[0]);
+            (string arrayName, int no) = mVar.getArrayName(args[0]);
             bool colRevers = false;
             if (1 < args.Count)
                 colRevers = args[1].mValue == "1";
             if (no == 1) {
-                int maxcol = mParse.getMaxArray(arrayName);
+                int maxcol = mVar.getMaxArray(arrayName);
                 if (maxcol <= 0) return;
                 Token[] tokens = new Token[maxcol + 1];
                 arrayName += "[";
-                foreach (var variable in mParse.getVariables(arrayName)) {
+                foreach (var variable in mVar.getVariableList(arrayName)) {
                     if (0 <= variable.Key.IndexOf(arrayName)) {
-                        (string name, int col) = mParse.getArrayNo(variable.Key);
+                        (string name, int col) = mVar.getArrayNo(variable.Key);
                         tokens[maxcol - col] = variable.Value;
                     }
                 }
                 clear(args);
-                mParse.setReturnArray(tokens, args[0]);
+                mVar.setReturnArray(tokens, args[0]);
             } else if (no == 2) {
-                Token[,] arrayData = mParse.cnvArrayToken2(args[0]);
+                Token[,] arrayData = mVar.cnvArrayToken2(args[0]);
                 Token[,] tokens = new Token[arrayData.GetLength(0), arrayData.GetLength(1)];
                 if (colRevers) {
                     for (int i = 0; i < arrayData.GetLength(0); i++) {
@@ -261,7 +263,7 @@ namespace KScriptWin
                     }
                 }
                 clear(args);
-                mParse.setReturnArray(tokens, args[0]);
+                mVar.setReturnArray(tokens, args[0]);
             }
         }
 
@@ -272,13 +274,13 @@ namespace KScriptWin
         /// <returns>最大値</returns>
         public Token max(List<Token> args)
         {
-            (string arrayName, int no) = mParse.getArrayName(args[0]);
+            (string arrayName, int no) = mVar.getArrayName(args[0]);
             double max = double.MinValue;
             if (no == 1 || no == 2) {
-                arrayName = mParse.getSearchName(args[0]);
+                arrayName = mVar.getSearchName(args[0]);
             } else
                 return new Token(arrayName, TokenType.ERROR);
-            foreach (var variable in mParse.getVariables(arrayName)) {
+            foreach (var variable in mVar.getVariableList(arrayName)) {
                 if (0 == variable.Key.IndexOf(arrayName)) {
                     if (variable.Value.mType != TokenType.STRING) {
                         double x = ylib.doubleParse(variable.Value.mValue);
@@ -297,13 +299,13 @@ namespace KScriptWin
         /// <returns>最小値</returns>
         public Token min(List<Token> args)
         {
-            (string arrayName, int no) = mParse.getArrayName(args[0]);
+            (string arrayName, int no) = mVar.getArrayName(args[0]);
             double min = double.MaxValue;
             if (no == 1 || no == 2) {
-                arrayName = mParse.getSearchName(args[0]);
+                arrayName = mVar.getSearchName(args[0]);
             } else
                 return new Token(arrayName, TokenType.ERROR);
-            foreach (var variable in mParse.getVariables(arrayName)) {
+            foreach (var variable in mVar.getVariableList(arrayName)) {
                 if (0 == variable.Key.IndexOf(arrayName)) {
                     if (variable.Value.mType != TokenType.STRING) {
                         double x = ylib.doubleParse(variable.Value.mValue);
@@ -322,10 +324,10 @@ namespace KScriptWin
         /// <returns>合計</returns>
         public Token sum(List<Token> args)
         {
-            (string arrayName, int no) = mParse.getArrayName(args[0]);
+            (string arrayName, int no) = mVar.getArrayName(args[0]);
             List<double> listData = new();
             if (no == 1 || no == 2) {
-                listData = mParse.cnvListDouble(args[0]);
+                listData = mVar.cnvListDouble(args[0]);
             } else
                 return new Token(arrayName, TokenType.ERROR);
             double sum = listData.Sum();
@@ -339,10 +341,10 @@ namespace KScriptWin
         /// <returns>平均値</returns>
         public Token average(List<Token> args)
         {
-            (string arrayName, int no) = mParse.getArrayName(args[0]);
+            (string arrayName, int no) = mVar.getArrayName(args[0]);
             List<double> listData = new();
             if (no == 1 || no == 2) {
-                listData = mParse.cnvListDouble(args[0]);
+                listData = mVar.cnvListDouble(args[0]);
             } else
                 return new Token(arrayName, TokenType.ERROR);
             double ave = listData.Sum() / listData.Count;
@@ -356,10 +358,10 @@ namespace KScriptWin
         /// <returns>分散値</returns>
         public Token variance(List<Token> args)
         {
-            (string arrayName, int no) = mParse.getArrayName(args[0]);
+            (string arrayName, int no) = mVar.getArrayName(args[0]);
             List<double> listData = new();
             if (no == 1 || no == 2) {
-                listData = mParse.cnvListDouble(args[0]);
+                listData = mVar.cnvListDouble(args[0]);
             } else
                 return new Token(arrayName, TokenType.ERROR);
             double ave = listData.Sum() / listData.Count;
@@ -390,8 +392,8 @@ namespace KScriptWin
         {
             if (args.Count < 2)
                 return new Token("", TokenType.ERROR);
-            List<double> listData0 = mParse.cnvListDouble(args[0]);
-            List<double> listData1 = mParse.cnvListDouble(args[1]);
+            List<double> listData0 = mVar.cnvListDouble(args[0]);
+            List<double> listData1 = mVar.cnvListDouble(args[1]);
             if (listData0.Count != listData1.Count)
                 return new Token("", TokenType.ERROR);
             double ave0 = listData0.Average();
@@ -412,8 +414,8 @@ namespace KScriptWin
         {
             if (args.Count < 2)
                 return new Token("", TokenType.ERROR);
-            List<double> x = mParse.cnvListDouble(args[0]);
-            List<double> y = mParse.cnvListDouble(args[1]);
+            List<double> x = mVar.cnvListDouble(args[0]);
+            List<double> y = mVar.cnvListDouble(args[1]);
             if (x.Count != y.Count)
                 return new Token("", TokenType.ERROR);
             double avex = x.Average();
@@ -440,16 +442,16 @@ namespace KScriptWin
         {
             if (args.Count < 2)
                 return new Token("", TokenType.ERROR);
-            (string arrayA, int noA) = mParse.getArrayName(new Token(args[0].mValue, TokenType.VARIABLE));
-            (string arrayB, int noB) = mParse.getArrayName(new Token(args[1].mValue, TokenType.VARIABLE));
+            (string arrayA, int noA) = mVar.getArrayName(new Token(args[0].mValue, TokenType.VARIABLE));
+            (string arrayB, int noB) = mVar.getArrayName(new Token(args[1].mValue, TokenType.VARIABLE));
             if (noA == 1 && noB == 1) {
-                List<double> a = mParse.cnvListDouble(args[0]);
-                List<double> b = mParse.cnvListDouble(args[1]);
+                List<double> a = mVar.cnvListDouble(args[0]);
+                List<double> b = mVar.cnvListDouble(args[1]);
                 a.AddRange(b);
-                mParse.setReturnArray(a.ToArray(), ret);
+                mVar.setReturnArray(a.ToArray(), ret);
             } else if (noA ==2 && noB == 2) {
-                double[,] a = mParse.cnvArrayDouble2(args[0]);
-                double[,] b = mParse.cnvArrayDouble2(args[1]);
+                double[,] a = mVar.cnvArrayDouble2(args[0]);
+                double[,] b = mVar.cnvArrayDouble2(args[1]);
                 double[,] c = new double[a.GetLength(0) + b.GetLength(0), a.GetLength(1)];
                 for (int i = 0; i < a.GetLength(0); i++) {
                     for (int j = 0; j < a.GetLength(1); j++)
@@ -459,13 +461,13 @@ namespace KScriptWin
                     for (int j = 0; j < Math.Min(a.GetLength(1),b.GetLength(1)); j++)
                         c[i + a.GetLength(0), j] = b[i, j];
                 }
-                mParse.setReturnArray(c, ret);
+                mVar.setReturnArray(c, ret);
             } else
                 return new Token("", TokenType.EMPTY);
 
             //  戻り値の設定
-            mParse.setVariable(new Token("return", TokenType.VARIABLE), ret);
-            return mParse.getVariable("return");
+            mVar.setVariable(new Token("return", TokenType.VARIABLE), ret);
+            return mVar.getVariable("return");
         }
     }
 }

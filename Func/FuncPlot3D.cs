@@ -42,6 +42,7 @@ namespace KScriptWin
         public Plot3DView mPlot3D;
 
         private KParse mParse;
+        private Variable mVar;
         private YLib ylib = new YLib();
 
         public FuncPlot3D(KScript script)
@@ -49,6 +50,7 @@ namespace KScriptWin
             mScript = script;
             mParse  = script.mParse;
             mPlot3D = script.mPlot3D;
+            mVar = script.mVar;
         }
 
         /// <summary>
@@ -104,8 +106,8 @@ namespace KScriptWin
         private void setArea(List<Token> args)
         {
             if (args.Count < 2) return ;
-            List<double> listData0 = mParse.cnvListDouble(args[0]);
-            List<double> listData1 = mParse.cnvListDouble(args[1]);
+            List<double> listData0 = mVar.cnvListDouble(args[0]);
+            List<double> listData1 = mVar.cnvListDouble(args[1]);
             Point3D sp = new Point3D(listData0[0], listData0[1], listData0[2]);
             Point3D ep = new Point3D(listData1[0], listData1[1], listData1[2]);
             if (mPlot3D != null)
@@ -163,7 +165,7 @@ namespace KScriptWin
         /// <param name="args">移動量(vec[x/y/z])</param>
         private void plotTranslate(List<Token> args)
         {
-            List<double> vec = mParse.cnvListDouble(args[0]);
+            List<double> vec = mVar.cnvListDouble(args[0]);
             if (vec == null || vec.Count < 3) return;
             mPlot3D.translate(new Point3D(vec[0], vec[1], vec[2]));
         }
@@ -187,7 +189,7 @@ namespace KScriptWin
         /// <param name="args">plotScale[x/y/z]</param>
         private void plotScale(List<Token> args)
         {
-            List<double> scale = mParse.cnvListDouble(args[0]);
+            List<double> scale = mVar.cnvListDouble(args[0]);
             if (scale == null || scale.Count < 3) return;
             mPlot3D.scale(new Point3D(scale[0], scale[1], scale[2]));
         }
@@ -230,9 +232,9 @@ namespace KScriptWin
         /// <param name="args">sp[x/y/z],ep[x/y/z]</param>
         private void plotLine(List<Token> args)
         {
-            List<double> sp = mParse.cnvListDouble(args[0]);
+            List<double> sp = mVar.cnvListDouble(args[0]);
             if (sp == null || sp.Count < 3) return;
-            List<double> ep = mParse.cnvListDouble(args[1]);
+            List<double> ep = mVar.cnvListDouble(args[1]);
             if (ep == null || ep.Count < 3) return;
             Line3D line = new Line3D(new Point3D(sp[0], sp[1], sp[2]), new Point3D(ep[0], ep[1], ep[2]));
             mPlot3D.plotLine(line);
@@ -244,7 +246,7 @@ namespace KScriptWin
         /// <param name="args">poslist[n,x/y/z]</param>
         private void plotLines(List<Token> args)
         {
-            double[,]? plist = mParse.cnvArrayDouble2(args[0]);
+            double[,]? plist = mVar.cnvArrayDouble2(args[0]);
             if (plist == null) return;
             List<Point3D> points = new List<Point3D>();
             for (int i = 0; i < plist.GetLength(0); i++) {
@@ -259,7 +261,7 @@ namespace KScriptWin
         /// <param name="args">poly[n,x/y/z]</param>
         private void plotPolyline(List<Token> args)
         {
-            double[,]? plist = mParse.cnvArrayDouble2(args[0]);
+            double[,]? plist = mVar.cnvArrayDouble2(args[0]);
             if (plist == null) return;
             List<Point3D> points = new List<Point3D>();
             for (int i = 0; i < plist.GetLength(0); i++) {
@@ -274,7 +276,7 @@ namespace KScriptWin
         /// <param name="args">poly[n,x/y/z]</param>
         private void plotPolyloop(List<Token> args)
         {
-            double[,]? plist = mParse.cnvArrayDouble2(args[0]);
+            double[,]? plist = mVar.cnvArrayDouble2(args[0]);
             if (plist == null) return;
             List<Point3D> points = new List<Point3D>();
             for (int i = 0; i < plist.GetLength(0); i++) {
@@ -289,7 +291,7 @@ namespace KScriptWin
         /// <param name="args">poslist[n,x/y/z]</param>
         private void plotPolygon(List<Token> args)
         {
-            double[,]? plist = mParse.cnvArrayDouble2(args[0]);
+            double[,]? plist = mVar.cnvArrayDouble2(args[0]);
             if (plist == null) return;
             List<Point3D> points = new List<Point3D>();
             for (int i = 0; i < plist.GetLength(0); i++) {
@@ -304,7 +306,7 @@ namespace KScriptWin
         /// <param name="args">poslist[n,x/y/z]</param>
         private void plotTriangles(List<Token> args)
         {
-            double[,]? plist = mParse.cnvArrayDouble2(args[0]);
+            double[,]? plist = mVar.cnvArrayDouble2(args[0]);
             if (plist == null) return;
             List<Point3D> points = new List<Point3D>();
             for (int i = 0; i < plist.GetLength(0); i++) {
@@ -319,7 +321,7 @@ namespace KScriptWin
         /// <param name="args">poslist[n,x/y/z]</param>
         private void plotQuads(List<Token> args)
         {
-            double[,]? plist = mParse.cnvArrayDouble2(args[0]);
+            double[,]? plist = mVar.cnvArrayDouble2(args[0]);
             if (plist == null) return;
             List<Point3D> points = new List<Point3D>();
             for (int i = 0; i < plist.GetLength(0); i++) {
@@ -334,7 +336,7 @@ namespace KScriptWin
         /// <param name="args">poslist[n,x/y/z]</param>
         private void plotTriangleStrip(List<Token> args)
         {
-            double[,]? plist = mParse.cnvArrayDouble2(args[0]);
+            double[,]? plist = mVar.cnvArrayDouble2(args[0]);
             if (plist == null) return;
             List<Point3D> points = new List<Point3D>();
             for (int i = 0; i < plist.GetLength(0); i++) {
@@ -349,7 +351,7 @@ namespace KScriptWin
         /// <param name="args">poslist[n,x/y/z]</param>
         private void plotQuadStrip(List<Token> args)
         {
-            double[,]? plist = mParse.cnvArrayDouble2(args[0]);
+            double[,]? plist = mVar.cnvArrayDouble2(args[0]);
             if (plist == null) return;
             List<Point3D> points = new List<Point3D>();
             for (int i = 0; i < plist.GetLength(0); i++) {
@@ -364,7 +366,7 @@ namespace KScriptWin
         /// <param name="args">poslist[n,x/y/z]</param>
         private void plotTriangleFan(List<Token> args)
         {
-            double[,]? plist = mParse.cnvArrayDouble2(args[0]);
+            double[,]? plist = mVar.cnvArrayDouble2(args[0]);
             if (plist == null) return;
             List<Point3D> points = new List<Point3D>();
             for (int i = 0; i < plist.GetLength(0); i++) {
@@ -412,16 +414,16 @@ namespace KScriptWin
         /// <returns></returns>
         private Token translate(List<Token> args, Token ret)
         {
-            (string arrayName, int no) = mParse.getArrayName(new Token(args[0].mValue, TokenType.VARIABLE));
-            double[] vec = mParse.cnvListDouble(args[1]).ToArray();
+            (string arrayName, int no) = mVar.getArrayName(new Token(args[0].mValue, TokenType.VARIABLE));
+            double[] vec = mVar.cnvListDouble(args[1]).ToArray();
             if (no == 1) {
-                double[] src = mParse.cnvListDouble(args[0]).ToArray();
+                double[] src = mVar.cnvListDouble(args[0]).ToArray();
                 Point3D pos = new Point3D(src[0], src[1], src[2]);
                 pos.translate(vec[0], vec[1], vec[2]);
                 double[] dest = new double[] { pos.x, pos.y, pos.z};
-                mParse.setReturnArray(dest, ret);
+                mVar.setReturnArray(dest, ret);
             } else if (no == 2) {
-                double[,] src = mParse.cnvArrayDouble2(args[0]);
+                double[,] src = mVar.cnvArrayDouble2(args[0]);
                 double[,] dest = new double[src.GetLength(0), 3];
                 for (int i = 0; i < src.GetLength(0); i++) {
                     Point3D pos = new Point3D(src[i,0], src[i,1], src[i,2]);
@@ -430,11 +432,11 @@ namespace KScriptWin
                     dest[i, 1] = pos.y;
                     dest[i, 2] = pos.z;
                 }
-                mParse.setReturnArray(dest, ret);
+                mVar.setReturnArray(dest, ret);
             }
             //  戻り値の設定
-            mParse.setVariable(new Token("return", TokenType.VARIABLE), ret);
-            return mParse.getVariable("return");
+            mVar.setVariable(new Token("return", TokenType.VARIABLE), ret);
+            return mVar.getVariable("return");
         }
 
         /// <summary>
@@ -445,18 +447,18 @@ namespace KScriptWin
         /// <returns></returns>
         private Token rotate(List<Token> args, Token ret)
         {
-            (string arrayName, int no) = mParse.getArrayName(new Token(args[0].mValue, TokenType.VARIABLE));
+            (string arrayName, int no) = mVar.getArrayName(new Token(args[0].mValue, TokenType.VARIABLE));
             double ang = ylib.doubleParse(args[1].mValue);      //  回転角度
             string coord = args[2].getValue();                  //  回転軸名
             FACE3D face = coord == "X" ? FACE3D.YZ : coord == "Y" ? FACE3D.ZX : coord == "Z" ? FACE3D.XY: FACE3D.NON;
             if (no == 1) {
-                double[] src = mParse.cnvListDouble(args[0]).ToArray();
+                double[] src = mVar.cnvListDouble(args[0]).ToArray();
                 Point3D pos = new Point3D(src[0], src[1], src[2]);
                 pos.rotate(ang, face);
                 double[] dest = new double[] { pos.x, pos.y, pos.z };
-                mParse.setReturnArray(dest, ret);
+                mVar.setReturnArray(dest, ret);
             } else if (no == 2) {
-                double[,] src = mParse.cnvArrayDouble2(args[0]);
+                double[,] src = mVar.cnvArrayDouble2(args[0]);
                 double[,] dest = new double[src.GetLength(0), 3];
                 for (int i = 0; i < src.GetLength(0); i++) {
                     Point3D pos = new Point3D(src[i, 0], src[i, 1], src[i, 2]);
@@ -465,11 +467,11 @@ namespace KScriptWin
                     dest[i, 1] = pos.y;
                     dest[i, 2] = pos.z;
                 }
-                mParse.setReturnArray(dest, ret);
+                mVar.setReturnArray(dest, ret);
             }
             //  戻り値の設定
-            mParse.setVariable(new Token("return", TokenType.VARIABLE), ret);
-            return mParse.getVariable("return");
+            mVar.setVariable(new Token("return", TokenType.VARIABLE), ret);
+            return mVar.getVariable("return");
         }
 
         /// <summary>
@@ -480,18 +482,18 @@ namespace KScriptWin
         /// <returns></returns>
         private Token rotateAxis(List<Token> args, Token ret)
         {
-            (string arrayName, int no) = mParse.getArrayName(new Token(args[0].mValue, TokenType.VARIABLE));
+            (string arrayName, int no) = mVar.getArrayName(new Token(args[0].mValue, TokenType.VARIABLE));
             double ang = ylib.doubleParse(args[1].mValue);          //  回転角度
-            double[] vec = mParse.cnvListDouble(args[2]).ToArray();
+            double[] vec = mVar.cnvListDouble(args[2]).ToArray();
             Point3D axis = new Point3D(vec[0], vec[1], vec[2]);     //  回転軸ベクトル
             if (no == 1) {
-                double[] src = mParse.cnvListDouble(args[0]).ToArray(); //  対象データ
+                double[] src = mVar.cnvListDouble(args[0]).ToArray(); //  対象データ
                 Point3D pos = new Point3D(src[0], src[1], src[2]);
                 pos.rotate(axis, ang);
                 double[] dest = new double[] { pos.x, pos.y, pos.z };
-                mParse.setReturnArray(dest, ret);
+                mVar.setReturnArray(dest, ret);
             } else if (no == 2) {
-                double[,] src = mParse.cnvArrayDouble2(args[0]);    //  対象データリスト
+                double[,] src = mVar.cnvArrayDouble2(args[0]);    //  対象データリスト
                 double[,] dest = new double[src.GetLength(0), 3];
                 for (int i = 0; i < src.GetLength(0); i++) {
                     Point3D pos = new Point3D(src[i, 0], src[i, 1], src[i, 2]);
@@ -500,12 +502,12 @@ namespace KScriptWin
                     dest[i, 1] = pos.y;
                     dest[i, 2] = pos.z;
                 }
-                mParse.setReturnArray(dest, ret);
+                mVar.setReturnArray(dest, ret);
             }
 
             //  戻り値の設定
-            mParse.setVariable(new Token("return", TokenType.VARIABLE), ret);
-            return mParse.getVariable("return");
+            mVar.setVariable(new Token("return", TokenType.VARIABLE), ret);
+            return mVar.getVariable("return");
         }
 
 
@@ -517,18 +519,18 @@ namespace KScriptWin
         /// <returns></returns>
         private Token scale(List<Token> args, Token ret)
         {
-            (string arrayName, int no) = mParse.getArrayName(new Token(args[0].mValue, TokenType.VARIABLE));
-            double[] c = mParse.cnvListDouble(args[1]).ToArray();
+            (string arrayName, int no) = mVar.getArrayName(new Token(args[0].mValue, TokenType.VARIABLE));
+            double[] c = mVar.cnvListDouble(args[1]).ToArray();
             Point3D cp = new Point3D(c[0], c[1], c[2]);
             double scale = ylib.doubleParse(args[2].mValue);
             if (no == 1) {
-                double[] src = mParse.cnvListDouble(args[0]).ToArray();
+                double[] src = mVar.cnvListDouble(args[0]).ToArray();
                 Point3D pos = new Point3D(src[0], src[1], src[2]);
                 pos.scale(cp, scale);
                 double[] dest = new double[] { pos.x, pos.y, pos.z };
-                mParse.setReturnArray(dest, ret);
+                mVar.setReturnArray(dest, ret);
             } else if (no == 2) {
-                double[,] src = mParse.cnvArrayDouble2(args[0]);
+                double[,] src = mVar.cnvArrayDouble2(args[0]);
                 double[,] dest = new double[src.GetLength(0), 3];
                 for (int i = 0; i < src.GetLength(0); i++) {
                     Point3D pos = new Point3D(src[i, 0], src[i, 1], src[i, 2]);
@@ -537,11 +539,11 @@ namespace KScriptWin
                     dest[i, 1] = pos.y;
                     dest[i, 2] = pos.z;
                 }
-                mParse.setReturnArray(dest, ret);
+                mVar.setReturnArray(dest, ret);
             }
             //  戻り値の設定
-            mParse.setVariable(new Token("return", TokenType.VARIABLE), ret);
-            return mParse.getVariable("return");
+            mVar.setVariable(new Token("return", TokenType.VARIABLE), ret);
+            return mVar.getVariable("return");
         }
 
         /// <summary>
@@ -553,24 +555,24 @@ namespace KScriptWin
         /// <returns></returns>
         private Token holePlate2Quads(List<Token> args, Token ret)
         {
-            (string arrayName, int no) = mParse.getArrayName(new Token(args[0].mValue, TokenType.VARIABLE));
+            (string arrayName, int no) = mVar.getArrayName(new Token(args[0].mValue, TokenType.VARIABLE));
             if (no != 2) return new Token("", TokenType.EMPTY);
-            double[,] outLine = mParse.cnvArrayDouble2(args[0]);
+            double[,] outLine = mVar.cnvArrayDouble2(args[0]);
             Polygon3D outPolygon = new Polygon3D(point3DArray2List(outLine));
 
             List<Polygon3D> innerPolygons = new List<Polygon3D>();
             for (int i = 1; i < args.Count; i++) {
-                double[,] innerLine = mParse.cnvArrayDouble2(args[i]);
+                double[,] innerLine = mVar.cnvArrayDouble2(args[i]);
                 innerPolygons.Add(new Polygon3D(point3DArray2List(innerLine)));
             }
 
             List<Point3D> quadsList = outPolygon.holePlate2Quads(innerPolygons);
             double[,] dest = point3DList2Array(quadsList);
-            mParse.setReturnArray(dest, ret);
+            mVar.setReturnArray(dest, ret);
 
             //  戻り値の設定
-            mParse.setVariable(new Token("return", TokenType.VARIABLE), ret);
-            return mParse.getVariable("return");
+            mVar.setVariable(new Token("return", TokenType.VARIABLE), ret);
+            return mVar.getVariable("return");
         }
 
         /// <summary>
@@ -581,18 +583,18 @@ namespace KScriptWin
         /// <returns></returns>
         private Token polygonSide2QuadStrip(List<Token> args, Token ret)
         {
-            (string arrayName, int no) = mParse.getArrayName(new Token(args[0].mValue, TokenType.VARIABLE));
+            (string arrayName, int no) = mVar.getArrayName(new Token(args[0].mValue, TokenType.VARIABLE));
             if (no != 2) return new Token("", TokenType.EMPTY);
-            double[,] outLine = mParse.cnvArrayDouble2(args[0]);
+            double[,] outLine = mVar.cnvArrayDouble2(args[0]);
             Polygon3D polygon = new Polygon3D(point3DArray2List(outLine));
             double t = ylib.doubleParse(args[1].mValue);
             List<Point3D> quadsList = polygon.sideFace2QuadStrip(t);
             double[,] dest = point3DList2Array(quadsList);
-            mParse.setReturnArray(dest, ret);
+            mVar.setReturnArray(dest, ret);
 
             //  戻り値の設定
-            mParse.setVariable(new Token("return", TokenType.VARIABLE), ret);
-            return mParse.getVariable("return");
+            mVar.setVariable(new Token("return", TokenType.VARIABLE), ret);
+            return mVar.getVariable("return");
         }
 
         /// <summary>
@@ -603,18 +605,18 @@ namespace KScriptWin
         /// <returns></returns>
         private Token polygonSide2Quads(List<Token> args, Token ret)
         {
-            (string arrayName, int no) = mParse.getArrayName(new Token(args[0].mValue, TokenType.VARIABLE));
+            (string arrayName, int no) = mVar.getArrayName(new Token(args[0].mValue, TokenType.VARIABLE));
             if (no != 2) return new Token("", TokenType.EMPTY);
-            double[,] outLine = mParse.cnvArrayDouble2(args[0]);
+            double[,] outLine = mVar.cnvArrayDouble2(args[0]);
             Polygon3D polygon = new Polygon3D(point3DArray2List(outLine));
             double t = ylib.doubleParse(args[1].mValue);
             List<Point3D> quadsList = polygon.sideFace2Quads(t);
             double[,] dest = point3DList2Array(quadsList);
-            mParse.setReturnArray(dest, ret);
+            mVar.setReturnArray(dest, ret);
 
             //  戻り値の設定
-            mParse.setVariable(new Token("return", TokenType.VARIABLE), ret);
-            return mParse.getVariable("return");
+            mVar.setVariable(new Token("return", TokenType.VARIABLE), ret);
+            return mVar.getVariable("return");
         }
 
         /// <summary>
@@ -625,12 +627,12 @@ namespace KScriptWin
         /// <returns></returns>
         private Token polylineRotate2Quads(List<Token> args, Token ret)
         {
-            (string arrayName, int no) = mParse.getArrayName(new Token(args[0].mValue, TokenType.VARIABLE));
+            (string arrayName, int no) = mVar.getArrayName(new Token(args[0].mValue, TokenType.VARIABLE));
             if (no != 2) return new Token("", TokenType.EMPTY);
-            double[,] outLine = mParse.cnvArrayDouble2(args[0]);
+            double[,] outLine = mVar.cnvArrayDouble2(args[0]);
             Polyline3D polyline = new Polyline3D(point3DArray2List(outLine));
             if (args.Count < 2) return new Token("", TokenType.EMPTY);
-            double[,] line = mParse.cnvArrayDouble2(args[1]);
+            double[,] line = mVar.cnvArrayDouble2(args[1]);
             Line3D centerLine = new Line3D(new Point3D(line[0, 0], line[0,1], line[0,2]), new Point3D(line[1, 0], line[1, 1], line[1, 2]));
             double divAng = Math.PI / 6;
             if (2 < args.Count)
@@ -643,11 +645,11 @@ namespace KScriptWin
                 ea = ylib.doubleParse(args[4].mValue);
             List<Point3D> quadsList = polyline.rotate2Quads(centerLine, divAng, sa, ea);
             double[,] dest = point3DList2Array(quadsList);
-            mParse.setReturnArray(dest, ret);
+            mVar.setReturnArray(dest, ret);
 
             //  戻り値の設定
-            mParse.setVariable(new Token("return", TokenType.VARIABLE), ret);
-            return mParse.getVariable("return");
+            mVar.setVariable(new Token("return", TokenType.VARIABLE), ret);
+            return mVar.getVariable("return");
         }
     }
 }

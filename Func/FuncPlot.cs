@@ -33,6 +33,7 @@ namespace KScriptWin
         private bool mAspectFix = true;
 
         private KParse mParse;
+        private Variable mVar;
         private KLexer mLexer = new KLexer();
         private YLib ylib = new YLib();
 
@@ -41,6 +42,7 @@ namespace KScriptWin
             mScript = script;
             mParse = script.mParse;
             mGraph = script.mGraph;
+            mVar = script.mVar;
         }
 
         public Token plotFunc(Token funcName, Token arg, Token ret)
@@ -257,8 +259,8 @@ namespace KScriptWin
         public void graphSet(List<Token> args)
         {
             if (args.Count < 2) return;
-            List<double> x = mParse.cnvListDouble(args[0]);
-            List<double> y = mParse.cnvListDouble(args[1]);
+            List<double> x = mVar.cnvListDouble(args[0]);
+            List<double> y = mVar.cnvListDouble(args[1]);
             if (x.Count != y.Count)
                 return;
             string title = "";
