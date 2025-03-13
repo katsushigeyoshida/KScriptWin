@@ -43,6 +43,7 @@ namespace KScriptWin
 
         private KParse mParse;
         private Variable mVar;
+        private Util mUtil = new Util();
         private YLib ylib = new YLib();
 
         public FuncPlot3D(KScript script)
@@ -414,7 +415,7 @@ namespace KScriptWin
         /// <returns></returns>
         private Token translate(List<Token> args, Token ret)
         {
-            (string arrayName, int no) = mVar.getArrayName(new Token(args[0].mValue, TokenType.VARIABLE));
+            (string arrayName, int no) = mUtil.getArrayName(new Token(args[0].mValue, TokenType.VARIABLE));
             double[] vec = mVar.cnvListDouble(args[1]).ToArray();
             if (no == 1) {
                 double[] src = mVar.cnvListDouble(args[0]).ToArray();
@@ -447,7 +448,7 @@ namespace KScriptWin
         /// <returns></returns>
         private Token rotate(List<Token> args, Token ret)
         {
-            (string arrayName, int no) = mVar.getArrayName(new Token(args[0].mValue, TokenType.VARIABLE));
+            (string arrayName, int no) = mUtil.getArrayName(new Token(args[0].mValue, TokenType.VARIABLE));
             double ang = ylib.doubleParse(args[1].mValue);      //  回転角度
             string coord = args[2].getValue();                  //  回転軸名
             FACE3D face = coord == "X" ? FACE3D.YZ : coord == "Y" ? FACE3D.ZX : coord == "Z" ? FACE3D.XY: FACE3D.NON;
@@ -482,7 +483,7 @@ namespace KScriptWin
         /// <returns></returns>
         private Token rotateAxis(List<Token> args, Token ret)
         {
-            (string arrayName, int no) = mVar.getArrayName(new Token(args[0].mValue, TokenType.VARIABLE));
+            (string arrayName, int no) = mUtil.getArrayName(new Token(args[0].mValue, TokenType.VARIABLE));
             double ang = ylib.doubleParse(args[1].mValue);          //  回転角度
             double[] vec = mVar.cnvListDouble(args[2]).ToArray();
             Point3D axis = new Point3D(vec[0], vec[1], vec[2]);     //  回転軸ベクトル
@@ -519,7 +520,7 @@ namespace KScriptWin
         /// <returns></returns>
         private Token scale(List<Token> args, Token ret)
         {
-            (string arrayName, int no) = mVar.getArrayName(new Token(args[0].mValue, TokenType.VARIABLE));
+            (string arrayName, int no) = mUtil.getArrayName(new Token(args[0].mValue, TokenType.VARIABLE));
             double[] c = mVar.cnvListDouble(args[1]).ToArray();
             Point3D cp = new Point3D(c[0], c[1], c[2]);
             double scale = ylib.doubleParse(args[2].mValue);
@@ -555,7 +556,7 @@ namespace KScriptWin
         /// <returns></returns>
         private Token holePlate2Quads(List<Token> args, Token ret)
         {
-            (string arrayName, int no) = mVar.getArrayName(new Token(args[0].mValue, TokenType.VARIABLE));
+            (string arrayName, int no) = mUtil.getArrayName(new Token(args[0].mValue, TokenType.VARIABLE));
             if (no != 2) return new Token("", TokenType.EMPTY);
             double[,] outLine = mVar.cnvArrayDouble2(args[0]);
             Polygon3D outPolygon = new Polygon3D(point3DArray2List(outLine));
@@ -583,7 +584,7 @@ namespace KScriptWin
         /// <returns></returns>
         private Token polygonSide2QuadStrip(List<Token> args, Token ret)
         {
-            (string arrayName, int no) = mVar.getArrayName(new Token(args[0].mValue, TokenType.VARIABLE));
+            (string arrayName, int no) = mUtil.getArrayName(new Token(args[0].mValue, TokenType.VARIABLE));
             if (no != 2) return new Token("", TokenType.EMPTY);
             double[,] outLine = mVar.cnvArrayDouble2(args[0]);
             Polygon3D polygon = new Polygon3D(point3DArray2List(outLine));
@@ -605,7 +606,7 @@ namespace KScriptWin
         /// <returns></returns>
         private Token polygonSide2Quads(List<Token> args, Token ret)
         {
-            (string arrayName, int no) = mVar.getArrayName(new Token(args[0].mValue, TokenType.VARIABLE));
+            (string arrayName, int no) = mUtil.getArrayName(new Token(args[0].mValue, TokenType.VARIABLE));
             if (no != 2) return new Token("", TokenType.EMPTY);
             double[,] outLine = mVar.cnvArrayDouble2(args[0]);
             Polygon3D polygon = new Polygon3D(point3DArray2List(outLine));
@@ -627,7 +628,7 @@ namespace KScriptWin
         /// <returns></returns>
         private Token polylineRotate2Quads(List<Token> args, Token ret)
         {
-            (string arrayName, int no) = mVar.getArrayName(new Token(args[0].mValue, TokenType.VARIABLE));
+            (string arrayName, int no) = mUtil.getArrayName(new Token(args[0].mValue, TokenType.VARIABLE));
             if (no != 2) return new Token("", TokenType.EMPTY);
             double[,] outLine = mVar.cnvArrayDouble2(args[0]);
             Polyline3D polyline = new Polyline3D(point3DArray2List(outLine));

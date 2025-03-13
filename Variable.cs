@@ -26,11 +26,6 @@ namespace KScriptWin
     /// double[,]? cnvArrayDouble2(Token args)              配列変数を実数配列double[,]に変換
     /// string[,]? cnvArrayString2(Token args)              配列変数を実数配列double[,]に変換
     /// Token[,] cnvArrayToken2(Token args)                 配列変数を配列 Token[,] に変換
-    /// string getSearchName(Token arg)                     配列検索用の配列名を求める
-    /// (string name, int no) getArrayName(Token args)      変数名または配列名と配列の次元の取得
-    /// (string name, int index) getArrayNo(string arrayName)   配列から配列名と配列のインデックスを取得
-    /// (string name, int? row, int? col) getArrayNo2(string arrayName) 2次元配列から配列名と行と列を取り出す
-    /// (string name, string row, string col) getArgArray2(string arrayName)    2次元配列名から配列名、行名、列名を抽出
     /// ===  配列の戻り値  ===
     /// void setReturnArray(Token[] src, Token dest)        配列戻り値に設定
     /// void setReturnArray(Token[,] src, Token dest)       配列戻り値に設定(2D Token)
@@ -298,7 +293,7 @@ namespace KScriptWin
         /// <returns>文字列あるなし</returns>
         public bool isStringArray(Token args)
         {
-            (string arrayName, int no) = getArrayName(args);
+            (string arrayName, int no) = mUtil.getArrayName(args);
             if (0 < no) {
                 if (0 == arrayName.IndexOf("g_")) {
                     foreach (var variable in mGlobalVar) {
@@ -331,13 +326,13 @@ namespace KScriptWin
             int maxCol = 0;
             if (0 == arrayName.IndexOf("g_")) {
                 foreach (var variable in mGlobalVar) {
-                    (string name, int? col) = getArrayNo(variable.Key);
+                    (string name, int? col) = mUtil.getArrayNo(variable.Key);
                     if (name == arrayName && col != null)
                         maxCol = Math.Max(maxCol, (int)col);
                 }
             } else {
                 foreach (var variable in mVariables) {
-                    (string name, int? col) = getArrayNo(variable.Key);
+                    (string name, int? col) = mUtil.getArrayNo(variable.Key);
                     if (name == arrayName && col != null)
                         maxCol = Math.Max(maxCol, (int)col);
                 }
@@ -373,7 +368,7 @@ namespace KScriptWin
         public List<string> cnvListString(Token arg)
         {
             List<string> listData = new List<string>();
-            string arrayName = getSearchName(arg);
+            string arrayName = mUtil.getSearchName(arg);
             foreach (var variable in getVariableList(arrayName)) {
                 if (0 == variable.Key.IndexOf(arrayName)) {
                     if (variable.Value.mType == TokenType.STRING)
@@ -390,14 +385,14 @@ namespace KScriptWin
         /// <returns>実数配列</returns>
         public double[,]? cnvArrayDouble2(Token args)
         {
-            (string arrayName, int no) = getArrayName(args);
+            (string arrayName, int no) = mUtil.getArrayName(args);
             if (no != 2)
                 return null;
             if (0 < arrayName.IndexOf("["))
                 arrayName = arrayName.Substring(0, arrayName.IndexOf("["));
             int maxRow = 0, maxCol = 0;
             foreach (var variable in getVariableList(arrayName)) {
-                (string name, int? row, int? col) = getArrayNo2(variable.Key);
+                (string name, int? row, int? col) = mUtil.getArrayNo2(variable.Key);
                 if (name == arrayName && row != null && col != null) {
                     maxRow = Math.Max(maxRow, (int)row);
                     maxCol = Math.Max(maxCol, (int)col);
@@ -420,12 +415,12 @@ namespace KScriptWin
         /// <returns>実数配列</returns>
         public string[,]? cnvArrayString2(Token args)
         {
-            (string arrayName, int no) = getArrayName(args);
+            (string arrayName, int no) = mUtil.getArrayName(args);
             if (no != 2)
                 return null;
             int maxRow = 0, maxCol = 0;
             foreach (var variable in getVariableList(arrayName)) {
-                (string name, int? row, int? col) = getArrayNo2(variable.Key);
+                (string name, int? row, int? col) = mUtil.getArrayNo2(variable.Key);
                 if (name == arrayName && row != null && col != null) {
                     maxRow = Math.Max(maxRow, (int)row);
                     maxCol = Math.Max(maxCol, (int)col);
@@ -449,12 +444,12 @@ namespace KScriptWin
         /// <returns>Token配列</returns>
         public Token[,] cnvArrayToken2(Token args)
         {
-            (string arrayName, int no) = getArrayName(args);
+            (string arrayName, int no) = mUtil.getArrayName(args);
             if (no != 2)
                 return null;
             int maxRow = 0, maxCol = 0;
             foreach (var variable in getVariableList(arrayName)) {
-                (string name, int? row, int? col) = getArrayNo2(variable.Key);
+                (string name, int? row, int? col) = mUtil.getArrayNo2(variable.Key);
                 if (name == arrayName && row != null && col != null) {
                     maxRow = Math.Max(maxRow, (int)row);
                     maxCol = Math.Max(maxCol, (int)col);
@@ -468,103 +463,6 @@ namespace KScriptWin
                 }
             }
             return ret;
-        }
-
-        /// <summary>
-        /// 配列検索用の配列名を求める(arrayName[, arraName[, , arrayName[aa, )
-        /// a[] => a[ , a[1] => a[1]
-        /// a[,] => a[ , a[1,] => a[1, , a[,1] => a[,1] , a[1,1] => a[1,1]
-        /// </summary>
-        /// <param name="arg">配列名</param>
-        /// <returns>検索用配列名</returns>
-        public string getSearchName(Token arg)
-        {
-            string arrayName = "";
-            if (0 <= arg.mValue.IndexOf("[]"))
-                arrayName = arg.mValue.Substring(0, arg.mValue.IndexOf('[') + 1);
-            else if (0 <= arg.mValue.IndexOf("[,]"))
-                arrayName = arg.mValue.Substring(0, arg.mValue.IndexOf('[') + 1);
-            else if (0 <= arg.mValue.IndexOf(",]"))
-                arrayName = arg.mValue.Substring(0, arg.mValue.IndexOf(',') + 1);
-            else
-                arrayName = arg.mValue;
-            return arrayName;
-        }
-
-        /// <summary>
-        /// 変数名または配列名と配列の次元の取得
-        /// </summary>
-        /// <param name="args">引数</param>
-        /// <returns>(配列名, 次元)</returns>
-        public (string name, int no) getArrayName(Token args)
-        {
-            int dimNo = 0;
-            int cp = args.mValue.LastIndexOf(',');
-            int sp = args.mValue.IndexOf("[");
-            if (0 < sp && cp < 0) dimNo = 1;
-            if (0 < sp && 0 < cp) dimNo = 2;
-            if (0 < args.mValue.IndexOf("[,]"))
-                cp = -1;
-            string arrayName = "";
-            if (0 < cp)
-                arrayName = args.mValue.Substring(0, cp + 1);
-            else if (0 < sp)
-                arrayName = args.mValue.Substring(0, sp);
-            return (arrayName, dimNo);
-        }
-
-        /// <summary>
-        /// 配列から配列名と配列のインデックスを取得
-        /// </summary>
-        /// <param name="arrayName">配列</param>
-        /// <returns>(配列名,インデックス)</returns>
-        public (string name, int index) getArrayNo(string arrayName)
-        {
-            List<Token> splitName = mLexer.splitArgList(arrayName);
-            if (splitName.Count < 2)
-                return ("", -1);
-            string name = splitName[0].mValue;
-            int index = ylib.intParse(splitName[2].mValue);
-            return (name, index);
-        }
-
-        /// <summary>
-        /// 2次元配列から配列名と行と列を取り出す
-        /// </summary>
-        /// <param name="arrayName">2D配列</param>
-        /// <returns>(配列名、行、列)</returns>
-        public (string name, int? row, int? col) getArrayNo2(string arrayName)
-        {
-            List<Token> splitName = mLexer.splitArgList(arrayName);
-            if (splitName.Count < 5)
-                return ("", null, null);
-            string name = splitName[0].mValue;
-            int row = ylib.intParse(splitName[2].mValue);
-            int col = ylib.intParse(splitName[4].mValue);
-            return (name, row, col);
-        }
-
-        /// <summary>
-        /// 2次元配列名から配列名、行名、列名を抽出
-        /// a[,] => a,, , a[m,] => a,m, , a[,n] => a,,n , a[m,n] => a,m,n
-        /// </summary>
-        /// <param name="arrayName">2D配列名</param>
-        /// <returns>(配列名,行名,列名)</returns>
-        public (string name, string row, string col) getArgArray2(string arrayName)
-        {
-            List<Token> splitName = mLexer.splitArgList(arrayName);
-            Console.WriteLine($"{splitName.Count}");
-            if (splitName.Count < 4)
-                return ("", "", "");
-            string name = splitName[0].mValue;
-            string row = "", col = "";
-            if (splitName[3].mValue == ",") {
-                row = splitName[2].mValue;
-                if (5 < splitName.Count && splitName[5].mValue == "]")
-                    col = splitName[4].mValue;
-            } else if (splitName[2].mValue == "," && 4 < splitName.Count && splitName[4].mValue == "]")
-                col = splitName[3].mValue;
-            return (name, row, col);
         }
 
         //  ===  配列の戻り値  ===

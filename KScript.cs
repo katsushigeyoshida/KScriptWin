@@ -125,6 +125,7 @@ namespace KScriptWin
         public ControlData mControlData;                        //  データを参照渡しするため
 
         private string mFuncName = "";                          //  実行中の関数名
+        private Util mUtil = new Util();
         private YCalc mCalc = new YCalc();                      //  数式処理
         private YLib ylib = new YLib();                         //  汎用関数
 
@@ -351,57 +352,34 @@ namespace KScriptWin
         {
             Token variable = null;
             List<Token> expressList = new List<Token>();
-            if (2 <= tokens.Count) {
-                if (0 <= tokens[0].mValue.IndexOf("[]") ||
-                    0 <= tokens[0].mValue.IndexOf(",]")) {
-                    //  配列一括設定
-                    if (tokens[2].mType == TokenType.STATEMENTS ||
-                        tokens[2].mType == TokenType.ARRAY) {
-                        if (!setArrayData(tokens)) {
-                            outputString($"Error: {tokensString(tokens)}\n");
-                            return RETURNTYPE.ERROR;
-                        }
-                    } else if (tokens[2].mType == TokenType.FUNCTION) {
-                        return funcStatement(tokens, 2, tokens[0]);
-                    } else {
-                        outputString($"Error: {tokensString(tokens)}\n");
-                        return RETURNTYPE.ERROR;
-                    }
-                    return RETURNTYPE.NORMAL;
-                } else if (tokens[0].mType == TokenType.VARIABLE ||
-                    tokens[0].mType == TokenType.ARRAY) {
-                    //  変数、配列に代入
-                    variable = getVariableName(tokens[0]);
-                    expressList.AddRange(tokens.Skip(2));
-                } else if (tokens[0].mType == TokenType.ASSIGNMENT) {
-                    //  '++','--'の時
-                    if (1 < tokens[0].mValue.Length && tokens[0].mValue[1] != '=') {
-                        Token token = new Token("1", TokenType.LITERAL);
-                        expressList = new List<Token>(){
-                            tokens[1],
-                            new Token(tokens[0].mValue[0].ToString(), TokenType.OPERATOR),
-                            token
-                        };
-                        variable = getVariableName(tokens[1]);
-                        Token v = express(expressList);
-                        if (v == null) return RETURNTYPE.ERROR;
-                        mVar.setVariable(variable, v);
+            if (1 >= tokens.Count) return RETURNTYPE.NORMAL;
+            if (0 <= tokens[0].mValue.IndexOf("[]") ||
+                0 <= tokens[0].mValue.IndexOf(",]")) {
+                //  配列一括設定
+                if (tokens[2].mType == TokenType.STATEMENTS ||
+                    tokens[2].mType == TokenType.ARRAY) {
+                    if (setArrayData(tokens))
                         return RETURNTYPE.NORMAL;
-                    }
-                } else {
-                    outputString($"Error: {tokensString(tokens)}\n");
-                    return RETURNTYPE.ERROR;
+                } else if (tokens[2].mType == TokenType.FUNCTION) {
+                    return funcStatement(tokens, 2, tokens[0]);
                 }
+            } else if (tokens[0].mType == TokenType.VARIABLE ||
+                tokens[0].mType == TokenType.ARRAY) {
+                //  変数、配列に代入
+                variable = getVariableName(tokens[0]);
+                expressList.AddRange(tokens.Skip(2));
                 if (tokens[1].mType == TokenType.ASSIGNMENT) {
-                    //  複合演算子(++.--,+=,-=,*=,/=,^=)
-                    //  [変数 = 変数 [+,-,*,/,^] 値] の形式に変換
                     if (tokens[1].mValue.Length == 2) {
+                        //  複合演算子(++.--,+=,-=,*=,/=,^=)
+                        //  [変数 = 変数 [+,-,*,/,^] 値] の形式に変換
                         Token token = new Token("1", TokenType.LITERAL);    //  '++','--'の時値
-                        //  '++','--' 以外の複合演算子
+                                                                            //  '++','--' 以外の複合演算子
                         if (tokens[1].mValue[1] == '=') {
                             token = express(tokens, 2);
-                            if (token == null)
+                            if (token == null) {
+                                outputString($"Error: {tokensString(tokens)}\n");
                                 return RETURNTYPE.ERROR;
+                            }
                         }
                         expressList = new List<Token>(){
                             tokens[0],
@@ -409,16 +387,30 @@ namespace KScriptWin
                             token
                         };
                     }
-                } else {
-                    outputString($"Error: {tokensString(tokens)}\n");
-                    return RETURNTYPE.ERROR;
+                    Token value = express(expressList);
+                    if (value != null) {
+                        mVar.setVariable(variable, value);
+                        return RETURNTYPE.NORMAL;
+                    }
                 }
-                Token value = express(expressList);
-                if (value == null)
-                    return RETURNTYPE.ERROR;
-                mVar.setVariable(variable, value);
+            } else if (tokens[0].mType == TokenType.ASSIGNMENT) {
+                //  '++','--'の時
+                if (1 < tokens[0].mValue.Length && tokens[0].mValue[1] != '=') {
+                    Token token = new Token("1", TokenType.LITERAL);
+                    expressList = new List<Token>(){
+                            tokens[1],
+                            new Token(tokens[0].mValue[0].ToString(), TokenType.OPERATOR),
+                            token
+                        };
+                    variable = getVariableName(tokens[1]);
+                    Token v = express(expressList);
+                    if (v == null) return RETURNTYPE.ERROR;
+                    mVar.setVariable(variable, v);
+                    return RETURNTYPE.NORMAL;
+                }
             }
-            return RETURNTYPE.NORMAL;
+            outputString($"Error: {tokensString(tokens)}\n");
+            return RETURNTYPE.ERROR;
         }
 
         /// <summary>
@@ -882,7 +874,7 @@ namespace KScriptWin
                     else if (0 <= args[i].IndexOf("("))
                         argValue.Add(new Token(args[i].Trim(), TokenType.EXPRESS));
                     else if (0 <= args[i].IndexOf("["))
-                        argValue.Add(new Token(args[i].Trim(), TokenType.VARIABLE));
+                        argValue.Add(express(new Token(args[i].Trim(), TokenType.ARRAY)));
                     else
                         argValue.Add(express(new Token(args[i].Trim(), TokenType.EXPRESS)));
                 }
@@ -1019,8 +1011,8 @@ namespace KScriptWin
         /// <returns>可否</returns>
         private bool setArrayData(List<Token> tokens)
         {
-            Token name = tokens[0];
-            Token data = tokens[2];
+            Token name = convVariable(tokens[0]);
+            Token data = convVariable(tokens[2]);
             if (0 <= name.mValue.IndexOf("[]"))
                 return setArrayData(name, data);    //  1次元配列
             else if (0 <= name.mValue.IndexOf(",]"))
@@ -1029,7 +1021,10 @@ namespace KScriptWin
         }
 
         /// <summary>
-        /// 1次元配列の代入処理(a[] = { 1,2,1,3}, a[] = b[], a[] = b[n,])
+        /// 1次元配列の代入処理
+        /// a[] = { 1,2,1,3};
+        /// a[] = b[];
+        /// a[] = b[n,];
         /// </summary>
         /// <param name="name">代入先配列名</param>
         /// <param name="data">代入元設定値</param>
@@ -1040,7 +1035,7 @@ namespace KScriptWin
             mVar.clearVariables(name);
             if (0 <= data.mValue.IndexOf("{")) {
                 // a[] = { 1,2,3..};
-                List<Token> dataList= getLiteralList(data);
+                List<Token> dataList= convLiteralList(data);
                 for (int i = 0; i < dataList.Count; i++) {
                     string buf = $"{arrayName}[{i}]";
                     mVar.setVariable(new Token(buf, TokenType.VARIABLE), dataList[i]);
@@ -1067,7 +1062,12 @@ namespace KScriptWin
         }
 
         /// <summary>
-        /// 2次元配列の一括値設定(a[,] = { { 1,2,1,3}, {2,3,4,5} } )
+        /// 2次元配列の一括値設定
+        /// a[,] = { { 1,2,1,3}, {2,3,4,5} };
+        /// a[n,] = { 1,2,3 }; 
+        /// a[,] = b[,];
+        /// a[n,] = b[n,];
+        /// a[n,] = b[];
         /// </summary>
         /// <param name="name">配列名</param>
         /// <param name="data">設定値</param>
@@ -1080,7 +1080,7 @@ namespace KScriptWin
                 //  一括設定(a[,] = {{1,2,3},{3,4,5}..};)
                 if (0 <= name.mValue.IndexOf("[,]")) {
                     //  a[,] = {{1,2,3},{2,3,4}...};
-                    List<List<Token>> dataList = getLiteral2List(data);
+                    List<List<Token>> dataList = convLiteral2List(data);
                     for (int i = 0; i < dataList.Count; i++) {
                         for (int j = 0; j < dataList[i].Count; j++) {
                             string buf = $"{arrayName}[{i},{j}]";
@@ -1091,7 +1091,7 @@ namespace KScriptWin
                     //  a[n,] = { 1,2,3 };
                     arrayName = name.mValue.Substring(0, name.mValue.LastIndexOf(','));
                     arrayName = arrayName.Replace(" ", "");
-                    List<Token> dataList = getLiteralList(data);
+                    List<Token> dataList = convLiteralList(data);
                     for (int i = 0; i < dataList.Count; i++) {
                         string buf = $"{arrayName},{i}]";
                         mVar.setVariable(new Token(buf, TokenType.VARIABLE), express(dataList[i]));
@@ -1131,11 +1131,131 @@ namespace KScriptWin
         }
 
         /// <summary>
-        /// 配列のリテラル値の取得({ 1,2,3}) Tokenリストに変換
+        /// 変数、配列変数、数式をリテラルに変換する(変換でないものはそのまま)
         /// </summary>
-        /// <param name="data">リテラルリスト</param>
-        /// <returns>Tokenリスト</returns>
-        private List<Token> getLiteralList(Token data)
+        /// <param name="array">変数、配列変数、数式</param>
+        /// <returns>変換変数</returns>
+        private Token convVariable(Token array)
+        {
+            return new Token(convVariable(array.mValue));
+        }
+
+        /// <summary>
+        /// 変数、配列変数、数式をリテラルに変換する(変換でないものはそのまま)
+        /// </summary>
+        /// <param name="array">変数、配列変数、数式</param>
+        /// <returns>変換変数</returns>
+        private string convVariable(string array)
+        {
+            List<string> arrayList = splitArrayVariable(array);
+            string buf = "";
+            foreach (var vari in arrayList) {
+                if (0 <= vari.IndexOf('[') && 0 <= vari.IndexOf(']')) {
+                    buf += convVariable(vari);
+                } else if (0 <= vari.IndexOf('[') || 0 <= vari.IndexOf(']')
+                 || 0 <= vari.IndexOf(',')) {
+                    buf += vari;
+                    if (isArrayVariable(buf)) {
+                        buf = mVar.getVariable(buf).mValue;
+                    }
+                } else if (0 <= vari.IndexOf('{') || 0 <= vari.IndexOf('}')) {
+                    buf += vari;
+                } else {
+                    buf += express(new Token(vari)).mValue;
+                }
+            }
+            return buf;
+        }
+
+        /// <summary>
+        /// 配列変数を分解する (a[b[n,0],0] →  a[ b[n,0] , 0 ]
+        /// </summary>
+        /// <param name="text">配列変数文字列</param>
+        /// <returns>分解リスト</returns>
+        private List<string> splitArrayVariable(string text)
+        {
+            List<string> extractList = new List<string>();
+            int pos = 0;
+            int count = 0;
+            string buf = "";
+            while (pos < text.Length) {
+                if (text[pos] == '[') {
+                    count++;
+                    buf += text[pos++];
+                    extractList.Add(buf);
+                    buf = "";
+                    while (pos < text.Length) {
+                        if (text[pos] == ']') {
+                            count--;
+                            if (count == 0) {
+                                if (0 < buf.Length)
+                                    extractList.Add(buf);
+                                extractList.Add(text[pos++].ToString());
+                                buf = "";
+                                break;
+                            } else {
+                                buf += text[pos++];
+                            }
+                        } else if (1 == count && text[pos] == ',') {
+                            if (0 < buf.Length)
+                                extractList.Add(buf);
+                            extractList.Add(text[pos++].ToString());
+                            buf = "";
+                        } else if (text[pos] == '[') {
+                            count++;
+                            buf += text[pos++];
+                        } else if (text[pos] == ' ' || text[pos] == '\n' || text[pos] == '\r') {
+                            pos++;
+                        } else {
+                            buf += text[pos++];
+                        }
+                    }
+                } else if (text[pos] == ',' || text[pos] == ']'
+                     || text[pos] == '{' || text[pos] == '}') {
+                    if (0 < buf.Length)
+                        extractList.Add(buf);
+                    extractList.Add(text[pos++].ToString());
+                    buf = "";
+                } else if (text[pos] == '"') {
+                    buf += text[pos++];
+                    while (pos < text.Length && text[pos] != '"') {
+                        buf += text[pos++];
+                    }
+                } else if (text[pos] == ' ' || text[pos] == '\t'
+                    || text[pos] == '\n' || text[pos] == '\r') {
+                    pos++;
+                } else {
+                    buf += text[pos++];
+                }
+            }
+            if (0 < buf.Length)
+                extractList.Add(buf);
+            return extractList;
+        }
+
+        /// <summary>
+        /// 文字列が配列変数かの確認 ([]の対応があっていないものは配列とはみなさない)
+        /// </summary>
+        /// <param name="vari">変数文字列</param>
+        /// <returns>配列変数</returns>
+        private bool isArrayVariable(string vari)
+        {
+            int sc = 0, ec = 0;
+            for (int i = 0; i < vari.Length; i++) {
+                if (vari[i] == '[') sc++;
+                if (vari[i] == ']') ec++;
+            }
+            if (0 < sc && sc == ec)
+                return true;
+            return false;
+        }
+
+        /// <summary>
+        /// 配列のリテラル値({ 1,2,3})を Tokenリストに変換
+        /// </summary>
+        /// <param name="data">1次元リテラル配列</param>
+        /// <returns>データリスト</returns>
+        private List<Token> convLiteralList(Token data)
         {
             string str = mLexer.stripBracketString(data.mValue, '{');
             List<Token> datas = mLexer.tokenList(str);
@@ -1148,11 +1268,11 @@ namespace KScriptWin
         }
 
         /// <summary>
-        /// 二次元配列のリテラル値の取得({{1,2,3},{4,5,6},..}) Tokenリストに変換
+        /// 二次元配列のリテラル値({{1,2,3},{4,5,6},..})を Tokenリストに変換
         /// </summary>
-        /// <param name="data"></param>
-        /// <returns></returns>
-        private List<List<Token>> getLiteral2List(Token data)
+        /// <param name="data">2次元リテラル配列</param>
+        /// <returns>データリスト</returns>
+        private List<List<Token>> convLiteral2List(Token data)
         {
             string str = mLexer.stripBracketString(data.mValue, '{');
             List<string> strings = mLexer.getBracketStringList(str, 0, '{');

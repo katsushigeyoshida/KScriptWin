@@ -35,6 +35,7 @@ namespace KScriptWin
         //  共有クラス
         public KScript mScript;
         private KParse mParse;
+        private Util mUtil = new Util();
         private Variable mVar;
 
         private YLib ylib = new YLib();
@@ -147,7 +148,7 @@ namespace KScriptWin
         public void remove(List<Token> args)
         {
             if (args.Count < 2) return;
-            (string arrayName, int no) = mVar.getArrayName(new Token(args[0].mValue, TokenType.VARIABLE));
+            (string arrayName, int no) = mUtil.getArrayName(new Token(args[0].mValue, TokenType.VARIABLE));
             int st = ylib.intParse(args[1].mValue);
             int ed = args.Count > 2 ? ylib.intParse(args[2].mValue) : st;
             for (int i = st; i <= ed; i++) {
@@ -163,7 +164,7 @@ namespace KScriptWin
         /// <param name="args">配列名</param>
         public void squeeze(List<Token> args)
         {
-            (string arrayName, int no) = mVar.getArrayName(args[0]);
+            (string arrayName, int no) = mUtil.getArrayName(args[0]);
             if (no != 1)
                 return;
             List<Token> listToken = new();
@@ -189,7 +190,7 @@ namespace KScriptWin
         /// <param name="args">配列名</param>
         public void sort(List<Token> args)
         {
-            (string arrayName, int no) = mVar.getArrayName(args[0]);
+            (string arrayName, int no) = mUtil.getArrayName(args[0]);
             if (no == 1) {
                 if (mVar.isStringArray(args[0])) {
                     //  文字列のソート
@@ -205,7 +206,7 @@ namespace KScriptWin
                     mVar.setReturnArray(doubleArray, args[0]);
                 }
             } else if (no == 2) {
-                (string name, string row, string col) = mVar.getArgArray2(args[0].mValue);
+                (string name, string row, string col) = mUtil.getArgArray2(args[0].mValue);
                 string outname = name + "[,]";
                 int n = col == "" ? 0 : ylib.intParse(col);
                 if (mVar.isStringArray(args[0])) {
@@ -229,7 +230,7 @@ namespace KScriptWin
         /// <param name="args">配列名[,colReverse]</param>
         public void reverse(List<Token> args)
         {
-            (string arrayName, int no) = mVar.getArrayName(args[0]);
+            (string arrayName, int no) = mUtil.getArrayName(args[0]);
             bool colRevers = false;
             if (1 < args.Count)
                 colRevers = args[1].mValue == "1";
@@ -240,7 +241,7 @@ namespace KScriptWin
                 arrayName += "[";
                 foreach (var variable in mVar.getVariableList(arrayName)) {
                     if (0 <= variable.Key.IndexOf(arrayName)) {
-                        (string name, int col) = mVar.getArrayNo(variable.Key);
+                        (string name, int col) = mUtil.getArrayNo(variable.Key);
                         tokens[maxcol - col] = variable.Value;
                     }
                 }
@@ -274,10 +275,10 @@ namespace KScriptWin
         /// <returns>最大値</returns>
         public Token max(List<Token> args)
         {
-            (string arrayName, int no) = mVar.getArrayName(args[0]);
+            (string arrayName, int no) = mUtil.getArrayName(args[0]);
             double max = double.MinValue;
             if (no == 1 || no == 2) {
-                arrayName = mVar.getSearchName(args[0]);
+                arrayName = mUtil.getSearchName(args[0]);
             } else
                 return new Token(arrayName, TokenType.ERROR);
             foreach (var variable in mVar.getVariableList(arrayName)) {
@@ -299,10 +300,10 @@ namespace KScriptWin
         /// <returns>最小値</returns>
         public Token min(List<Token> args)
         {
-            (string arrayName, int no) = mVar.getArrayName(args[0]);
+            (string arrayName, int no) = mUtil.getArrayName(args[0]);
             double min = double.MaxValue;
             if (no == 1 || no == 2) {
-                arrayName = mVar.getSearchName(args[0]);
+                arrayName = mUtil.getSearchName(args[0]);
             } else
                 return new Token(arrayName, TokenType.ERROR);
             foreach (var variable in mVar.getVariableList(arrayName)) {
@@ -324,7 +325,7 @@ namespace KScriptWin
         /// <returns>合計</returns>
         public Token sum(List<Token> args)
         {
-            (string arrayName, int no) = mVar.getArrayName(args[0]);
+            (string arrayName, int no) = mUtil.getArrayName(args[0]);
             List<double> listData = new();
             if (no == 1 || no == 2) {
                 listData = mVar.cnvListDouble(args[0]);
@@ -341,7 +342,7 @@ namespace KScriptWin
         /// <returns>平均値</returns>
         public Token average(List<Token> args)
         {
-            (string arrayName, int no) = mVar.getArrayName(args[0]);
+            (string arrayName, int no) = mUtil.getArrayName(args[0]);
             List<double> listData = new();
             if (no == 1 || no == 2) {
                 listData = mVar.cnvListDouble(args[0]);
@@ -358,7 +359,7 @@ namespace KScriptWin
         /// <returns>分散値</returns>
         public Token variance(List<Token> args)
         {
-            (string arrayName, int no) = mVar.getArrayName(args[0]);
+            (string arrayName, int no) = mUtil.getArrayName(args[0]);
             List<double> listData = new();
             if (no == 1 || no == 2) {
                 listData = mVar.cnvListDouble(args[0]);
@@ -442,8 +443,8 @@ namespace KScriptWin
         {
             if (args.Count < 2)
                 return new Token("", TokenType.ERROR);
-            (string arrayA, int noA) = mVar.getArrayName(new Token(args[0].mValue, TokenType.VARIABLE));
-            (string arrayB, int noB) = mVar.getArrayName(new Token(args[1].mValue, TokenType.VARIABLE));
+            (string arrayA, int noA) = mUtil.getArrayName(new Token(args[0].mValue, TokenType.VARIABLE));
+            (string arrayB, int noB) = mUtil.getArrayName(new Token(args[1].mValue, TokenType.VARIABLE));
             if (noA == 1 && noB == 1) {
                 List<double> a = mVar.cnvListDouble(args[0]);
                 List<double> b = mVar.cnvListDouble(args[1]);

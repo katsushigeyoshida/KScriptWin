@@ -132,6 +132,16 @@ namespace KScriptWin
     /// 代入演算子(ASSIGNMENT)  : =|+=|-=|*=|/=|^=|++|--
     /// 条件演算子(CONDITINAL)  : ==|!=|<|>|<=|>=
     /// 区切り文字(DELIMITER)   : (|)|{|}| |,|;
+    /// 
+    /// List<Token> tokenList(string str)               字句解析 文字列をトークンリストに変換
+    /// 
+    /// List<List<Token>> tokensList(List<Token> tokens, char sep = ',')    トークンをセパレータで区切ってまとめる
+    /// string stripBracketString(string str, char bracket = '(')   括弧付き文字列で前後の括弧を除いた文字列
+    /// getBracketString(string str, int n, char bracket = '(')     括弧で囲まれた文字列の抽出(括弧含む)
+    /// List<string> getBracketStringList(string str, int n, char bracket = '(')    複数の括弧で囲まれた文字列の抽出(括弧含む)
+    /// List<string> commaSplit(string str)             カンマで文字列を分割する("",(),{},[]内は無視)
+    /// List<Token> splitArgList(string args)           引数文字列の分解(args[a,b] → args,[,a,,,b,])
+    /// 
     /// </summary>
     public class KLexer
     {
@@ -286,7 +296,7 @@ namespace KScriptWin
             str = str.Trim();
             int sp = str.IndexOf(mBrackets[offset]);
             int ep = str.LastIndexOf(mBrackets[offset + 1]);
-            if (sp != 0 || ep < 0 || sp >= ep)
+            if (sp != 0 || ep != str.Length -1)
                 return str;
             return str.Substring(sp + 1, ep - sp - 1);
         }

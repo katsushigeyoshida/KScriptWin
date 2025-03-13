@@ -31,7 +31,8 @@ Editorの機能(AvalonEditor)
 ・検索・置換え (検索のみ 2024/09/30)
 ・関数名や定数の入力候補機能(コードスニペット snippets) Apps/F8キー (2024/10/10)
 ・タブをスペースに変換
-・ユーザー関数の入力候補
+・ユーザー関数の入力候補(2024/)
+・Shift+Alt+矢印 : 複数行操作
 
 KScriptの特徴
 ・インタプリタであること
@@ -53,17 +54,53 @@ KScriptWinの特徴
 ・グラフィック機能が簡単に使用できる(直接ワールド座標が使えスクリーン座標を考慮する必要がない)
 
 システム関数
-    a = inKey();
-    sleep(n);
-    cmd(command);                           cmd(dir);
-	dateTime(type);
-    startTime();
-    s = lapTime();
+    key = inKey();                          キー入力
+    sleep(n);                               スリープ(n msec)
+    cmd(command);                           Windowsコマンドの実行
+    t = dateTimeNow(type);                  現在の時刻を文字列で取得(0:\"HH:mm:ss 1:yyyy/MM/dd HH:mm:ss 2:yyyy/MM/dd 3:HH時mm分ss秒 4:yyyy年MM月dd日 HH時mm分ss秒 5:yyyy年MM月dd日
+    startTime();                            時間計測の開始
+    lap = lapTime();                        経過時間の取得(秒)
+マトリックス関数
+    m[,] = matrix.unit(size);               単位行列(2次元)の作成(a[,]=...)
+    m[,] = matrix.transpose(a[,]);          転置行列(2次元行列Aの転置(A^T) b[,]=...)
+    m[,] = matrix.multi(a[,],b[,]);         行列の積 AxB (c[,]=...)
+    m[,] = matrix.add(a[,],b[,]);           行列の和 A+B c[,]=...)
+    m[,] = matrix.inverse(a[,]);            逆行列 A^-1 (b[,]=...)
+    m[,] = matrix.copy(a[,]);               行列のコピー(b[,]=...)
+方程式の解
+    r[] = solve.quadraticEquation(a,b,c);   2次方程式の解(y = a*x^2+b*x+c)(y[] = solv..)
+    r[] = solve.qubicEquation(a,b,c,d);     3次方程式の解(y = a*x^3+b*x^2+c*x+d)(y[] = solv..)
+    r[] = solve.quarticEquation(a,b,c,d,e); 4次方程式の解(y = a*x^4+b*x^3+c*x^2+d*x+e)(y[] = solv..)
+
+配列関数
+    n = array.contains(c[2]);                   配列の有無(0:なし 1:あり)
+    n = array.count(a[]);                       1次元配列のサイズ
+    n = array.count(a[,]);                      2次元配列のサイズ
+    n = array.count(a[1,]);                     2次元配列1列目のサイズ
+    array.clear(a[]);                           配列クリア
+    array.remove(a[],start[,end]);              配列要素を範囲指定で削除
+    array.squeeze(a[]);                         配列の未使用データを削除圧縮
+    a[] = array.sort(a[]);                      配列のソート
+    a[] = array.sort(a[,n]);                    配列をn列でソート
+    a[] = array.reverse(a[]);                   配列の逆順
+    a[,] = array.reverse(a[,]);                 配列の行を逆順
+    a[,] = array.reverse(a[,],1);               配列の列を逆順
+    c[] = array.concat(a[],b[]);                配列同士の結合c[]=array.add(a[],b[])
+    c[,] = array.concat(a[,],b[,]);             配列同士の結合c[,]=array.add(a[,],b[,])
+    m = array.max(a[]);                         配列の最大値
+    m = array.min(a[,]);                        配列の最小値
+    sum =array.sum(a[]);                        配列の合計
+    ave = array.average(a[,]);                  配列の平均
+    v = array.variance(a[]);                    配列の分散
+    std = array.stdDeviation(a[]);              配列の標準偏差
+    c = array.covariance(a[], b[]);             共分散
+    c = array.corrCoeff(x[],y[]);               配列の相関係数
 
 Win版用の関数
-    a = inputBox(title);                    文字入力ダイヤログ
-    messageBox(outString[, title]);         文字列のダイヤログ表示
-    n = menuSelect(menu[],title);
+    a = inputBox(title);                        文字入力ダイヤログ
+    messageBox(outString[, title]);             文字列のダイヤログ表示
+    n = menuSelect(menu[],title);               メニュー選択ダイヤログ
+
     plot関数(2Dグラフィック)
         plot.WindowSet(left,bottom,right,top);   表示領域の設定
         plot.Aspect(1);                          アスペクト比固定の設定(0(非固定)/1(固定))
@@ -104,7 +141,8 @@ Win版用の関数
         plot3D.polygonSideQuads(polygon[,],thicknes);       ポリゴンの側面データをQuadsで作成
         plot3D.polylinRotateQuads(polyline[,],centerline[,],divAng,sa,ea); ポリラインデーをセンタラインを中心に回転させたデータ
  
-ScriptLibの追加関数の引数の処理方法
+内部処理 
+    ScriptLibの追加関数の引数の処理方法
     配列以外の引数は値で渡す
     //  配列以外の引数 messageBox("メッセージ" [, title])
     public void messageBox(Token args) {
@@ -143,31 +181,32 @@ ScriptLibの追加関数の引数の処理方法
         if (2 < listArg.Count)
             title = getValueToken(listArg[2]).mValue.Trim('"');
 
-変数から値の取得
-    a = 2; b = a; b = a- 1;
-    b = c[1]; b = c[a]; b = c[a -2]; b = d[c[1]]; b = d[c[a]]; b = c["string"];
-    b = e[1, 2]; b = e[a, 1]; b = e[a - 1,1];
+    変数から値の取得
+        a = 2; b = a; b = a- 1;
+        b = c[1]; b = c[a]; b = c[a -2]; b = d[c[1]]; b = d[c[a]]; b = c["string"];
+        b = e[1, 2]; b = e[a, 1]; b = e[a - 1,1];
 
-    value = getVariableValue(Token variable)
+        value = getVariableValue(Token variable)
         value = variable.TokenType.LITERAL
                                    STRING
                                    VARIABLE   ←　mParse.getVriable()
                                    ARRAY      ← Index ←  variables, array
+        value = convVariable(variable/array);
 
 機能追加
 ・多次元配列対応(インデックスなしの場合) 3次元以上  a[,,],a[,,,] ...の時
 ・2Dグラフィック: plotXXXXX() (2024/10/06)
 ・追加グラフィック関数 plotRect(),plotPolyline(a[,]),plotPolygon(a[,]),plotFIllColor()
 ・グラフ機能 散布図,(折線,棒グラフ)
-・3Dグラフィック  回転体の作成, dataClear()
-・ダイヤログ関数(xxxDlg関数) input,message (2024/10/06) menuSlelct
+・3Dグラフィック  回転体の作成, dataClear() (2024/11/10)
+・ダイヤログ関数(xxxDlg関数) inputBox, messageBox, menuSlelct (2024/10/06)
 ・システム設定(フォントファミリ・サイズ、)
 ・条件文の true/false は現状は 数値/!数値 で対応
 ・swtch文、do while()
-・システム関数 win版inkey()
+・システム関数 win版inkey() (2024/12/02)
 ・ファイルの読込保存 a=loadText(), saveText(a),a[]=loadLine(),saveLine(a[]),a[,]=loadCsv(),savCsv(a[,]);
 ・数値: format/toString,
-・時刻・時間関数: startTime,lapTime,dateTimeNow (2024/10/24), sleep()
+・時刻・時間関数: startTime, lapTime, dateTimeNow, sleep() (2024/10/24)
 ・乱数()
 ・配列関数: copy, add, insert, find, findAll, findIndex, findLast,findLastIndex,
             indexOf, lastIndexOf
@@ -188,6 +227,7 @@ ScriptLibの追加関数の引数の処理方法
 
 機能制限
 ・関数は値渡しのみでアドレス渡しは不可
+・2次元配列インデックスの入れ子不可 n = a[b[1,2],0];  (2025/01/30)
 
 問題点
 ・return で関数が使えない(return array.add();) 引数内で関数が使えない(holePlateQuads(array.reverse());)
@@ -197,6 +237,8 @@ ScriptLibの追加関数の引数の処理方法
 ・println("DEG(atan2 = ", DEG(atan2(1,1))); ← string内の括弧が認識される (2024/10/23)
 ・グラフィックウィンドウのクローズができない
 ・コメント追加/解除するとundoがリセットされる (2024/10/23 AvalonEditor.Documentで対応)
+・if (abs(p[i,0]) < 1e-8) p[i,0] = 0; (2025/1/26)
+・plot3D.plotPolygon(p[,]); p[,] = { {1,0,0}, {0,1,0}, {0,0,1}} oint3D.cnvPlaneLocation()のバグ
 
 ■開発環境
 開発ソフト : Microsoft Visual Studio 2022  
@@ -207,6 +249,8 @@ NuGetライブラリ : AvalonEditor
 
 
 履歴
+2025/01/26 Point3D.cnvPlaneLocation()のバグ修正
+2025/01/12 配列の代入追加 (a[] = b[], a[,] = b[,], a[n,] = b[m,])
 2024/12/05 関数名変更 array.add()  →  array.concat()
 2024/12/02 inKey(),sleep(),plot3D.dataClear()追加 (アニメーション機能用)
 2024/12/01 array.add()関数追加

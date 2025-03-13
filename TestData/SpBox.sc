@@ -17,7 +17,7 @@ cy = 2;
 t = 0.5;
 plot3D.setColor("SandyBrown");
 
-v[] = { 0,0,5};
+v[] = { 0,0,5 };
 plot3D.plotTranslate(v[]);
 plot3D.plotPush();
 //	前面

@@ -3,6 +3,7 @@ println("Increment Test");
 n= 1;
 println(n);
 println(n += 1);
+println(n);
 println(n++);
 println(n);
 println(++n);
