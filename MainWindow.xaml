@@ -128,9 +128,10 @@
                         </Grid.ColumnDefinitions>
                         <Grid Grid.Column="0">
                             <ComboBox Name="cbFolderList" Height="25" VerticalAlignment="Top" SelectionChanged="cbFolderList_SelectionChanged" MouseDoubleClick="cbFolderList_MouseDoubleClick" />
-                            <ListBox x:Name="lbFileList" Margin="0,25,0,0" SelectionChanged="lbFileList_SelectionChanged" >
+                            <ListBox x:Name="lbFileList" Margin="0,25,0,0" SelectionChanged="lbFileList_SelectionChanged" MouseDoubleClick="lbFileList_MouseDoubleClick" >
                                 <ListBox.ContextMenu>
                                     <ContextMenu>
+                                        <MenuItem Header="開く" Name="lbFileListOpenMenu" Click="lbFileListMenu_Click" />
                                         <MenuItem Header="コピー" Name="lbFileListCopyMenu" Click="lbFileListMenu_Click" />
                                         <MenuItem Header="移動" Name="lbFileListmoveMenu" Click="lbFileListMenu_Click" />
                                         <MenuItem Header="削除" Name="lbFileListRemoveMenu" Click="lbFileListMenu_Click" />

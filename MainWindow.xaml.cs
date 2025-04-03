@@ -272,6 +272,21 @@ namespace KScriptWin
         }
 
         /// <summary>
+        /// 参照ファイルリストをダブルクリック
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void lbFileList_MouseDoubleClick(object sender, MouseButtonEventArgs e)
+        {
+            int index = lbFileList.SelectedIndex;
+            if (0 <= index) {
+                closeCheck();
+                string path = Path.Combine(cbFolderList.Text, lbFileList.Items[index].ToString());
+                loadFile(path);
+            }
+        }
+
+        /// <summary>
         /// 参照ファイルリストのコンテキストメニュー
         /// </summary>
         /// <param name="sender"></param>
@@ -284,7 +299,9 @@ namespace KScriptWin
             if (0 <= index)
                 path = Path.Combine(cbFolderList.Text, lbFileList.Items[index].ToString());
 
-            if (menuItem.Name.CompareTo("lbFileListCopyMenu") == 0) {
+            if (menuItem.Name.CompareTo("lbFileListOpenMenu") == 0) {
+                ylib.openUrl(path);
+            } else if (menuItem.Name.CompareTo("lbFileListCopyMenu") == 0) {
                 copyFile(path);
             } else if (menuItem.Name.CompareTo("lbFileListmoveMenu") == 0) {
                 copyFile(path, true);
@@ -570,16 +587,27 @@ namespace KScriptWin
             };
             string path = ylib.fileOpenSelectDlg("ファイル選択", mDataFolder, filters);
             if (path != null && 0 < path.Length) {
-                mDataFolder = Path.GetDirectoryName(path);
-                mFilePath = path;
-                string text = ylib.loadTextFile(path);
-                avalonEditor.Text = text;
-                setHash(text);
-                setTitle();
-                mSearchWordIndex = 0;
-                updateSnippetKeyWird(text);
+                loadFile(path);
             }
         }
+
+        /// <summary>
+        /// プログラムファイルを読み込む
+        /// </summary>
+        /// <param name="path">プログラムファイルパス</param>
+        private void loadFile(string path)
+        {
+            if (!File.Exists(path) || Path.GetExtension(path).ToLower() != ".sc") return;
+            mDataFolder = Path.GetDirectoryName(path);
+            mFilePath = path;
+            string text = ylib.loadTextFile(path);
+            avalonEditor.Text = text;
+            setHash(text);
+            setTitle();
+            mSearchWordIndex = 0;
+            updateSnippetKeyWird(text);
+        }
+
 
         /// <summary>
         /// 入力候補のデータを更新する

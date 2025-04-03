@@ -194,25 +194,26 @@ Win版用の関数
         value = convVariable(variable/array);
 
 機能追加
+・3Dグラフィックにレイヤー機能の追加 plot3D.setLayer("レイヤー名"))
 ・多次元配列対応(インデックスなしの場合) 3次元以上  a[,,],a[,,,] ...の時
-・2Dグラフィック: plotXXXXX() (2024/10/06)
 ・追加グラフィック関数 plotRect(),plotPolyline(a[,]),plotPolygon(a[,]),plotFIllColor()
 ・グラフ機能 散布図,(折線,棒グラフ)
-・3Dグラフィック  回転体の作成, dataClear() (2024/11/10)
-・ダイヤログ関数(xxxDlg関数) inputBox, messageBox, menuSlelct (2024/10/06)
 ・システム設定(フォントファミリ・サイズ、)
 ・条件文の true/false は現状は 数値/!数値 で対応
 ・swtch文、do while()
-・システム関数 win版inkey() (2024/12/02)
 ・ファイルの読込保存 a=loadText(), saveText(a),a[]=loadLine(),saveLine(a[]),a[,]=loadCsv(),savCsv(a[,]);
 ・数値: format/toString,
-・時刻・時間関数: startTime, lapTime, dateTimeNow, sleep() (2024/10/24)
 ・乱数()
 ・配列関数: copy, add, insert, find, findAll, findIndex, findLast,findLastIndex,
             indexOf, lastIndexOf
 ・文字列関数: char取出, substring,replace,insert,remove,trim,toString,length,indexof,join,split,compare
 ・数式: 4元数, 最小二乗法,多変量解析
 
+・2Dグラフィック: plotXXXXX() (2024/10/06)
+・3Dグラフィック  回転体の作成, dataClear() (2024/11/10)
+・ダイヤログ関数(xxxDlg関数) inputBox, messageBox, menuSlelct (2024/10/06)
+・システム関数 win版inkey() (2024/12/02)
+・時刻・時間関数: startTime, lapTime, dateTimeNow, sleep() (2024/10/24)
 ・pause の追加 pause("message"); (2024/11/17)
 ・exit を例外処理(throw)で組み込む (2024/10/23)
 ・グローバル変数は変数名の先頭に「g_」をつけることで対応 (2024/10/20)

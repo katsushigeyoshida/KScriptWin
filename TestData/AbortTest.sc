@@ -1,4 +1,5 @@
 ﻿println("inKey start");
+print("Key In ? =");
 a = inKey();
 println("Key Code: ",a);
 
