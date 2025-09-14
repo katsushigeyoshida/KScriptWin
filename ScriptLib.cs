@@ -1,4 +1,5 @@
 ﻿using CoreLib;
+using System;
 using System.Windows;
 
 namespace KScriptWin
@@ -6,15 +7,7 @@ namespace KScriptWin
     /// <summary>
     /// 追加内部関数
     ///     input    : a = input();                         キー入力(文字列)
-    ///     cmd      : cmd(command);                        Windowsコマンドの実行
-    ///     array.xxxx                                      配列関数 (FuncArray.cs)
-    ///     matrix.xxxx                                     マトリックス関数
-    ///         a[,] = matrix.unit(size);                   単位行列の作成
-    ///         b[,] = matrix.transpose(a[,]);              転置行列  行列Aの転置A^T
-    ///         c[,] = matrix.multi(a[,], b[,]);            行列の積 AxB
-    ///         c[,] = matrix.add(a[,], b[,]);              行列の和 A+B
-    ///         b[,] = matrix.inverse(a[,]);                逆行列 A^-1
-    ///         b[,] = matrix.copy(a[,]);                   行列のコピー
+    ///     cmd      : cmd(command);                        Windowsコマンドの実行s)
     ///     
     /// Windows用関数
     ///     inputBox    : a = inputBox();                   文字入力ダイヤログ
@@ -33,22 +26,6 @@ namespace KScriptWin
     ///     imageView                                       イメージ表示(Win版)
     ///     
     /// 
-    /// スクリプト関数の引数や戻り値を処理する関数(KParse)
-    ///     bool isStringArray(Token args)                      配列に文字列名があるかの確認
-    ///     string[]? cnvArrayString(Token args)                配列をstring[]に変換
-    /// 　　double[]? cnvArrayDouble(Token args)                配列をdouble[]に変換
-    /// 　　double[,]? cnvArrayDouble2(Token args)              配列変数を実数配列double[,]に変換
-    /// 　　List<double> cnvListDouble(Token arg)               配列データを実数のリストに変換
-    /// 　　int getMaxArray(string arrayName)                   配列の最大インデックスを求める
-    /// 　　(string name, int index) getArrayNo(string arrayName)   配列から配列名と配列のインデックスを取得
-    /// 　　(string name, int? row, int? col) getArrayNo2(string arrayName) 2次元配列から配列名と行と列を取り出す
-    /// 　　(string name, int no) getArrayName(Token args)      変数名または配列名と配列の次元の取得
-    ///                                                     
-    /// 　　void setReturnArray(Token[] src, Token dest)        配列戻り値に設定
-    /// 　　void setReturnArray(double[,] src, Token dest)      2D配列の戻り値に設定
-    /// 　　void setReturnArray(double[] src, Token dest)        配列の戻り値に設定
-    /// 　　void setReturnArray(string[] src, Token dest)       文字列配列を戻り値に設定
-    /// 
     /// </summary>
     public class ScriptLib
     {
@@ -59,12 +36,6 @@ namespace KScriptWin
             "inKey(); キー入力",
             "sleep(n); スリープ(n msec)",
             "cmd(command); Windowsコマンドの実行",
-            "matrix.unit(size); 単位行列(2次元)の作成(a[,]=...)",
-            "matrix.transpose(a[,]); 転置行列(2次元行列Aの転置(A^T) b[,]=...)",
-            "matrix.multi(a[,],b[,]); 行列の積 AxB (c[,]=...)",
-            "matrix.add(a[,],b[,]); 行列の和 A+B c[,]=...)",
-            "matrix.inverse(a[,]); 逆行列 A^-1 (b[,]=...)",
-            "matrix.copy(a[,]); 行列のコピー(b[,]=...)",
             "dateTimeNow(type); 現在の時刻を文字列で取得(0:\"HH:mm:ss 1:yyyy/MM/dd HH:mm:ss 2:yyyy/MM/dd 3:HH時mm分ss秒 4:yyyy年MM月dd日 HH時mm分ss秒 5:yyyy年MM月dd日",
             "startTime(); 時間計測の開始",
             "lapTime(); 経過時間の取得(秒)",
@@ -108,12 +79,6 @@ namespace KScriptWin
                 case "messageBox"       : messageBox(args); break;
                 case "sleep"            : sleep(args); break;
                 case "cmd"              : cmd(args); break;
-                case "matrix.unit"      : return unitMatrix(args, ret);
-                case "matrix.transpose" : return matrixTranspose(args, ret);
-                case "matrix.multi"     : return matrixMulti(args, ret);
-                case "matrix.add"       : return matrixAdd(args, ret);
-                case "matrix.inverse"   : return matrixInverse(args, ret);
-                case "matrix.copy"      : return matrixCopy(args, ret);
                 case "menuSelect"       : return menuSelect(args);
                 case "dateTimeNow"      : return dateTimeNow(args);
                 case "startTime"        : starTime(); break;
@@ -145,7 +110,7 @@ namespace KScriptWin
         }
 
         /// <summary>
-        /// 現在の時刻の取得
+        /// 現在の時刻の取得(dateTimeNow() / dateTimeNow(No) / dateTimeNow(Form))
         /// 0:"HH:mm:ss 1:yyyy/MM/dd HH:mm:ss 2:yyyy/MM/dd
         /// 3:HH時mm分ss秒 4:yyyy年MM月dd日 HH時mm分ss秒 5:yyyy年MM月dd日
         /// </summary>
@@ -153,30 +118,30 @@ namespace KScriptWin
         /// <returns></returns>
         public Token dateTimeNow(List<Token> args)
         {
-            if (args == null || args.Count == 0) 
-                return new Token("", TokenType.ERROR);
-            int format = ylib.intParse(mScript.getValueToken(args[0].mValue).mValue);
-            if (format == 1) {
-                string datetime = DateTime.Now.ToString("yyyy/MM/dd HH:mm:ss");
-                return new Token(datetime, TokenType.STRING);
-            } else if (format == 2) {
-                string datetime = DateTime.Now.ToString("yyyy/MM/dd");
-                return new Token(datetime, TokenType.STRING);
-            } else if (format == 3) {
-                string datetime = DateTime.Now.ToString("HH時mm分ss秒");
-                return new Token(datetime, TokenType.STRING);
-            } else if (format == 4) {
-                string datetime = DateTime.Now.ToString("yyyy年MM月dd日 HH時mm分ss秒");
-                return new Token(datetime, TokenType.STRING);
-            } else if (format == 5) {
-                string datetime = DateTime.Now.ToString("yyyy年MM月dd日");
-                return new Token(datetime, TokenType.STRING);
-            } else {
-                string datetime = DateTime.Now.ToString("HH:mm:ss");
+            string datetime = "";
+            if (args == null || args.Count == 0) {
+                datetime = DateTime.Now.ToString("HH:mm:ss");
                 return new Token(datetime, TokenType.STRING);
             }
+            string form = args[0].getValue();
+            int formNo = ylib.intParse(form);
+            if (formNo == 1) {
+                datetime = DateTime.Now.ToString("yyyy/MM/dd HH:mm:ss");
+            } else if (formNo == 2) {
+                datetime = DateTime.Now.ToString("yyyy/MM/dd");
+            } else if (formNo == 3) {
+                datetime = DateTime.Now.ToString("HH時mm分ss秒");
+            } else if (formNo == 4) {
+                datetime = DateTime.Now.ToString("yyyy年MM月dd日 HH時mm分ss秒");
+            } else if (formNo == 5) {
+                datetime = DateTime.Now.ToString("yyyy年MM月dd日");
+            } else if (formNo == 0) {
+                datetime = DateTime.Now.ToString(form);
+            } else {
+                datetime = DateTime.Now.ToString("HH:mm:ss");
+            }
+            return new Token(datetime, TokenType.STRING);
         }
-
 
         /// <summary>
         /// メニューを出して項目を選択(inner function)
@@ -329,124 +294,6 @@ namespace KScriptWin
             double[] result = ylib.solveQuarticEquation(a, b, c, d, e).ToArray();
             //  戻り値の設定
             mVar.setReturnArray(result, ret);
-            mVar.setVariable(new Token("return", TokenType.VARIABLE), ret);
-            return mVar.getVariable("return");
-        }
-
-        /// <summary>
-        /// 単位行列の作成(n x n)
-        /// </summary>
-        /// <param name="size">行列の大きさ</param>
-        /// <param name="ret">戻り変数</param>
-        /// <returns>戻り変数</returns>
-        private Token unitMatrix(List<Token> args, Token ret)
-        {
-            double[,] matrix = ylib.unitMatrix(ylib.intParse(args[0].mValue));
-
-            //  戻り値の設定
-            mVar.setReturnArray(matrix, ret);
-            mVar.setVariable(new Token("return", TokenType.VARIABLE), ret);
-            return mVar.getVariable("return");
-        }
-
-        /// <summary>
-        /// 転置行列  行列Aの転置A^T
-        /// </summary>
-        /// <param name="args">引数(行列 A</param>
-        /// <param name="ret">戻り変数</param>
-        /// <returns>戻り変数</returns>
-        private Token matrixTranspose(List<Token> args, Token ret)
-        {
-            //  2D配列を実数配列に変換
-            double[,]? a = mVar.cnvArrayDouble2(args[0]);
-            if (a == null) return new Token("", TokenType.ERROR);
-            //  行列演算
-            double[,] c = ylib.matrixTranspose(a);
-            //  戻り値の設定
-            mVar.setReturnArray(c, ret);
-            mVar.setVariable(new Token("return", TokenType.VARIABLE), ret);
-            return mVar.getVariable("return");
-        }
-
-        /// <summary>
-        /// 行列の積  AxB
-        /// 行列の積では 結合の法則  (AxB)xC = Ax(BxC) , 分配の法則 (A+B)xC = AxC+BxC , Cx(A+B) = CxA + CxB　が可
-        /// 交換の法則は成立しない  AxB ≠ BxA
-        /// </summary>
-        /// <param name="args">引数(行列A,行列B)</param>
-        /// <param name="ret">戻り変数</param>
-        /// <returns>戻り変数</returns>
-        private Token matrixMulti(List<Token> args, Token ret)
-        {
-            //  2D配列を実数配列に変換
-            double[,]? a = mVar.cnvArrayDouble2(args[0]);
-            if (a == null) return new Token("", TokenType.ERROR);
-            double[,]? b = mVar.cnvArrayDouble2(args[1]);
-            if (b == null) return new Token("", TokenType.ERROR);
-            //  行列演算
-            double[,] c = ylib.matrixMulti(a, b);
-            //  戻り値の設定
-            mVar.setReturnArray(c, ret);
-            mVar.setVariable(new Token("return", TokenType.VARIABLE), ret);
-            return mVar.getVariable("return");
-        }
-
-        /// <summary>
-        /// 行列の和 A+B
-        /// 異なるサイズの行列はゼロ行列にする
-        /// </summary>
-        /// <param name="args">引数(行列A,行列B)</param>
-        /// <param name="ret">戻り変数</param>
-        /// <returns>戻り変数</returns>
-        private Token matrixAdd(List<Token> args, Token ret)
-        {
-            //  2D配列を実数配列に変換
-            double[,]? a = mVar.cnvArrayDouble2(args[0]);
-            if (a == null) return new Token("", TokenType.ERROR);
-            double[,]? b = mVar.cnvArrayDouble2(args[1]);
-            if (b == null) return new Token("", TokenType.ERROR);
-            //  行列演算
-            double[,] c = ylib.matrixAdd(a, b);
-            //  戻り値の設定
-            mVar.setReturnArray(c, ret);
-            mVar.setVariable(new Token("return", TokenType.VARIABLE), ret);
-            return mVar.getVariable("return");
-        }
-
-        /// <summary>
-        /// 逆行列 A^-1 (ある行列で線形変換した空間を元に戻す行列)
-        /// </summary>
-        /// <param name="args">引数(行列A)</param>
-        /// <param name="ret">戻り変数</param>
-        /// <returns>戻り変数</returns>
-        private Token matrixInverse(List<Token> args, Token ret)
-        {
-            //  2D配列を実数配列に変換
-            double[,]? a = mVar.cnvArrayDouble2(args[0]);
-            if (a == null) return new Token("", TokenType.ERROR);
-            //  行列演算
-            double[,] c = ylib.matrixInverse(a);
-            //  戻り値の設定
-            mVar.setReturnArray(c, ret);
-            mVar.setVariable(new Token("return", TokenType.VARIABLE), ret);
-            return mVar.getVariable("return");
-        }
-
-        /// <summary>
-        /// 行列のコピー(inner function)
-        /// </summary>
-        /// <param name="args">引数(行列A)</param>
-        /// <param name="ret">戻り変数</param>
-        /// <returns>戻り変数</returns>
-        private Token matrixCopy(List<Token> args, Token ret)
-        {
-            //  2D配列を実数配列に変換
-            double[,]? a = mVar.cnvArrayDouble2(args[0]);
-            if (a == null) return new Token("", TokenType.ERROR);
-            //  行列演算
-            double[,] c = ylib.copyMatrix(a);
-            //  戻り値の設定
-            mVar.setReturnArray(c, ret);
             mVar.setVariable(new Token("return", TokenType.VARIABLE), ret);
             return mVar.getVariable("return");
         }

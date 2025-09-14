@@ -73,28 +73,46 @@ KScriptWinの特徴
     r[] = solve.quarticEquation(a,b,c,d,e); 4次方程式の解(y = a*x^4+b*x^3+c*x^2+d*x+e)(y[] = solv..)
 
 配列関数
-    n = array.contains(c[2]);                   配列の有無(0:なし 1:あり)
-    n = array.count(a[]);                       1次元配列のサイズ
-    n = array.count(a[,]);                      2次元配列のサイズ
-    n = array.count(a[1,]);                     2次元配列1列目のサイズ
     array.clear(a[]);                           配列クリア
     array.remove(a[],start[,end]);              配列要素を範囲指定で削除
     array.squeeze(a[]);                         配列の未使用データを削除圧縮
-    a[] = array.sort(a[]);                      配列のソート
-    a[] = array.sort(a[,n]);                    配列をn列でソート
-    a[] = array.reverse(a[]);                   配列の逆順
+    n    = array.contains(c[2]);                配列の有無(0:なし 1:あり)
+    n    = array.count(a[]);                    1次元配列のサイズ
+    n    = array.count(a[,]);                   2次元配列のサイズ
+    n    = array.count(a[1,]);                  2次元配列1列目のサイズ
+    a[]  = array.sort(a[]);                     配列のソート
+    a[]  = array.sort(a[,n]);                   配列をn列でソート
+    a[]  = array.reverse(a[]);                  配列の逆順
     a[,] = array.reverse(a[,]);                 配列の行を逆順
     a[,] = array.reverse(a[,],1);               配列の列を逆順
-    c[] = array.concat(a[],b[]);                配列同士の結合c[]=array.add(a[],b[])
+    c[]  = array.concat(a[],b[]);               配列同士の結合c[]=array.add(a[],b[])
     c[,] = array.concat(a[,],b[,]);             配列同士の結合c[,]=array.add(a[,],b[,])
-    m = array.max(a[]);                         配列の最大値
-    m = array.min(a[,]);                        配列の最小値
-    sum =array.sum(a[]);                        配列の合計
-    ave = array.average(a[,]);                  配列の平均
-    v = array.variance(a[]);                    配列の分散
-    std = array.stdDeviation(a[]);              配列の標準偏差
-    c = array.covariance(a[], b[]);             共分散
-    c = array.corrCoeff(x[],y[]);               配列の相関係数
+    m    = array.max(a[]);                      配列の最大値
+    m    = array.min(a[,]);                     配列の最小値
+    sum  = array.sum(a[]);                      配列の合計
+    ave  = array.average(a[,]);                 配列の平均
+    v    = array.variance(a[]);                 配列の分散
+    std  = array.stdDeviation(a[]);             配列の標準偏差
+    c    = array.covariance(a[], b[]);          共分散
+    c    = array.corrCoeff(x[],y[]);            配列の相関係数
+文字列関数
+    str = string.concat(a, b);                  文字列の接続
+    len = string.length(a);                     文字列の長さ
+    str = string.substring(str,start,count);    文字列から部分取得
+    str = string.join(sep,str[]);               指定文字列を挟んで連結
+    arr[] = string.split(str,sep);              文字列を分割
+    b   = string.contains(str,val);             文字列内に指定文字列を含むか判定
+    pos = string.indexOf(str,val,star,count);   文字列内から指定文字列を検索
+    str = string.format(form,v0,v1...);         文字列を成型
+    c   = string.compare(strA,strB);            文字列を比較
+    str = string.replace(str,old,new);          文字列の置換
+    str = tring.insert(str,start,val);          文字列の挿入
+    str = string.remove(str,start,count);       文字列の削除
+    str = string.padLeft(str,totalWidth[,paddingChar]);     左寄せ
+    str = string.padRight(str,totalWidth[,paddingChar]);    右寄せ
+    str = string.toUpper(str);                  大文字化
+    str = string.toLower(str);                  小文字化
+    str = string.trim(str[,trimChars]);         前後の空白削除
 
 Win版用の関数
     a = inputBox(title);                        文字入力ダイヤログ
@@ -202,6 +220,11 @@ Win版用の関数
 ・条件文の true/false は現状は 数値/!数値 で対応
 ・swtch文、do while()
 ・ファイルの読込保存 a=loadText(), saveText(a),a[]=loadLine(),saveLine(a[]),a[,]=loadCsv(),savCsv(a[,]);
+  File関数 : File.exists(),createDirectory(),copy(),remove(),loadText(),saveText(),
+             loadCsv(),saveCsv(),fileInfo(),fileSelect()
+  String関数 : Concat(),Length(),Substring(),Join(),Split(),Contains(),IndexOf(),Format(),
+               Compare(),Replace(),Insert(),Remove(),PadLeft(),PadRight(),ToUpper(),ToLower(),
+               Trim()
 ・数値: format/toString,
 ・乱数()
 ・配列関数: copy, add, insert, find, findAll, findIndex, findLast,findLastIndex,

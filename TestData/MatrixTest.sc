@@ -46,6 +46,7 @@ d[,] = matrix.inverse(d[,]);
 printArray2(d[,]);
 
 //  最小二乗法
+
 //  2D配列表示
 printArray2(array[,]) {
     size = array.count(array[,]);

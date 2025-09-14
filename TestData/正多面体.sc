@@ -2,6 +2,7 @@
 //	https://ooya-takemasa.thick.jp/Suugaku/Seitamentai.pdf
 //	https://qiita.com/ikiuo/items/f5905c353858fc43e597
 
+g_colors[] = { "Blue", "Green", "Red", "Yellow" };
 //	正多面体 Polyhedron
 sp = -0.5;
 ep =  0.5;
@@ -42,12 +43,15 @@ tetrahedron(surface){
     plist[4,] = { 0,0,h};
     vec[] = { 0,0,-r/2};
     plist[,] = plot3D.translate(plist[,],vec[]);
+    colorNo = 0;
+    plot3D.setColor(g_colors[colorNo]);
     if (surface ==1) {
         p[0,] = plist[0,];
         p[1,] = plist[1,];
         p[2,] = plist[2,];
         plot3D.plotPolygon(p[,]);
         for (i = 0; i < 3; i++) {
+		    plot3D.setColor(g_colors[++colorNo]);
             p[0,] = plist[i,];
             p[1,] = plist[i+1,];
             p[2,] = plist[4,];

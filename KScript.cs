@@ -78,7 +78,7 @@ namespace KScriptWin
     /// setArrayData(List<Token> tokens)                        配列の一括値設定(a[] = { 1,2,1,3} )
     /// setArrayData(Token name, Token data)                    1次元配列の一括値設定(a[] = { 1,2,1,3} )
     /// setArrayData2(Token name, Token data)                   2次元配列の一括値設定(a[,] = { { 1,2,1,3}, {2,3,4,5} } )
-    /// getFuncArray(Token src, Token dest, KScript script)      プログラム関数の戻り値受け渡し
+    /// getFuncArray(Token src, Token dest, KScript script)     プログラム関数の戻り値受け渡し
     /// setFuncArray(Token src, Token dest, KScript script)     プログラム関数の引数受け渡し
     /// 
     /// outputString(string str = "\n")                         表示出力(callbackを呼び出す)
@@ -116,6 +116,9 @@ namespace KScriptWin
         public FuncPlot mFuncPlot;                              //  グラフィック関数
         public FuncPlot3D mFuncPlot3D;                          //  3Dグラフィック関数
         public FuncArray mFuncArray;                            //  配列関数
+        public FuncMatrix mFuncMatrix;                          //  マトリックス関数
+        public FuncString mFuncString;                          //  文字列関数
+        public FuncFile mFuncFile;                              //  ファイル関連関数
         public string mScriptFolder = "";                       //  プログラムファイルフォルダ
 
         public bool mDebug = false;
@@ -136,7 +139,10 @@ namespace KScriptWin
         {
             mScriptLib  = new ScriptLib(this);
             mFuncArray  = new FuncArray(this);
-            mFuncPlot   = new FuncPlot(this);
+            mFuncMatrix = new FuncMatrix(this);
+            mFuncString = new FuncString(this);
+            mFuncFile = new FuncFile(this);
+            mFuncPlot = new FuncPlot(this);
             mFuncPlot3D = new FuncPlot3D(this);
             mControlData = new ControlData();
         }
@@ -153,7 +159,10 @@ namespace KScriptWin
             mPlot3D = plot3D;
             mScriptLib  = new ScriptLib(this);
             mFuncArray  = new FuncArray(this);
-            mFuncPlot   = new FuncPlot(this);
+            mFuncMatrix = new FuncMatrix(this);
+            mFuncString = new FuncString(this);
+            mFuncFile = new FuncFile(this);
+            mFuncPlot = new FuncPlot(this);
             mFuncPlot3D = new FuncPlot3D(this);
             mControlData = new ControlData();
 
@@ -607,8 +616,15 @@ namespace KScriptWin
                     result = mFuncPlot3D.plotFunc(funcName, arg, ret);  //  3Dグラフィック関数
                 else if (0 == funcName.mValue.IndexOf("array."))
                     result = mFuncArray.function(funcName, arg, ret);   //  配列関数
+                else if (0 == funcName.mValue.IndexOf("matrix."))
+                    result = mFuncMatrix.function(funcName, arg, ret);  //  マトリックス関数
+                else if (0 == funcName.mValue.IndexOf("string."))
+                    result = mFuncString.function(funcName, arg, ret);  //  文字列関数
+                else if (0 == funcName.mValue.IndexOf("file."))
+                    result = mFuncFile.function(funcName, arg, ret);    //  ファイル関連関数
                 else
                     result = mScriptLib.innerFunc(funcName, arg, ret);  //  内部関数処理
+
                 if (result != null && result.mType != TokenType.ERROR)
                     return result;
 
@@ -790,8 +806,10 @@ namespace KScriptWin
                 if (token == null || token.mType == TokenType.ERROR)
                     return new Token("", TokenType.ERROR);
                 if (buf == null && token.mType != TokenType.ASSIGNMENT) {
+                    //  初期値
                     buf = token.copy();
                 } else if (token.mType == TokenType.ASSIGNMENT) {
+                    //  代入演算(=,+=,-=,*=,/=,^=,++,--)
                     Token tmpValue, tmpKey;
                     if (0 < i && tokens[i - 1].mType == TokenType.VARIABLE)
                         tmpKey = tokens[i - 1];
@@ -808,22 +826,28 @@ namespace KScriptWin
                         i++;
                     mVar.setVariable(tmpKey, tmpValue);
                 } else if (buf.mType == TokenType.STRING || token.mType == TokenType.STRING) {
-                    if (0 < i && tokens[i - 1].mType == TokenType.OPERATOR)
+                    //  文字列同士の演算
+                    if (0 < i && tokens[i - 1].mType == TokenType.OPERATOR) {
                         buf.mValue = buf.mValue.Remove(buf.mValue.Length - 1);
-                    buf.mValue += token.mValue;
+                        buf.mValue = buf.getValue() + token.getValue(); 
+                    } else
+                        buf.mValue += token.mValue;
                     buf.mType = TokenType.STRING;
                 } else if (token.mType == TokenType.OPERATOR) {
+                    //  演算式の追加
                     buf.mValue += token.mValue;
                     buf.mType = TokenType.EXPRESS;
                 } else {
                     buf.mValue += token.mValue;
                 }
             }
-            if (buf != null && buf.mType != TokenType.STRING) {
+            if (buf != null && buf.mType == TokenType.STRING) {
+                return buf;
+            } else if (buf != null && buf.mType == TokenType.ARRAY) {
+                return buf;
+            } else if (buf != null) {
                 buf.mValue = mCalc.expression(buf.mValue).ToString();
                 buf.mType = TokenType.LITERAL;
-                return buf;
-            } else if (buf != null && buf.mType == TokenType.STRING) {
                 return buf;
             } else
                 return new Token("Error: express", TokenType.ERROR);
@@ -895,7 +919,7 @@ namespace KScriptWin
             List<Token> funcList = mParse.getStatement(mLexer.tokenList(func));
             List<string> funcargs = mLexer.commaSplit(mLexer.stripBracketString(funcList[sp].mValue, '('));
             for (int i = 0; i < funcargs.Count; i++)
-                args.Add(getVariableValue(new Token(funcargs[i].Trim())));
+                args.Add(getVariableValue(express(new Token(funcargs[i].Trim()))));
             return args;
         }
 

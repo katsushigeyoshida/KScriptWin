@@ -20,24 +20,48 @@ for (x = xmin; x <= xmax; x += xstep) {
 	if (ymin > fx) ymin = fx;
 	if (ymax < fx) ymax = fx;
 }
-println(lapTime()," s");
 
 plot.Aspect(1);
 plot.Window(xmin, ymin, xmax, ymax);
 plot.Color("Green");
-y = func(xmin);
-for (x = xmin; x < xmax; x += xstep) {
-	xn = x + xstep;
-	yn = func(xn);
-	plot.Line(x, y, xn, yn);
-	y= yn;
-}
+println(lapTime()," s");
+
+plist[,] = plotGraph2(xmin,xmax,xstep);
+println(lapTime()," s");
+plot.Line(plist[,]);
+
 println(lapTime()," s");
 
 plot.Color("Brown");
 plot.Line(xmin, 0, xmax, 0);
 plot.Line(0, ymin, 0, ymax);
 
+plotGraph2(xmin,xmax,xstep) {
+	y = func(xmin);
+	n = 0;
+	for (x = xmin; x < xmax; x += xstep) {
+		plist[n,0] = x;
+		plist[n,1] = y;
+		n++;
+		xn = x + xstep;
+		yn = func(xn);
+		plist[n,0] = xn;
+		plist[n,1] = yn;
+		y = yn;
+		n++;
+	}
+	return plist[,];
+}
+
+plotGraph(xmin,xmax,xstep) {
+	y = func(xmin);
+	for (x = xmin; x < xmax; x += xstep) {
+		xn = x + xstep;
+		yn = func(xn);
+		plot.Line(x, y, xn, yn);
+		y= yn;
+	}
+}
 
 func(x) {
 	return sin(x) + cos(x * 2) + cos(x * 4);

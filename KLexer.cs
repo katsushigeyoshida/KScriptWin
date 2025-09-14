@@ -77,10 +77,11 @@ namespace KScriptWin
         /// <returns>値</returns>
         public string getValue()
         {
-            if (mType == TokenType.STRING)
-                return mLexer.stripBracketString(mValue, '"');
-            else
-                return mValue;
+            if (mType == TokenType.STRING) {
+                if (0 <= mValue.IndexOf('"'))
+                    return mLexer.stripBracketString(mValue, '"');
+            }
+            return mValue;
         }
 
         /// <summary>
@@ -296,9 +297,13 @@ namespace KScriptWin
             str = str.Trim();
             int sp = str.IndexOf(mBrackets[offset]);
             int ep = str.LastIndexOf(mBrackets[offset + 1]);
-            if (sp != 0 || ep != str.Length -1)
-                return str;
-            return str.Substring(sp + 1, ep - sp - 1);
+            if (0 == sp && ep < 0)
+                return str.Substring(sp + 1);
+            else if (0 == sp && ep == str.Length - 1)
+                return str.Substring(sp + 1, ep - sp - 1);
+            else if (sp < 0 && 0 <= ep)
+                return str.Substring(0, ep - 1);
+            return str;
         }
 
         /// <summary>

@@ -17,11 +17,11 @@ namespace KScriptWin
             "plot.LineType(\"dash\"); 線種の設定(\"solid\", \"dash\", \"center\", \"phantom\")",
             "plot.PointSize(3); 点サイズの設定",
             "plot.LineThickness(2); 線の太さの設定",
-            "plot.Point(x,y); 点の表示",
-            "plot.Line(sx,sy,ex,ey); 線分の表示(始点x,y、終点x,y)",
+            "plot.Point(x,y); 点の表示 Point(x,y/p[]/pl[,])",
+            "plot.Line(sx,sy,ex,ey); 線分の表示 Line(sx,sy,ex,ey/sp[],ep[]/pl[,]))",
             "plot.Arc(cx,cy,r[,sa][,ea]); 円弧の表示(中心x,中心y,半径[、始角][、終角])",
             "plot.Text(text,x,y[,size[,rot[,ha[,va]]]]); 文字列の表示(文字列,X座標,Y座標,サイズ,回転角,水平アライメント,垂直アライメント)",
-            "graph.Set(x[],y[][,Title]); グラフデータの設定(X[],Y[][,Title])",
+            "graph.Set(x[],y[][,Title]); グラフデータの設定 set(x[],y[][,Title])/set(pl[,][,title])",
             "graph.FontSize(5); グラフのフォントサイズの設定",
         };
 
@@ -158,31 +158,76 @@ namespace KScriptWin
 
         /// <summary>
         /// 点の表示(inner function)
+        /// Point(x,y)/Point(p[])/Point(p[,])
         /// </summary>
         /// <param name="args">点座標x,y</param>
         public void plotPoint(List<Token> args)
         {
-            List<double> datas = new List<double>();
-            for (int i = 0; i < args.Count; i++)
-                datas.Add(ylib.doubleParse(args[i].mValue));
-            if (1 < datas.Count) {
-                PointD point = new PointD(datas[0], datas[1]);
-                mGraph.plotPoint(point);
+            if (args.Count == 2 && mVar.getArrayOder(args[0]) == 0 && mVar.getArrayOder(args[1]) ==0) {
+                //  Point(x,y)
+                List<double> datas = new List<double>();
+                for (int i = 0; i < args.Count; i++)
+                    datas.Add(ylib.doubleParse(args[i].mValue));
+                if (1 < datas.Count) {
+                    PointD point = new PointD(datas[0], datas[1]);
+                    mGraph.plotPoint(point);
+                }
+            } else if (0 < args.Count && mVar.getArrayOder(args[0]) == 1) {
+                //  Point(p[])
+                List<double> datas = mVar.cnvListDouble(args[0]);
+                if (1 < datas.Count) {
+                    PointD point = new PointD(datas[0], datas[1]);
+                    mGraph.plotPoint(point);
+                }
+            } else if (0 < args.Count && mVar.getArrayOder(args[0]) == 2) {
+                //  Point(p[,])
+                double[,] datas = mVar.cnvArrayDouble2(args[0]);
+                if (1 < datas.GetLength(1)) {
+                    for (int i = 0; i < datas.GetLength(0); i++) {
+                        PointD point = new PointD(datas[i,0], datas[i,1]);
+                        mGraph.plotPoint(point);
+                    }
+                }
             }
         }
 
         /// <summary>
         /// 線分の表示(始点x,y、終点x,y)(inner function)
+        /// Line(sx,sy,ex,ey)/Line(sp[],ep[])/Line(pl[,])
         /// </summary>
         /// <param name="args">始終点座標</param>
         public void plotLine(List<Token> args)
         {
-            List<double> datas = new List<double>();
-            for (int i = 0; i < args.Count; i++)
-                datas.Add(ylib.doubleParse(args[i].mValue));
-            if (3 < datas.Count) {
-                LineD line = new LineD(datas[0], datas[1], datas[2], datas[3]);
-                mGraph.plotLine(line);
+            if (args.Count == 4 && mVar.getArrayOder(args[0]) == 0 && mVar.getArrayOder(args[1]) == 0) {
+                //  Line((sx,sy,ex,ey)
+                List<double> datas = new List<double>();
+                for (int i = 0; i < args.Count; i++)
+                    datas.Add(ylib.doubleParse(args[i].mValue));
+                if (3 < datas.Count) {
+                    LineD line = new LineD(datas[0], datas[1], datas[2], datas[3]);
+                    mGraph.plotLine(line);
+                }
+            }else if (args.Count == 2 && mVar.getArrayOder(args[0]) == 1 && mVar.getArrayOder(args[1]) == 1) {
+                //  Line(sp[],ep[])
+                List<double> data0 = mVar.cnvListDouble(args[0]);
+                List<double> data1 = mVar.cnvListDouble(args[1]);
+                if (1 < data0.Count && 1 < data1.Count) {
+                    LineD line = new LineD(data0[0], data0[1], data1[0], data1[1]);
+                    mGraph.plotLine(line);
+                }
+            } else if (args.Count == 1 && mVar.getArrayOder(args[0]) == 2) {
+                //  Line(pl[,])
+                double[,] datas = mVar.cnvArrayDouble2(args[0]);
+                PointD sp, ep;
+                if (1 < datas.GetLength(0) && 1 < datas.GetLength(1)) {
+                    sp = new PointD(datas[0, 0], datas[0, 1]);
+                    for (int i = 1; i < datas.GetLength(0); i++) {
+                        ep = new PointD(datas[i, 0], datas[i, 1]);
+                        LineD line = new LineD(sp, ep);
+                        mGraph.plotLine(line);
+                        sp = ep;
+                    }
+                }
             }
         }
 
@@ -254,18 +299,35 @@ namespace KScriptWin
 
         /// <summary>
         /// グラフデータの設定(X[], Y[][, Title])(inner function)
+        /// set(x[],y[],title)/set(pl[,],title)
         /// </summary>
         /// <param name="args">引数(x[],y[][,title]</param>
         public void graphSet(List<Token> args)
         {
-            if (args.Count < 2) return;
-            List<double> x = mVar.cnvListDouble(args[0]);
-            List<double> y = mVar.cnvListDouble(args[1]);
-            if (x.Count != y.Count)
-                return;
             string title = "";
-            if (2 < args.Count)
-                title = mScript.getValueToken(args[2].mValue).mValue.Trim('"');
+            double[] x = null, y = null;
+            double[,] datas = null;
+            if (1 < args.Count && mVar.getArrayOder(args[0]) == 1 && mVar.getArrayOder(args[1]) == 1) {
+                //  set(x[],y[],title)
+                x = mVar.cnvListDouble(args[0]).ToArray();
+                y = mVar.cnvListDouble(args[1]).ToArray();
+                if (x.Length != y.Length)
+                    return;
+                if (2 < args.Count)
+                    title = mScript.getValueToken(args[2].mValue).mValue.Trim('"');
+            } else if (0 < args.Count && mVar.getArrayOder(args[0]) == 2) {
+                //  set(pl[,],title)
+                datas = mVar.cnvArrayDouble2(args[0]);
+                x = new double[datas.GetLength(0)];
+                y = new double[datas.GetLength(0)];
+                for (int i = 0; i < datas.GetLength(0); i++) {
+                    x[i] = datas[i, 0];
+                    y[i] = datas[i, 1];
+                }
+                if (1 < args.Count)
+                    title = mScript.getValueToken(args[1].mValue).mValue.Trim('"');
+            } else
+                return;
 
             if (mGraph != null)
                 mGraph.Close();
@@ -274,7 +336,9 @@ namespace KScriptWin
             mGraph.Show();
             mGraph.setAspectFix(0);
             mGraph.setFontSize(mGraphFontSize);
-            mGraph.setGraph(x.ToArray(), y.ToArray(), title);
+            if (x != null && y != null) {
+                mGraph.setGraph(x.ToArray(), y.ToArray(), title);
+            }
         }
     }
 }

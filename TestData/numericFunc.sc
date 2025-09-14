@@ -2,6 +2,8 @@
 a = PI;
 b = E;
 println("PI = ", PI, " ", a);
+println("RAD(180) = ", RAD(180));
+println("DEG(PI) = ", DEG(PI));
 println("E = ", E, " ", b,);
 println("mod = ", mod(10,3));
 println("pow = ", pow(2,3));

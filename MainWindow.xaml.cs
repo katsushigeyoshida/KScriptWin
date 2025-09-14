@@ -33,6 +33,7 @@ namespace KScriptWin
         private Plot3DView mPlot3D;             //  3Dグラフィック
         private GraphView mGraph;               //  グラフィックWindow
         private KScript mScript;                //  スクリプト本体
+        private Snippet mSnippet = new Snippet();
         private List<string> mKeyWordList = new List<string>(); //  入力候補リスト
         private string mHelpFile = "KScriptWinManual.pdf";      //  マニュアルファイル
 
@@ -62,7 +63,7 @@ namespace KScriptWin
         {
             //   int index = cbFontFamily.Items.IndexOf(mFontFamily);
             int index = -1;
-            if (mFontFamily == "") mFontFamily = "Consolas";
+            if (mFontFamily == "") mFontFamily = "MS Gothic";
             for (int i = 0; i < cbFontFamily.Items.Count; i++) {
                 if (cbFontFamily.Items[i].ToString() == mFontFamily)
                     index = i;
@@ -72,6 +73,9 @@ namespace KScriptWin
             if (mFontSize == 0)
                 mFontSize = 12;
             avalonEditor.FontSize = mFontSize;
+            tbOutput.FontFamily = new FontFamily("MS Gothic");
+            tbOutput.FontSize = mFontSize;
+            //tbReference.FontFamily = new FontFamily("MS Gothic");
             //  参照フォルダの設定
             if (0 < mDataFolder.Length && Directory.Exists(mDataFolder)) {
                 setRefFileList(mDataFolder);
@@ -192,6 +196,7 @@ namespace KScriptWin
             if (cbFontFamily.SelectedItem != null) {
                 avalonEditor.FontFamily = (FontFamily)cbFontFamily.SelectedItem;
                 mFontFamily = cbFontFamily.SelectedItem.ToString();
+                tbOutput.FontFamily = (FontFamily)cbFontFamily.SelectedItem;
             }
         }
 
@@ -249,9 +254,11 @@ namespace KScriptWin
             } else if (button.Name.CompareTo("btFontUp") == 0) {
                 mFontSize += 1;
                 avalonEditor.FontSize = mFontSize;
+                tbOutput.FontSize = mFontSize;
             } else if (button.Name.CompareTo("btFontDown") == 0) {
                 mFontSize -= 1;
                 avalonEditor.FontSize = mFontSize;
+                tbOutput.FontSize = mFontSize;
             } else if (button.Name.CompareTo("btExecute") == 0) {
                 if (mScript.mControlData.mPause)
                     mScript.mControlData.mPause = false;
@@ -608,39 +615,18 @@ namespace KScriptWin
             updateSnippetKeyWird(text);
         }
 
-
         /// <summary>
         /// 入力候補のデータを更新する
         /// </summary>
         /// <param name="text">スクリプトコード</param>
         private void updateSnippetKeyWird(string text)
         {
-            List<string> paths = getIncludeFilePath(text);
+            List<string> paths = mSnippet.getIncludeFilePath(text, mDataFolder);
             if (0 < paths.Count)
                 setSnippetKeyword(paths);
             else
                 setSnippetKeyword();
         }
-
-        /// <summary>
-        /// スクリプト文から#includeのファイル名を抽出
-        /// </summary>
-        /// <param name="text">スクリプト文</param>
-        /// <returns>ファイル名リスト</returns>
-        private List<string> getIncludeFilePath(string text)
-        {
-            List<string> flePath = new List<string>();
-            string[] list = text.Split('\n');
-            foreach (var line in list)
-                if (0 <= line.IndexOf("#include")) {
-                    List<string> path = ylib.extractBrackets(line, '"', '"');
-                    if (0 < path.Count) {
-                        flePath.Add(Path.Combine(mDataFolder, path[0]));
-                    }
-                }
-            return flePath;
-        }
-
 
         /// <summary>
         /// 文字列のハッシュ値を保存
@@ -772,98 +758,24 @@ namespace KScriptWin
         /// <param name="filepath">追加ファイルパス</param>
         public void setSnippetKeyword(List<string> files = null)
         {
-            mKeyWordList.Clear();
-            //  snippetの予約語
-            mKeyWordList.AddRange(KScript.mStatmantHelp);
-            mKeyWordList.AddRange(ScriptLib.mFuncNames);
-            mKeyWordList.AddRange(FuncArray.mFuncNames);
-            mKeyWordList.AddRange(FuncPlot.mFuncNames);
-            mKeyWordList.AddRange(FuncPlot3D.mFuncNames);
-            mKeyWordList.AddRange(YCalc.mFuncList);
-            mKeyWordList.AddRange(YDraw.mLineTypeHelp);
-            mKeyWordList.AddRange(YDraw.mPointTypeHelp);
-            YLib.ColorTitle[] colorTitles = ylib.getColorList();
-            foreach (var colorTitle in colorTitles)
-                mKeyWordList.Add($"{colorTitle.colorTitle} 色");
-            if (files != null && 0 < files.Count) {
-                foreach (var filepath in files) {
-                    if (0 < filepath.Length) {
-                        mKeyWordList.AddRange(getFuncList(filepath));
-                    }
-                }
-            }
-        }
-
-        /// <summary>
-        /// スクリプトファイルから関数名の抽出
-        /// </summary>
-        /// <param name="filepath">スクリプトファイルパス</param>
-        /// <returns>関数名リスト</returns>
-        private List<string> getFuncList(string filepath)
-        {
-            List<string> funcList = new List<string>();
-            if (File.Exists(filepath)) {
-                string str = ylib.loadTextFile(filepath);
-                List<string> list = exructFuncList(str);
-                string buf = "";
-                for (int i = 0; i < list.Count; i++) {
-                    if (list[i].IndexOf("//") == 0)
-                        buf = list[i].Substring(2).Trim();
-                    else {
-                        funcList.Add($"{list[i]} {buf}");
-                        buf = "";
-                    }
-                }
-            }
-            return funcList;
-        }
-
-        /// <summary>
-        /// スクリプトコードから関数名とコメントを抽出
-        /// </summary>
-        /// <param name="str">スクリプトコード</param>
-        /// <returns>関数名リスト</returns>
-        List<string> exructFuncList(string str)
-        {
-            List<string> tokenList = new();
-            string buf = "";
-            for (int i = 0; i < str.Length; i++) {
-                if (str[i] == ' ') {
-                    continue;
-                } else if (i < str.Length - 1 && str[i] == '/' && str[i + 1] == '/') {
-                    buf = "";
-                    while (i < str.Length && str[i] != '\n') {
-                        buf += str[i++];
-                    }
-                    i--;
-                    tokenList.Add(buf);
-                } else if (Char.IsLetter(str[i])) {
-                    buf = "";
-                    while (i < str.Length && str[i] != ')') {
-                        if (str[i] == ';') {
-                            buf = "";
-                            break;
-                        }
-                        if (str[i] != ' ' && str[i] != '\t' && str[i] != '\n')
-                            buf += str[i++];
-                        else
-                            i++;
-                    }
-                    if (i < str.Length && str[i] == ')')
-                        buf += str[i];
-                    if (0 < buf.Length && 0 < buf.IndexOf('(') && 0 < buf.IndexOf(')'))
-                        tokenList.Add(buf);
-                } else if (str[i] == '{') {
-                    i++;
-                    int count = 0;
-                    while (i < str.Length && !(count == 0 && str[i] == '}')) {
-                        if (str[i] == '{') count++;
-                        if (str[i] == '}') count--;
-                        i++;
-                    }
-                }
-            }
-            return tokenList;
+            if (mSnippet == null)
+                mSnippet = new Snippet();
+            else
+                mSnippet.clear();
+            mSnippet.add(KScript.mStatmantHelp);
+            mSnippet.add(ScriptLib.mFuncNames);
+            mSnippet.add(FuncArray.mFuncNames);
+            mSnippet.add(FuncMatrix.mFuncNames);
+            mSnippet.add(FuncString.mFuncNames);
+            mSnippet.add(FuncFile.mFuncNames);
+            mSnippet.add(FuncPlot.mFuncNames);
+            mSnippet.add(FuncPlot3D.mFuncNames);
+            mSnippet.add(YCalc.mFuncList);
+            mSnippet.add(YDraw.mLineTypeHelp);
+            mSnippet.add(YDraw.mPointTypeHelp);
+            mSnippet.addColorList();
+            if (files != null)
+                mSnippet.add(files);
         }
 
         /// <summary>
@@ -871,44 +783,10 @@ namespace KScriptWin
         /// </summary>
         private void snippet()
         {
-            //  カーソル前の単語の取得
-            int cursorPos = avalonEditor.SelectionStart - 1;
-            string word = "";
-            int start = cursorPos;
-            for (; 0 <= start; start--) {
-                if ((!Char.IsLetterOrDigit(avalonEditor.Text[start]) && avalonEditor.Text[start] != '.') || start == 0) {
-                    if (start == 0) {
-                        word = avalonEditor.Text.Substring(start, cursorPos - start + 1);
-                        start--;
-                    } else
-                        word = avalonEditor.Text.Substring(start + 1, cursorPos - start);
-                    break;
-                }
-            }
-            //  単語を含む予約語の抽出
-            List<string> keyWords = new List<string>();
-            foreach (var key in mKeyWordList)
-                if (0 <= key.IndexOf(word, StringComparison.InvariantCultureIgnoreCase))
-                    keyWords.Add(key);
-            //  予約語のメニュー表示と選択
-            MenuDialog dlg = new MenuDialog();
-            dlg.Title = "関数などの候補";
-            dlg.mMainWindow = this;
-            dlg.mHorizontalAliment = 1;
-            dlg.mVerticalAliment = 1;
-            dlg.mOneClick = true;
-            dlg.mMenuList = keyWords;
-            dlg.ShowDialog();
-            if (dlg.mResultMenu != "") {
-                //  予約語の挿入
-                string funcName = dlg.mResultMenu;
-                if (0 <= funcName.IndexOf(" : "))
-                    funcName = funcName.Substring(0, funcName.IndexOf(" : "));
-                else if (0 <= funcName.IndexOf(' '))
-                    funcName = funcName.Substring(0, funcName.IndexOf(' '));
-                funcName = funcName.Trim();
-                avalonEditor.Document.Text = avalonEditor.Document.Text.Remove(start + 1, cursorPos - start).Insert(start + 1, funcName);
-                avalonEditor.Select(start + 1 + funcName.Length, 0);
+            (string text, int selectStart) = mSnippet.showDialog(this, avalonEditor.Text, avalonEditor.SelectionStart);
+            if (0 <= selectStart) {
+                avalonEditor.Document.Text = text;
+                avalonEditor.Select(selectStart, 0);
             }
         }
 
