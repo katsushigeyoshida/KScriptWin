@@ -65,6 +65,9 @@ if (a > b) println(a);
 
 
 ### 履歴
+2025/09/14 matrix関数の追加
+2025/01/26 Point3D.cnvPlaneLocation()のバグ修正  
+2025/01/12 配列の代入追加 (a[] = b[], a[,] = b[,], a[n,] = b[m,])  
 2024/12/01 array.add()関数追加  
 2024/11/28 plot3D.holePlateQuads(),polygonSideQuadStrip()関数を追加  
 2024/11/17 pause();ステートメント追加  
