@@ -34,12 +34,20 @@ namespace KScriptWin
     /// void setReturnArray(string[] src, Token dest)       文字列配列を戻り値に設定
     /// void setReturnArray(double[,] src, Token dest)      2D配列の戻り値に設定
     /// void setReturnArray(string[,] src, Token dest)      2D配列の戻り値に設定
+    /// ===  関数の引数を変数に変換
+    /// List<PointD> args2PointList(List<Token> args)       引数からPointDリストを作成(plist[,]/p0[],p1[].../x0,y0,x1,y1...  → List<PointD>)</PointD>
+    /// List<double> getDoubleListFromArgs(List<Token> args)    引数からdoubleリストを取得(配列を除く)
+    /// List<string> getStringListFromArgs(List<Token> args)    引数からstringリストを取得
+    /// List<PointD> getPointListFromArgs(List<Token> args)     引数からPointDリストを取得(配列のみ)
+    /// string getStringFromArg(Token arg)                  一引数から文字列を取得
+    /// double getDoubleFromArg(Token arg)                  一引数から数値を取得
+    /// 
     /// 
     /// </summary>
     public class Variable
     {
-        public Dictionary<string, Token> mGlobalVar = new Dictionary<string, Token>();  //  変数リスト(変数名,値)
-        public Dictionary<string, Token> mVariables = new Dictionary<string, Token>();  //  変数リスト(変数名,値)
+        public Dictionary<string, Token> mGlobalVar = new Dictionary<string, Token>();  //  変数リスト(変数名,値)　グローバル変数
+        public Dictionary<string, Token> mVariables = new Dictionary<string, Token>();  //  変数リスト(変数名,値)　ローカル変数
 
         private KParse mParse = new KParse();                    //  構文解析
         private KLexer mLexer = new KLexer();                    //  字句解析
@@ -630,5 +638,149 @@ namespace KScriptWin
             }
         }
 
+        //  ===  関数の引数を変数に変換
+
+        /// <summary>
+        /// 引数からPointDリストを作成(plist[,]/p0[],p1[].../x0,y0,x1,y1...  → List<PointD>)</PointD>
+        /// </summary>
+        /// <param name="args"></param>
+        /// <returns></returns>
+        public List<PointD> args2PointList(List<Token> args)
+        {
+            List<PointD> pointList = new List<PointD>();
+            if (0 < args.Count && getArrayOder(args[0]) == 2) {
+                //  plist[,] → List<PointD>
+                double[,] plist = cnvArrayDouble2(args[0]);
+                if (1 < plist.GetLength(1)) {
+                    for (int i = 0; i < plist.GetLength(0); i++) {
+                        PointD p = new PointD(plist[i, 0], plist[i, 1]);
+                        pointList.Add(p);
+                    }
+                }
+            } else if (0 < args.Count && getArrayOder(args[0]) == 1) {
+                //  p0[],p1[]... → List<PointD>
+                for (int i = 0; i < args.Count; i++) {
+                    List<double> spList = cnvListDouble(args[i]);
+                    if (1 < spList.Count) {
+                        PointD p = new PointD(spList[0], spList[1]);
+                        pointList.Add(p);
+                    }
+                }
+            } else if (1 < args.Count && getArrayOder(args[0]) == 0) {
+                //  x0,y0,x1,y1... → List<PointD>
+                for (int i = 0; i < args.Count - 1; i += 2) {
+                    if (getArrayOder(args[i]) == 0 && getArrayOder(args[i + 1]) == 0) {
+                        if (getVariable(args[i]).mType == TokenType.LITERAL && getVariable(args[i + 1]).mType == TokenType.LITERAL) {
+                            PointD p = new PointD(ylib.doubleParse(args[i].mValue), ylib.doubleParse(args[i + 1].mValue));
+                            pointList.Add(p);
+                        }
+                    }
+                }
+            }
+            return pointList;
+        }
+
+        /// <summary>
+        /// 引数からdoubleリストを取得(配列を除く)
+        /// </summary>
+        /// <param name="args"></param>
+        /// <returns></returns>
+        public List<double> getDoubleListFromArgs(List<Token> args)
+        {
+            List<double> doubleList = new List<double>();
+            //  x0,x1,x2....  →  List<double>
+            for (int i = 0; i < args.Count; i++) {
+                if (getArrayOder(args[i]) == 0) {
+                    if (getVariable(args[i]).mType == TokenType.LITERAL)
+                        doubleList.Add(ylib.doubleParse(args[i].mValue));
+                }
+            }
+            return doubleList;
+        }
+
+        /// <summary>
+        /// 引数からstringリストを取得
+        /// </summary>
+        /// <param name="args"></param>
+        /// <returns></returns>
+        public List<string> getStringListFromArgs(List<Token> args)
+        {
+            List<string> stringList = new List<string>();
+            //  x0,x1,x2....  →  List<double>
+            for (int i = 0; i < args.Count; i++) {
+                if (getArrayOder(args[i]) == 0) {
+                    if (getVariable(args[i]).mType == TokenType.STRING)
+                        stringList.Add(ylib.stripBracketString(getVariable(args[i]).mValue, '"'));
+                }
+            }
+            return stringList;
+        }
+
+
+        /// <summary>
+        /// 引数からPointDリストを取得(配列のみ)
+        /// </summary>
+        /// <param name="args"></param>
+        /// <returns></returns>
+        public List<PointD> getPointListFromArgs(List<Token> args)
+        {
+            List<PointD> pointList = new List<PointD>();
+            for (int i = 0; i < args.Count; i++) {
+                if (0 < args.Count && getArrayOder(args[i]) == 2) {
+                    //  plist[,] → List<PointD>
+                    double[,] plist = cnvArrayDouble2(args[i]);
+                    if (1 < plist.GetLength(1)) {
+                        for (int j = 0; j < plist.GetLength(0); j++) {
+                            PointD p = new PointD(plist[j, 0], plist[j, 1]);
+                            pointList.Add(p);
+                        }
+                    }
+                } else if (getArrayOder(args[i]) == 1) {
+                    //  p0[],p1[]... → List<PointD>
+                    List<double> spList = cnvListDouble(args[i]);
+                    if (1 < spList.Count) {
+                        PointD p = new PointD(spList[0], spList[1]);
+                        pointList.Add(p);
+                    }
+                } else if (i < args.Count - 1 && getArrayOder(args[i]) == 0 && getArrayOder(args[i + 1]) == 0) {
+                    if (getVariable(args[i]).mType == TokenType.LITERAL && getVariable(args[i + 1]).mType == TokenType.LITERAL) {
+                        //  x0,y0,x1,y1... → List<PointD>
+                        PointD p = new PointD(ylib.doubleParse(args[i].mValue), ylib.doubleParse(args[i + 1].mValue));
+                        pointList.Add(p);
+                        i++;
+                    }
+                }
+            }
+            return pointList;
+        }
+
+
+        /// <summary>
+        /// 一引数から文字列を取得
+        /// </summary>
+        /// <param name="arg"></param>
+        /// <returns></returns>
+        public string getStringFromArg(Token arg)
+        {
+            if (getArrayOder(arg) == 0) {
+                if (getVariable(arg).mType == TokenType.STRING)
+                    return ylib.stripBracketString(getVariable(arg).mValue, '"');
+            }
+            return "";
+        }
+
+        /// <summary>
+        /// 一引数から数値を取得
+        /// </summary>
+        /// <param name="arg"></param>
+        /// <returns></returns>
+        public double getDoubleFromArg(Token arg)
+        {
+            if (getArrayOder(arg) == 0) {
+                if (getVariable(arg).mType == TokenType.LITERAL)
+                    return ylib.doubleParse(arg.mValue);
+            }
+            return 0;
+        }
     }
 }

@@ -96,68 +96,91 @@ KScriptWinの特徴
     c    = array.covariance(a[], b[]);          共分散
     c    = array.corrCoeff(x[],y[]);            配列の相関係数
 文字列関数
-    str = string.concat(a, b);                  文字列の接続
-    len = string.length(a);                     文字列の長さ
-    str = string.substring(str,start,count);    文字列から部分取得
-    str = string.join(sep,str[]);               指定文字列を挟んで連結
-    arr[] = string.split(str,sep);              文字列を分割
-    b   = string.contains(str,val);             文字列内に指定文字列を含むか判定
-    pos = string.indexOf(str,val,star,count);   文字列内から指定文字列を検索
-    str = string.format(form,v0,v1...);         文字列を成型
-    c   = string.compare(strA,strB);            文字列を比較
-    str = string.replace(str,old,new);          文字列の置換
-    str = tring.insert(str,start,val);          文字列の挿入
-    str = string.remove(str,start,count);       文字列の削除
-    str = string.padLeft(str,totalWidth[,paddingChar]);     左寄せ
-    str = string.padRight(str,totalWidth[,paddingChar]);    右寄せ
-    str = string.toUpper(str);                  大文字化
-    str = string.toLower(str);                  小文字化
-    str = string.trim(str[,trimChars]);         前後の空白削除
+    str = string.concat(a, b);                          文字列の接続
+    len = string.length(a);                             文字列の長さ
+    str = string.substring(str,start,count);            文字列から部分取得
+    str = string.join(sep,str[]);                       指定文字列を挟んで連結
+    arr[] = string.split(str,sep);                      文字列を分割
+    b   = string.contains(str,val);                     文字列内に指定文字列を含むか判定
+    pos = string.indexOf(str,val,star,count);           文字列内から指定文字列を検索
+    str = string.format(form,v0,v1...);                 文字列を成型
+    c   = string.compare(strA,strB);                    文字列を比較
+    str = string.replace(str,old,new);                  文字列の置換
+    str = tring.insert(str,start,val);                  文字列の挿入
+    str = string.remove(str,start,count);               文字列の削除
+    str = string.padLeft(str,totalWidth[,paddingChar]); 左寄せ
+    str = string.padRight(str,totalWidth[,paddingChar]);右寄せ
+    str = string.toUpper(str);                          大文字化
+    str = string.toLower(str);                          小文字化
+    str = string.trim(str[,trimChars]);                 前後の空白削除
+ファイル関数
+     exists = file.fileExists(path);                    ファイルの存在確認(0:なし/1:あり)
+     exists = file.dirExists(path);                     ディレクトリの存在確認(0:なし/1:あり)
+     file.makeDir(dir);                                 ディレクトリの作成
+     file.copy(src,dest);                               ファイルのコピー
+     file.move(path,dir);                               ファイルの移動
+     file.rename(path,new);                             ファイル名変更
+     file.delete(path);                                 ファイル削除
+     file.delDir(dir);                                  ディレクトリ削除
+     filename = file.getFileName(path);                 ファイル名の抽出
+     dirname  = file.getDirectory(path);                ディレクトリ名の抽出
+     extname = file.getExtention(path);                 拡張子の抽出
+     filename = file.getFileNameWithoutExtension(path); 拡張子なしのファイル名",
+     text = file.loadText(path);                        テキストファイルの読込
+     file.saveText(path,text);                          テキストのファイル保存
+     text[,] = file.loadCsv(path);                      CSVファイルの読込
+     file.saveCsv(path,text[,]);                        テキストのCSV保存
+     size = file.size(path);                            ファイルサイズの取得
+     file.lastWrite(path[,form[,"jp"]);                 ファイルの日時の取得
+     path = file.select(dir,ext);                       ファイル選択
+
 
 Win版用の関数
     a = inputBox(title);                        文字入力ダイヤログ
+    a[,] = inputBoxMulti(a[,]);                 複数項目の文字列/数値入力
     messageBox(outString[, title]);             文字列のダイヤログ表示
     n = menuSelect(menu[],title);               メニュー選択ダイヤログ
 
-    plot関数(2Dグラフィック)
-        plot.WindowSet(left,bottom,right,top);   表示領域の設定
-        plot.Aspect(1);                          アスペクト比固定の設定(0(非固定)/1(固定))
-        plot.Color("Blue");                      要素の色設定
-        plot.PointType("cross");                 点種の設定("dot", "cross", "plus", "box", "circle", "triangle")
-        plot.LineType("dash");                   線種の設定("solid", "dash", "center", "phantom")
-        plot.PointSize(3);                       点サイズの設定
-        plot.LineThickness(2);                   線の太さの設定
-        plot.Point(x, y);                        点の表示
-        plot.Line(sx, sy, ex, ey);               線分の表示(始点x,y、終点x,y)
-        plot.Arc(cx, cy, r[, sa][, ea]);         円弧の表示(中心x,中心y,半径[,始角[,終角]])
-        plot.Text(text,x,y,size,rotate,ha,va);   文字列表示(文字列,座標[,大きさ[,回転角[,水平アライメント[,垂直アライメント]]]])
-    plot3D関数(3Dグラフィック)
-        plot3D.setArea(min[],max[]);             3DViewの初期化
-        plot3D.setAxisFrame(axis,frame);         軸とフレームの表示(0:非表示/1:表示)
-        plot3D.disp();                           要素の表示
-        plot3D.setColor(\"Blue\");               色の設定
-        plot3D.plotTranslate(vec[]);             要素の移動(移動量 vec[x/y/z])
-        plot3D.plotRotate(angle,\"X\");          要素の回転(回転角度,回転軸 X/Y/Z軸)
-        plot3D.plotScale(scale[]);               要素の縮小拡大 (拡大率 scale[x/y/z])
-        plot3D.plotReset();                      座標変換をクリアする
-        plot3D.plotLine(sp[x/y/z],ep[x/y/z]);    線分の設定()
-        plot3D.plotLines(plist[n,x/y/z]);        複数線分(plits[,])
-        plot3D.plotPolyline(plist[n,x/y/z]);     ポリライン
-        plot3D.plotPolyloop(plist[n,x/y/z]);     ポリラインループ
-        plot3D.plotPolygon(plist[n,x/y/z]);　    ポリゴン(塗潰し)
-        plot3D.plotTrianges(plist[n,x/y/z]);     複数三角形(塗潰し)
-        plot3D.plotTriangeStrip(plist[n,x/y/z]); 連続三角形
-        plot3D.plotQuads(plist[n,x/y/z]);        複数四角形
-        plot3D.plotQuadeStrip(plist[n,x/y/z]);   連続四角形
-        plot3D.plotTriangeFan(plist[n,x/y/z]);   扇形の連続三角形
-        plot3D.translate(pos[],vec[]);           3D座標の移動(3D座標,移動量)
-        plot3D.rotate(pos[],cp[],angle,face);    3D座標の回転(3D座標,回転中心,回転角,回転軸)
-        plot3D.rotateAxis(pos[,],angle,axis[]);  3D座標の指定軸で回転(3D座標,回転角,回転軸ベクトル
-        plot3D.scale(pos[],cp[],scale);          3D座標の拡大縮小(3D座標,拡大中心,拡大率)
-        plot3D.holePlateQuads(outline[,],innerLine[,],,);   中抜きの平面データの作成
-        plot3D.polygonSideQuadStrip(polygon[,],thicknes);   ポリゴンの側面データをQuadStripで作成
-        plot3D.polygonSideQuads(polygon[,],thicknes);       ポリゴンの側面データをQuadsで作成
-        plot3D.polylinRotateQuads(polyline[,],centerline[,],divAng,sa,ea); ポリラインデーをセンタラインを中心に回転させたデータ
+plot関数(2Dグラフィック)
+    plot.WindowSet(left,bottom,right,top);      表示領域の設定
+    plot.Aspect(1);                             アスペクト比固定の設定(0(非固定)/1(固定))
+    plot.Color("Blue");                         要素の色設定
+    plot.PointType("cross");                    点種の設定("dot", "cross", "plus", "box", "circle", "triangle")
+    plot.LineType("dash");                      線種の設定("solid", "dash", "center", "phantom")
+    plot.PointSize(3);                          点サイズの設定
+    plot.LineThickness(2);                      線の太さの設定
+    plot.Point(x, y);                           点の表示
+    plot.Line(sx, sy, ex, ey);                  線分の表示(始点x,y、終点x,y)
+    plot.Arc(cx, cy, r[, sa][, ea]);            円弧の表示(中心x,中心y,半径[,始角[,終角]])
+    plot.Text(text,x,y,size,rotate,ha,va);      文字列表示(文字列,座標[,大きさ[,回転角[,水平アライメント[,垂直アライメント]]]])
+
+plot3D関数(3Dグラフィック)
+    plot3D.setArea(min[],max[]);             3DViewの初期化
+    plot3D.setAxisFrame(axis,frame);         軸とフレームの表示(0:非表示/1:表示)
+    plot3D.disp();                           要素の表示
+    plot3D.setColor(\"Blue\");               色の設定
+    plot3D.plotTranslate(vec[]);             要素の移動(移動量 vec[x/y/z])
+    plot3D.plotRotate(angle,\"X\");          要素の回転(回転角度,回転軸 X/Y/Z軸)
+    plot3D.plotScale(scale[]);               要素の縮小拡大 (拡大率 scale[x/y/z])
+    plot3D.plotReset();                      座標変換をクリアする
+    plot3D.plotLine(sp[x/y/z],ep[x/y/z]);    線分の設定()
+    plot3D.plotLines(plist[n,x/y/z]);        複数線分(plits[,])
+    plot3D.plotPolyline(plist[n,x/y/z]);     ポリライン
+    plot3D.plotPolyloop(plist[n,x/y/z]);     ポリラインループ
+    plot3D.plotPolygon(plist[n,x/y/z]);　    ポリゴン(塗潰し)
+    plot3D.plotTrianges(plist[n,x/y/z]);     複数三角形(塗潰し)
+    plot3D.plotTriangeStrip(plist[n,x/y/z]); 連続三角形
+    plot3D.plotQuads(plist[n,x/y/z]);        複数四角形
+    plot3D.plotQuadeStrip(plist[n,x/y/z]);   連続四角形
+    plot3D.plotTriangeFan(plist[n,x/y/z]);   扇形の連続三角形
+    plot3D.translate(pos[],vec[]);           3D座標の移動(3D座標,移動量)
+    plot3D.rotate(pos[],cp[],angle,face);    3D座標の回転(3D座標,回転中心,回転角,回転軸)
+    plot3D.rotateAxis(pos[,],angle,axis[]);  3D座標の指定軸で回転(3D座標,回転角,回転軸ベクトル
+    plot3D.scale(pos[],cp[],scale);          3D座標の拡大縮小(3D座標,拡大中心,拡大率)
+    plot3D.holePlateQuads(outline[,],innerLine[,],,);   中抜きの平面データの作成
+    plot3D.polygonSideQuadStrip(polygon[,],thicknes);   ポリゴンの側面データをQuadStripで作成
+    plot3D.polygonSideQuads(polygon[,],thicknes);       ポリゴンの側面データをQuadsで作成
+    plot3D.polylinRotateQuads(polyline[,],centerline[,],divAng,sa,ea); ポリラインデーをセンタラインを中心に回転させたデータ
  
 内部処理 
     ScriptLibの追加関数の引数の処理方法
@@ -211,6 +234,17 @@ Win版用の関数
                                    ARRAY      ← Index ←  variables, array
         value = convVariable(variable/array);
 
+言語処理
+    ２パス方式: １パス目で関数の取得、２パス目で関数の実行、起動はmain()関数(省略化か)
+    関数処理　: 遂時処理で実行、関数内の関数は再起処理で行う
+    関数      : 関数は一つのオブジェクトとして扱い、その中に言語処理と変数をもつ
+
+変数の
+    変数名と値を辞書(Dictionary)で保管
+    グローバル変数は変数名の先頭に'g_'を付けて保管、それ以外は関数ごとに変数を持つ
+
+
+
 機能追加
 ・3Dグラフィックにレイヤー機能の追加 plot3D.setLayer("レイヤー名"))
 ・多次元配列対応(インデックスなしの場合) 3次元以上  a[,,],a[,,,] ...の時
@@ -248,6 +282,15 @@ Win版用の関数
 ・配列関数(array.): contains, count, clear, remove, squeez, sort, reverse, 
     統計 max, min, sum, average, variance, stdDeviation, covariance, corrCoeff (2024/10/20)
     マトリックス関数(matrix.): unit,transpose,multi, add, inverse, copy
+・リスト構造
+    a[0,0,0] = 3;
+    a[0,1,0] = 2;
+    println(a[0,0,0]," ",a[0,1,0]);
+    c = a[0,0,0] * a[0,1,0];
+    println(c);
+    list<0> = a[,,];
+    list<1> = c;
+    println(list<0>[0,0,0]);
 
 機能制限
 ・関数は値渡しのみでアドレス渡しは不可
@@ -306,3 +349,9 @@ git commit -m "first commit"
 git branch -M main
 git remote add origin https://github.com/katsushigeyoshida/KScriptWin.git
 git push -u origin main
+
+
+プログラムの構成と処理
+
+1.スクリプト文の構文解析
+

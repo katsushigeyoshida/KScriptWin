@@ -1,5 +1,7 @@
 ﻿using CoreLib;
 using System;
+using System.Collections.Generic;
+using System.Threading;
 using System.Windows;
 
 namespace KScriptWin
@@ -8,6 +10,16 @@ namespace KScriptWin
     /// 追加内部関数
     ///     input    : a = input();                         キー入力(文字列)
     ///     cmd      : cmd(command);                        Windowsコマンドの実行s)
+    ///     inKey    : inkey();                             キー入力
+    ///     sleep    : sleep(n);                            スリープ(n msec)",
+    ///     dateTimeNow : a = dateTimeNow(type);            現在の時刻を文字列で取得(0:\"HH:mm:ss 1:yyyy/MM/dd HH:mm:ss 2:yyyy/MM/dd 
+    ///                                                         3:HH時mm分ss秒 4:yyyy年MM月dd日 HH時mm分ss秒 5:yyyy年MM月dd日"),
+    ///     startTime : startTime();                        時間計測の開始
+    ///     lapTime   : a = lapTime();                      経過時間の取得(秒)
+    ///     
+    ///     y[] = solve.quadraticEquation(a,b,c);           2次方程式の解(y = a*x^2+b*x+c)(y[] = solv..) ",
+    ///     y[] = solve.qubicEquation(a,b,c,d);             3次方程式の解(y = a*x^3+b*x^2+c*x+d)(y[] = solv..) ",
+    ///     y[] = solve.quarticEquation(a,b,c,d,e);         4次方程式の解(y = a*x^4+b*x^3+c*x^2+d*x+e)(y[] = solv..) ",
     ///     
     /// Windows用関数
     ///     inputBox    : a = inputBox();                   文字入力ダイヤログ
@@ -31,6 +43,7 @@ namespace KScriptWin
     {
         public static string[] mFuncNames = new string[] {
             "inputBox(); 文字入力ダイヤログ",
+            "inputBoxMulti(dataList[,]); 複数項目入力",
             "messageBox(outString[, title]); 文字列のダイヤログ表示",
             "menuSelect(menu[],title); メニューリストを表示して項目Noを返す",
             "inKey(); キー入力",
@@ -75,11 +88,12 @@ namespace KScriptWin
             switch (funcName.mValue) {
                 //case "input"            : return new Token(Console.ReadLine(), TokenType.STRING);
                 case "inputBox"         : return inputBox(args);
+                case "inputBoxMulti"    : return inputBoxMulti(args, ret);
+                case "menuSelect"       : return menuSelect(args);
                 case "inKey"            : return inKey();
                 case "messageBox"       : messageBox(args); break;
                 case "sleep"            : sleep(args); break;
                 case "cmd"              : cmd(args); break;
-                case "menuSelect"       : return menuSelect(args);
                 case "dateTimeNow"      : return dateTimeNow(args);
                 case "startTime"        : starTime(); break;
                 case "lapTime"          : return lapTime();
@@ -179,6 +193,42 @@ namespace KScriptWin
                     return new Token(dlg.mEditText.ToString(), TokenType.LITERAL);
                 else
                     return new Token(dlg.mEditText.ToString(), TokenType.STRING);
+            }
+            return new Token("", TokenType.EMPTY);
+        }
+
+        /// <summary>
+        /// 複数項目入力ダイヤログ(data[,] = inputBoxMulti(data[,], title);
+        /// </summary>
+        /// <param name="args"></param>
+        /// <param name="ret"></param>
+        /// <returns></returns>
+        public Token inputBoxMulti(List<Token> args, Token ret)
+        {
+            if (0 < args.Count && mVar.getArrayOder(args[0]) == 2) {
+                string[,] data = mVar.cnvArrayString2(args[0]);
+                string title = "タイトル";
+                List<string[]> dataList = new List<string[]>();
+                for (int i = 0; i < data.GetLength(0); i++) {
+                    if (1 < data.GetLength(1)) {
+                        string[] ddate = new string[] { ylib.stripBracketString(data[i, 0], '"'), ylib.stripBracketString(data[i, 1], '"') };
+                        dataList.Add(ddate);
+                    }
+                }
+                if (1 < args.Count && mVar.getArrayOder(args[1]) == 0)
+                    title = mVar.getStringFromArg(args[1]);
+                InputBoxMulti dlg = new InputBoxMulti();
+                dlg.Title = title;
+                dlg.mDataList = dataList;
+                if (dlg.ShowDialog() == true) {
+                    for (int i = 0; i < dlg.mDataList.Count; i++) {
+                        data[i, 1] = dlg.mDataList[i][1];
+                    }
+                    //  戻り値の設定
+                    mVar.setReturnArray(data, ret);
+                    mVar.setVariable(new Token("return", TokenType.VARIABLE), ret);
+                    return mVar.getVariable("return");
+                }
             }
             return new Token("", TokenType.EMPTY);
         }

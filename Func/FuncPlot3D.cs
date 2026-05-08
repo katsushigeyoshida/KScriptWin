@@ -63,6 +63,9 @@ namespace KScriptWin
         /// <returns>戻り値</returns>
         public Token plotFunc(Token funcName, Token arg, Token ret)
         {
+            if (mPlot3D == null && 
+                (0 <= funcName.mValue.IndexOf("plot3D.plot") || 0 <= funcName.mValue.IndexOf("plot3D.disp")))
+                return new Token("plot3Dが初期化(setArea())されていない(", TokenType.ERROR);
             List<Token> args = mScript.getFuncArgs(arg.mValue);
             switch (funcName.mValue) {
                 case "plot3D.setArea"         : setArea(args); break;
@@ -106,11 +109,14 @@ namespace KScriptWin
         /// <param name="args">min[],max[]</param>
         private void setArea(List<Token> args)
         {
-            if (args.Count < 2) return ;
-            List<double> listData0 = mVar.cnvListDouble(args[0]);
-            List<double> listData1 = mVar.cnvListDouble(args[1]);
-            Point3D sp = new Point3D(listData0[0], listData0[1], listData0[2]);
-            Point3D ep = new Point3D(listData1[0], listData1[1], listData1[2]);
+            Point3D sp = new Point3D(-1, -1, -1);
+            Point3D ep = new Point3D( 1,  1,  1);
+            if (1 < args.Count) {
+                List<double> listData0 = mVar.cnvListDouble(args[0]);
+                List<double> listData1 = mVar.cnvListDouble(args[1]);
+                sp = new Point3D(listData0[0], listData0[1], listData0[2]);
+                ep = new Point3D(listData1[0], listData1[1], listData1[2]);
+            }
             if (mPlot3D != null)
                 mPlot3D.Close();
             mPlot3D = new Plot3DView();
