@@ -49,6 +49,7 @@ namespace KScriptWin
         public TokenType mType;
 
         private KLexer mLexer = new KLexer();
+        private YLib ylib = new YLib();
 
         /// <summary>
         /// コンストラクタ(データの種別は自動判定)
@@ -72,14 +73,28 @@ namespace KScriptWin
         }
 
         /// <summary>
-        /// STRING データを取得するとき'"'の囲みを外す
+        /// 値を文字列に変換
+        /// STRINGデータを取得するとき'"'の囲みを外す
+        /// LITERALは有効桁で丸める
         /// </summary>
         /// <returns>値</returns>
         public string getValue()
         {
             if (mType == TokenType.STRING) {
+                //  文字列は前後の'"'を除く
                 if (0 <= mValue.IndexOf('"'))
                     return mLexer.stripBracketString(mValue, '"');
+            } else if (mType == TokenType.LITERAL) {
+                //  数値は有効桁数(13桁)で丸めて文字列に変換
+                double d;
+                string result = "0";
+                if (double.TryParse(mValue, out d)) {
+                    if (d != 0)
+                        result = ylib.roundRound((decimal)d,12).ToString().TrimEnd('0');
+                    if (result[result.Length - 1] == '.')
+                        result = result.TrimEnd('.');
+                    return result;
+                }
             }
             return mValue;
         }

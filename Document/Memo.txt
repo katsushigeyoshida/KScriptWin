@@ -53,6 +53,21 @@ KScriptWinの特徴
 ・おなじ環境でグラフィック機能が使える
 ・グラフィック機能が簡単に使用できる(直接ワールド座標が使えスクリーン座標を考慮する必要がない)
 
+変数
+
+制御文
+    a = b                                   代入文 letStatement
+    if ( ) { } else { }                     if文
+    while ( ) { }                           while文
+    for ( ; ; ) { }                         for文
+    return
+    break
+    continue
+    #include
+    print() / println()                     プリント文
+    exit / puse
+
+
 システム関数
     key = inKey();                          キー入力
     sleep(n);                               スリープ(n msec)
@@ -95,6 +110,27 @@ KScriptWinの特徴
     std  = array.stdDeviation(a[]);             配列の標準偏差
     c    = array.covariance(a[], b[]);          共分散
     c    = array.corrCoeff(x[],y[]);            配列の相関係数
+    追加予定
+    array.append(a[], 5);                       配列に値を追加
+    array.append(a[1,], 5);                     配列に値を追加
+    array.extend(a[], b[]);                     配列に配列を追加
+    array.insert(a[], n, v);                    配列のn番目に値を挿入
+    array.remove(a[], n);                       配列のn番目の値を削除
+    a[]  = array.arrange(start, end, step);     等間隔のの数値配列作成
+    a[]  = array.linspace(start, end, div);     等分割した数値配列の作成
+    a[]  = array.creat(size, value);            sizeで指定した1次元配列
+    a[,] = array.creat(size0, size1, value);    sizeで指定した1次元配列
+    array.add(a[], val);                        配列に値を足す
+    array.add(a[1,], val);                      配列に値を足す
+    array.sub(a[], val);                        配列に値を引く
+    array.multi(a[], val);                      配列に値を掛ける
+    array.divide(a[], val);                     配列に値で割る
+    c[] = array.add(a[], b[]);                  配列同士の演算
+    c[] = array.sub(a[], b[]);
+    c[] = array.multi(a[], b[]);
+    c[] = array.divide(a[], b[]);
+    n = array.indexOf(a[], val, start);         valを検索してindexを返す
+    n = array.lastIndexOf(a[], val, lastStart); valを最後から検索してindexを返す
 文字列関数
     str = string.concat(a, b);                          文字列の接続
     len = string.length(a);                             文字列の長さ
@@ -142,6 +178,7 @@ Win版用の関数
     n = menuSelect(menu[],title);               メニュー選択ダイヤログ
 
 plot関数(2Dグラフィック)
+    plot.ViewArea(left,bottom,right,top);       未サポート
     plot.WindowSet(left,bottom,right,top);      表示領域の設定
     plot.Aspect(1);                             アスペクト比固定の設定(0(非固定)/1(固定))
     plot.Color("Blue");                         要素の色設定
@@ -149,9 +186,13 @@ plot関数(2Dグラフィック)
     plot.LineType("dash");                      線種の設定("solid", "dash", "center", "phantom")
     plot.PointSize(3);                          点サイズの設定
     plot.LineThickness(2);                      線の太さの設定
+    plot.Fill(1);                               塗潰し設定(円とポリゴンのみ)
+    plot.FillColor("Green");                    塗潰しの色設定
     plot.Point(x, y);                           点の表示
     plot.Line(sx, sy, ex, ey);                  線分の表示(始点x,y、終点x,y)
     plot.Arc(cx, cy, r[, sa][, ea]);            円弧の表示(中心x,中心y,半径[,始角[,終角]])
+    plot.Polyline(plist[,]);                    ポリラインの表示
+    plot.Polygon(plist[,]);                     ポリゴンの標示
     plot.Text(text,x,y,size,rotate,ha,va);      文字列表示(文字列,座標[,大きさ[,回転角[,水平アライメント[,垂直アライメント]]]])
 
 plot3D関数(3Dグラフィック)

@@ -508,6 +508,7 @@ namespace KScriptWin
         /// print文の処理
         /// </summary>
         /// <param name="tokens">トークンリスト</param>
+        /// <param name="lf">改行の有無</param>
         public RETURNTYPE printStatement(List<Token> tokens, bool lf = false)
         {
             if (tokens.Count <= 1) {
@@ -524,14 +525,24 @@ namespace KScriptWin
                     string buf = "";
                     for (int i = 0; i < tokenList.Count; i++) {
                         if (tokenList[i].mType == TokenType.DELIMITER) {
+                            //  計算式の処理
                             Token v = express(expList);
-                            buf += v.getValue();
+                            if (v != null)
+                                buf += v.getValue();
                             expList = new List<Token>();
+                        } else if (0 < mVar.getArrayOder(tokenList[i])) {
+                            //  配列変数から値を抽出
+                            List<string> arrayNameList = mVar.getArrayNameList(getVariableName(tokenList[i]));
+                            foreach (string name in arrayNameList) {
+                                buf += mVar.getVariable(name).getValue() + " ";
+                            }
                         } else if (i == tokenList.Count - 1) {
+                            //  変数
                             expList.Add(tokenList[i]);
                             Token v = express(expList);
-                             buf += v.getValue();
+                            buf += v.getValue();
                         } else {
+                            //  定数
                             expList.Add(tokenList[i]);
                         }
                     }
@@ -765,6 +776,8 @@ namespace KScriptWin
         /// <returns>計算結果(文字列)</returns>
         private Token express(List<Token> tokens, int sp = 0)
         {
+            if (tokens.Count == 0)
+                return null;
             Token buf = null;
             Token token = null;
             for (int i = sp; i < tokens.Count; i++) {

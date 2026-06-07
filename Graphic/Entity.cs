@@ -4,7 +4,7 @@ using System.Windows.Media;
 namespace KScriptWin
 {
     public enum EntityId {
-        Non, Point, Line, Arc, Text,
+        Non, Point, Line, Arc, Polyline, Polygon, Text,
     }
     public enum PointType { dot, cross, plus, box, circle, triangle }
     public enum LineType { solid, dash, center, phantom }
@@ -19,6 +19,8 @@ namespace KScriptWin
         public Brush mColor = Brushes.Black;
         public LineType mLineType = LineType.solid;
         public PointType mPointType = PointType.dot;
+        public bool mFill = false;
+        public Brush mFillColor = Brushes.Black;
         public double mThickness = 1.0;
         public double mSize = 1.0;
 
@@ -90,9 +92,54 @@ namespace KScriptWin
             ydraw.mBrush = mColor;
             ydraw.mThickness = mThickness;
             ydraw.mLineType = (int)mLineType;
-            ydraw.drawWArc(mArc);
+            ydraw.mFillColor = mFillColor;
+            ydraw.drawWArc(mArc, mFill);
         }
     }
+
+    /// <summary>
+    /// ポリライン要素
+    /// </summary>
+    public class PolylineEntity : Entity
+    {
+        public PolylineD mPolyline;
+        public PolylineEntity()
+        {
+            mId = EntityId.Polyline;
+            mPolyline = new PolylineD();
+        }
+
+        public override void draw(YWorldDraw ydraw)
+        {
+            ydraw.mBrush = mColor;
+            ydraw.mThickness = mThickness;
+            ydraw.mLineType = (int)mLineType;
+            ydraw.drawWPolyline(mPolyline);
+        }
+    }
+
+    /// <summary>
+    /// ポリゴン要素
+    /// </summary>
+    public class PolygonEntity : Entity
+    {
+        public PolygonD mPolygon;
+        public PolygonEntity()
+        {
+            mId = EntityId.Polygon;
+            mPolygon = new PolygonD();
+        }
+
+        public override void draw(YWorldDraw ydraw)
+        {
+            ydraw.mBrush = mColor;
+            ydraw.mThickness = mThickness;
+            ydraw.mLineType = (int)mLineType;
+            ydraw.mFillColor = mFillColor;
+            ydraw.drawWPolygon(mPolygon, mFill);
+        }
+    }
+
 
     /// <summary>
     /// 文字列要素

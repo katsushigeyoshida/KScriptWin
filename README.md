@@ -65,6 +65,7 @@ if (a > b) println(a);
 
 
 ### 履歴
+2026/06/05 array関数を拡張、graph関数を強化  
 2025/09/14 matrix関数の追加
 2025/01/26 Point3D.cnvPlaneLocation()のバグ修正  
 2025/01/12 配列の代入追加 (a[] = b[], a[,] = b[,], a[n,] = b[m,])  

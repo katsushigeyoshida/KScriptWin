@@ -13,6 +13,8 @@ namespace KScriptWin
             "plot.Disp(); グラフィックデータの再表示",
             "plot.Aspect(1); アスペクト比固定の設定(0(非固定)/1(固定))",
             "plot.Color(\"Blue\"); 要素の色設定",
+            "plot.Fill(1); 塗潰し設定(0:塗潰しなし/1:塗潰しあり",
+            "plot.FillColor(\"Blue\"); 塗潰しの色設定",
             "plot.PointType(\"cross\"); 点種の設定(\"dot\", \"cross\", \"plus\", \"box\", \"circle\", \"triangle\")",
             "plot.LineType(\"dash\"); 線種の設定(\"solid\", \"dash\", \"center\", \"phantom\")",
             "plot.PointSize(3); 点サイズの設定",
@@ -20,8 +22,20 @@ namespace KScriptWin
             "plot.Point(x,y); 点の表示 Point(x,y/p[]/pl[,])",
             "plot.Line(sx,sy,ex,ey); 線分の表示 Line(sx,sy,ex,ey/sp[],ep[]/pl[,]))",
             "plot.Arc(cx,cy,r[,sa][,ea]); 円弧の表示(中心x,中心y,半径[、始角][、終角])",
+            "plot.Polyline(x0,y0,x1,y1,...); ポリラインの表示 Polyline(x0,y0,x1,y1,.../p0[],p1[].../pl[,]))",
+            "plot.Polygon(x0,y0,x1,y1,...); ポリゴンの表示 Polygon(x0,y0,x1,y1,.../p0[],p1[].../pl[,]))",
             "plot.Text(text,x,y[,size[,rot[,ha[,va]]]]); 文字列の表示(文字列,X座標,Y座標,サイズ,回転角,水平アライメント,垂直アライメント)",
-            "graph.Set(x[],y[][,Title]); グラフデータの設定 set(x[],y[][,Title])/set(pl[,][,title])",
+            "graph.SetData(x[],y[]); グラフデータの設定 Set(x[],y[])/set(pl[,])",
+            "graph.AddData(x[],y[]); グラフデータの追加 Add(x[],y[]/p[,])",
+            "graph.GraphType(\"line\"); グラフの種別設定(折れ線\"line\",散布図\"scatter\",棒グラフ\"bar\")",
+            "graph.LineColor(\"Blue\"); グラフの線の色設定",
+            "graph.LineType(\"dash\"); 線種の設定(\"solid\", \"dash\", \"center\", \"phantom\")",
+            "graph.LineThickness(1); 線の太さ",
+            "graph.PointType(\"cross\"); 点種の設定(\"dot\", \"cross\", \"plus\", \"box\", \"circle\", \"triangle\")",
+            "graph.PointSize(3); 点サイズの設定",
+            "graph.Title(\"title\"); グラフのタイトル",
+            "graph.XTitle(\"title\"); グラフのX軸タイトル\"",
+            "graph.YTitle(\"title\"); グラフのY軸タイトル",
             "graph.FontSize(5); グラフのフォントサイズの設定",
         };
 
@@ -31,6 +45,15 @@ namespace KScriptWin
 
         private double mGraphFontSize = 12;
         private bool mAspectFix = true;
+        private GraphDraw.GRAPHTYPE mGraphType = GraphDraw.GRAPHTYPE.LINE_GRAPH;
+        private string mLineColor = "Black";
+        private string mLineType = "solid";
+        private double mLineThickness = 1;
+        private string mPointType = "circle";
+        private double mPointSize = 1;
+        private string mTitle = "";
+        private string mXTitle = "";
+        private string mYTitle = "";
 
         private KParse mParse;
         private Variable mVar;
@@ -53,6 +76,8 @@ namespace KScriptWin
                 case "plot.Disp"         : plotDisp(); break;
                 case "plot.Aspect"       : plotAspect(args); break;
                 case "plot.Color"        : plotColor(args); break;
+                case "plot.Fill"         : plotSetFill(args); break;
+                case "plot.FillColor"    : plotFillColor(args); break;
                 case "plot.PointType"    : plotPointType(args); break;
                 case "plot.LineType"     : plotLineType(args); break;
                 case "plot.PointSize"    : plotPointSize(args); break;
@@ -60,9 +85,21 @@ namespace KScriptWin
                 case "plot.Point"        : plotPoint(args); break;
                 case "plot.Line"         : plotLine(args); break;
                 case "plot.Arc"          : plotArc(args); break;
+                case "plot.Polyline"     : plotPolyline(args); break;
+                case "plot.Polygon"      : plotPolygon(args); break;
                 case "plot.Text"         : plotText(args); break;
-                case "graph.Set"         : graphSet(args); break;
+                case "graph.SetData"     : setGraphData(args); break;
+                case "graph.AddData"     : addtGraphData(args); break;
                 case "graph.FontSize"    : graphFontSize(args); break;
+                case "graph.GraphType"   : setGraphType(args); break;
+                case "graph.SetColor"    : setLineColor(args); break;
+                case "graph.LineType"    : setLineType(args); break;
+                case "graph.LineThickness": setLineThickness(args); break;
+                case "graph.PointType"   : setPointType(args); break;
+                case "graph.PointSize"   : setPointSize(args); break;
+                case "graph.Title"       : setTitle(args); break;
+                case "graph.XTitle"      : setXTitle(args); break;
+                case "graph.YTitle"      : setYTitle(args); break;
                 default: return new Token("not found func", TokenType.ERROR);
             }
             return new Token("", TokenType.EMPTY);
@@ -114,6 +151,26 @@ namespace KScriptWin
         {
             string colorName = ylib.stripBracketString(args[0].mValue, '"');
             mGraph.setColor(colorName);
+        }
+
+        /// <summary>
+        /// 要素の塗潰し色設定(inner function)
+        /// </summary>
+        /// <param name="args">色名</param>
+        public void plotFillColor(List<Token> args)
+        {
+            string colorName = ylib.stripBracketString(args[0].mValue, '"');
+            mGraph.setFillColor(colorName);
+        }
+
+        /// <summary>
+        /// 要素の塗潰し設定
+        /// </summary>
+        /// <param name="args">1=塗潰す other:塗り潰しなし</param>
+        public void plotSetFill(List<Token> args)
+        {
+            int fill = ylib.intParse(args[0].mValue);
+            mGraph.setFill(fill == 1 ? true : false);
         }
 
         /// <summary>
@@ -253,6 +310,32 @@ namespace KScriptWin
         }
 
         /// <summary>
+        /// ポリラインの表示
+        /// </summary>
+        /// <param name="args"></param>
+        private void plotPolyline(List<Token> args)
+        {
+            List<PointD> plist = mVar.args2PointList(args);
+            if (plist != null && 1 < plist.Count) {
+                PolylineD polyline = new PolylineD(plist);
+                mGraph.plotPolyline(polyline);
+            }
+        }
+
+        /// <summary>
+        /// ポリゴンの表示
+        /// </summary>
+        /// <param name="args"></param>
+        private void plotPolygon(List<Token> args)
+        {
+            List<PointD> plist = mVar.args2PointList(args);
+            if (plist != null && 1 < plist.Count) {
+                PolygonD polygon = new PolygonD(plist);
+                mGraph.plotPolygon(polygon);
+            }
+        }
+
+        /// <summary>
         /// 文字列の表示(文字列,座標x,座標y,サイズ,回転角,水平アライメント,垂直アライメント)(inner function)
         /// </summary>
         /// <param name="args"></param>
@@ -302,43 +385,142 @@ namespace KScriptWin
         /// set(x[],y[],title)/set(pl[,],title)
         /// </summary>
         /// <param name="args">引数(x[],y[][,title]</param>
-        public void graphSet(List<Token> args)
+        public void setGraphData(List<Token> args)
         {
-            string title = "";
-            double[] x = null, y = null;
-            double[,] datas = null;
-            if (1 < args.Count && mVar.getArrayOder(args[0]) == 1 && mVar.getArrayOder(args[1]) == 1) {
-                //  set(x[],y[],title)
-                x = mVar.cnvListDouble(args[0]).ToArray();
-                y = mVar.cnvListDouble(args[1]).ToArray();
-                if (x.Length != y.Length)
-                    return;
-                if (2 < args.Count)
-                    title = mScript.getValueToken(args[2].mValue).mValue.Trim('"');
-            } else if (0 < args.Count && mVar.getArrayOder(args[0]) == 2) {
-                //  set(pl[,],title)
-                datas = mVar.cnvArrayDouble2(args[0]);
-                x = new double[datas.GetLength(0)];
-                y = new double[datas.GetLength(0)];
-                for (int i = 0; i < datas.GetLength(0); i++) {
-                    x[i] = datas[i, 0];
-                    y[i] = datas[i, 1];
-                }
-                if (1 < args.Count)
-                    title = mScript.getValueToken(args[1].mValue).mValue.Trim('"');
-            } else
+            List<PointD> dataList = mVar.args2PointList(args);
+            if (dataList.Count == 0)
                 return;
-
             if (mGraph != null)
                 mGraph.Close();
             mGraph = new GraphView();
             mScript.mGraph = mGraph;
             mGraph.Show();
-            mGraph.setAspectFix(0);
+
+            mGraph.mDraw.mTitle = mTitle;
+            mGraph.mDraw.mXTitle = mXTitle;
+            mGraph.mDraw.mYTitle = mYTitle;
+            mGraph.mAspectFix = false;
             mGraph.setFontSize(mGraphFontSize);
-            if (x != null && y != null) {
-                mGraph.setGraph(x.ToArray(), y.ToArray(), title);
+            
+            mGraph.mDraw.mGraphType = mGraphType;
+            mGraph.setColor(mLineColor);
+            mGraph.setLineType(mLineType);
+            mGraph.setLineThickness(mLineThickness);
+            mGraph.setPointType(mPointType);
+            mGraph.setPointSize(mPointSize);
+
+            mGraph.setGraph(dataList);
+        }
+
+        /// <summary>
+        /// グラフデータを追加 addGraphData(p[,]/x[],y[])
+        /// </summary>
+        /// <param name="args"></param>
+        private void addtGraphData(List<Token> args )
+        {
+            List<PointD> dataList = mVar.args2PointList(args);
+            if (dataList.Count == 0)
+                return;
+            mGraph.mDraw.mGraphType = mGraphType;
+            mGraph.setColor(mLineColor);
+            mGraph.setLineType(mLineType);
+            mGraph.setLineThickness(mLineThickness);
+            mGraph.setPointType(mPointType);
+            mGraph.setPointSize(mPointSize);
+
+            mGraph.addGraph(dataList); 
+        }
+
+        /// <summary>
+        /// グラフの種類を設定 (setGraphType = scatter(散布図) / line(折れ線) / bar(棒グラフ) )
+        /// </summary>
+        /// <param name="args"></param>
+        public void setGraphType(List<Token> args) {
+            string type = mVar.getStringFromArg(args[0]);
+            setGraphType(type);
+        }
+
+        /// <summary>
+        /// グラフの種別設定
+        /// </summary>
+        /// <param name="type"></param>
+        private void setGraphType(string type)
+        {
+            switch (type.ToLower()) {
+                case "scatter": mGraphType = GraphDraw.GRAPHTYPE.SCATTER; break;
+                case "line": mGraphType = GraphDraw.GRAPHTYPE.LINE_GRAPH; break;
+                case "bar": mGraphType = GraphDraw.GRAPHTYPE.BAR_GRAPH; break;
             }
+        }
+
+        /// <summary>
+        /// グラフの線の色設定
+        /// </summary>
+        /// <param name="args"></param>
+        public void setLineColor(List<Token> args)
+        {
+            mLineColor = mVar.getStringFromArg(args[0]);
+        }
+
+        /// <summary>
+        /// グラフの線種設定
+        /// </summary>
+        /// <param name="args"></param>
+        public void setLineType(List<Token> args)
+        {
+            mLineType = ylib.stripBracketString(args[0].mValue, '"');
+        }
+
+        /// <summary>
+        /// グラフの線の太さを設定
+        /// </summary>
+        /// <param name="args"></param>
+        public void setLineThickness(List<Token> args)
+        {
+            mLineThickness = ylib.doubleParse(args[0].mValue);
+        }
+
+
+        /// <summary>
+        /// 点種の設定("dot", "cross", "plus", "box", "circle", "triangle")
+        /// </summary>
+        /// <param name="args">点種</param>
+        public void setPointType(List<Token> args)
+        {
+            mPointType = ylib.stripBracketString(args[0].mValue, '"');
+        }
+
+        /// <summary>
+        /// 点サイズの設定
+        /// </summary>
+        /// <param name="args">サイズ</param>
+        public void setPointSize(List<Token> args)
+        {
+            mPointSize = ylib.doubleParse(args[0].mValue);
+        }
+
+        /// <summary>
+        /// タイトル設定
+        /// </summary>
+        /// <param name="args"></param>
+        public void setTitle(List<Token> args) {
+            mTitle = mVar.getStringFromArg(args[0]);
+        }
+
+        /// <summary>
+        /// X軸タイトル設定
+        /// </summary>
+        /// <param name="args"></param>
+        public void setXTitle(List<Token> args) {
+            mXTitle = mVar.getStringFromArg(args[0]);
+        }
+
+        /// <summary>
+        /// Y軸タイトル設定
+        /// </summary>
+        /// <param name="args"></param>
+        public void setYTitle(List<Token> args) {
+            mYTitle = mVar.getStringFromArg(args[0]);
         }
     }
 }

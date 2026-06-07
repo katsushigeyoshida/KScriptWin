@@ -2,14 +2,77 @@
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
+using static KScriptWin.GraphDraw;
 
 namespace KScriptWin
 {
+    /// <summary>
+    /// グラフデータ
+    /// </summary>
+    public class GraphData
+    {
+        public List<PointD> mData = new List<PointD>();     //  グラフデータ
+        public GRAPHTYPE mGraphType = GRAPHTYPE.LINE_GRAPH; //  グラフの種別
+        public Box mDataArea;                               //  データ領域
+        public Brush mColor = Brushes.Black;                //  折れ線の色
+        public LineType mLineType = LineType.solid;         //  折れ線の線種
+        public PointType mPointType = PointType.circle;     //  点の種類
+        public double mThickness = 1.0;                     //  折れ線の太さ
+        public double mPointSize = 1.0;                     //  点の大きさ
+
+        /// <summary>
+        /// コンストラクタ
+        /// </summary>
+        /// <param name="dataList">座標データ</param>
+        public GraphData(List<PointD> dataList)
+        {
+            mData = dataList;
+            mDataArea = new Box(getXmin(),getYmax(),getXmax(),getYmin());
+            mDataArea.normalize();
+        }
+
+        /// <summary>
+        /// Xデータの最小値
+        /// </summary>
+        /// <returns></returns>
+        public double getXmin()
+        {
+            return mData.Min(p => p.x);
+        }
+        /// <summary>
+        /// Xデータの最大値
+        /// </summary>
+        /// <returns></returns>
+        public double getXmax()
+        {
+            return mData.Max(p => p.x);
+        }
+        /// <summary>
+        /// Yデータの最小値
+        /// </summary>
+        /// <returns></returns>
+        public double getYmin()
+        {
+            return mData.Min(p => p.y);
+        }
+        /// <summary>
+        /// Yデータの最大値
+        /// </summary>
+        /// <returns></returns>
+        public double getYmax()
+        {
+            return mData.Max(p => p.y);
+        }
+    }
+
+    /// <summary>
+    /// グラフの表示
+    /// </summary>
     public class GraphDraw
     {
         public Brush mBaseBackColor = Brushes.White;            //  背景色
         public enum GRAPHTYPE { SCATTER, LINE_GRAPH, BAR_GRAPH, STACKEDLINE_GRAPH, STACKEDBAR_GRAPH }
-        private GRAPHTYPE mGraphType = GRAPHTYPE.LINE_GRAPH;
+        public GRAPHTYPE mGraphType = GRAPHTYPE.LINE_GRAPH;
         private string[] mGraphTypeTitle = { "散布図", "折線", "棒グラフ", "積上げ式折線", "積上棒グラフ" };
         private Box mDispArea = new Box();
         private Box mDataArea = new Box();
@@ -19,14 +82,19 @@ namespace KScriptWin
         private double mStepYsize = 1;
         private double mFontWorldSize = 8;
 
+        //  グラフデータ
         public double mFontSize = 12;
-        public double[] mX;
-        public double[] mY;
+        public List<GraphData> mGraphData;
+        public string mTitle = "Title";
+        public string mXTitle = "X-Title";
+        public string mYTitle = "Y-Title";
 
         public List<Entity> mEntityList;
-        public Brush mColor         = Brushes.Black;
+        public Brush mColor        = Brushes.Black;
         public LineType mLineType   = LineType.solid;
         public PointType mPointType = PointType.dot;
+        public bool mFill           = false;
+        public Brush mFillColor     = Brushes.Black;
         public double mThickness    = 1.0;
         public double mPointSize    = 1.0;
 
@@ -34,6 +102,10 @@ namespace KScriptWin
         private YWorldDraw ydraw;
         private YLib ylib = new YLib();
 
+        /// <summary>
+        /// コンストラクタ
+        /// </summary>
+        /// <param name="canvas"></param>
         public GraphDraw(Canvas canvas)
         {
             mCanvas = canvas;
@@ -41,6 +113,7 @@ namespace KScriptWin
             mEntityList = new List<Entity>();
             mDispArea = new Box(0, 0, 100, 100);
             mDispArea.normalize();
+            mGraphData = new List<GraphData>();
         }
 
         /// <summary>
@@ -150,6 +223,15 @@ namespace KScriptWin
         }
 
         /// <summary>
+        /// 塗り潰し色の設定
+        /// </summary>
+        /// <param name="color">色名</param>
+        public void plotFillColor(string color)
+        {
+            mFillColor = ydraw.getColor(color);
+        }
+
+        /// <summary>
         /// 点の描画
         /// </summary>
         /// <param name="point">点座標</param>
@@ -190,6 +272,40 @@ namespace KScriptWin
             ent.mColor = mColor;
             ent.mThickness = mThickness;
             ent.mLineType = mLineType;
+            ent.mFill = mFill;
+            ent.mFillColor = mFillColor;
+            mEntityList.Add(ent);
+            ent.draw(ydraw);
+        }
+
+        /// <summary>
+        /// ポリラインの描画
+        /// </summary>
+        /// <param name="polyline">ポリライン</param>
+        public void plotPolyline(PolylineD polyline)
+        {
+            PolylineEntity ent = new PolylineEntity();
+            ent.mPolyline = polyline;
+            ent.mColor = mColor;
+            ent.mThickness = mThickness;
+            ent.mLineType = mLineType;
+            mEntityList.Add(ent);
+            ent.draw(ydraw);
+        }
+
+        /// <summary>
+        /// ポリゴンの描画
+        /// </summary>
+        /// <param name="polygon">ポリゴン</param>
+        public void plotPolygon(PolygonD polygon)
+        {
+            PolygonEntity ent = new PolygonEntity();
+            ent.mPolygon = polygon;
+            ent.mColor = mColor;
+            ent.mThickness = mThickness;
+            ent.mLineType = mLineType;
+            ent.mFill = mFill;
+            ent.mFillColor = mFillColor;
             mEntityList.Add(ent);
             ent.draw(ydraw);
         }
@@ -209,6 +325,8 @@ namespace KScriptWin
             ent.draw(ydraw);
         }
 
+        //  ===   グラフ処理   ===
+
         /// <summary>
         /// グラフ領域を設定する
         /// </summary>
@@ -219,10 +337,10 @@ namespace KScriptWin
             mDispArea.normalize();
             //  表示領域(データ領域+目盛り領域)
             mDataArea = mDispArea.toCopy();
-            ydraw.setWorldWindow(mDispArea.Left, mDispArea.Top, mDispArea.Right, mDispArea.Bottom);
+            ydraw.setWorldWindow(mDispArea.Left, mDispArea.Top, mDispArea.Right, mDispArea.Bottom); //  仮の表示領域
             mDispArea = addAxisArea(mDispArea);
             mDispArea.normalize();
-            ydraw.setWorldWindow(mDispArea.Left, mDispArea.Top, mDispArea.Right, mDispArea.Bottom);
+            ydraw.setWorldWindow(mDispArea.Left, mDispArea.Top, mDispArea.Right, mDispArea.Bottom); //  調整後の表示領域
             mFontWorldSize = ydraw.screen2worldYlength(mFontSize);
         }
 
@@ -235,12 +353,59 @@ namespace KScriptWin
             ydraw.mBrush = Brushes.Green;
             ydraw.drawWRectangle(mDataArea);    //  データ枠
             drawAxis();
+            for (int i = 0; i < mGraphData.Count; i++)
+                drawGraphData(mGraphData[i]);
+        }
 
-            ydraw.mBrush = Brushes.Blue;
-            for (int i = 0; i < mX.Length; i++) {
-                ArcD arc = new ArcD(new PointD(mX[i], mY[i]), ydraw.screen2worldXlength(5));
-                ydraw.drawWArc(arc);
+        /// <summary>
+        /// データの表示
+        /// </summary>
+        /// <param name="data"></param>
+        public void drawGraphData(GraphData data)
+        {
+            ydraw.mBrush = data.mColor;
+            if (data.mGraphType == GRAPHTYPE.SCATTER) {
+                ydraw.mPointType = (int)mPointType;
+                ydraw.mPointSize = mPointSize;
+                for (int i = 0; i < data.mData.Count; i++) {
+                    ydraw.drawWPoint(data.mData[i]);
+                }
+            } else if (data.mGraphType == GRAPHTYPE.LINE_GRAPH) {
+                ydraw.mLineType = (int)data.mLineType;
+                ydraw.mThickness = data.mThickness;
+                for (int i = 0; i < data.mData.Count - 1; i++) {
+                    LineD l = new LineD(data.mData[i], data.mData[i + 1]);
+                    ydraw.drawWLine(l);
+                }
             }
+        }
+
+        /// <summary>
+        /// 全データクリア
+        /// </summary>
+        public void dataClear()
+        {
+            if (mGraphData == null)
+                mGraphData = new List<GraphData>();
+            mGraphData.Clear();
+        }
+
+        /// <summary>
+        /// データの追加
+        /// </summary>
+        /// <param name="dataList"></param>
+        public void addData(List<PointD> dataList)
+        {
+
+            if (mGraphData == null)
+                mGraphData = new List<GraphData>();
+            GraphData data = new GraphData(dataList);
+            data.mColor = mColor;
+            data.mGraphType = mGraphType;
+            data.mLineType = mLineType;
+            data.mThickness = mThickness;
+            mGraphData.Add(data);
+
         }
 
         /// <summary>
@@ -249,11 +414,13 @@ namespace KScriptWin
         /// <returns></returns>
         public Rect getGraphArea()
         {
+            //  データ領域
             Rect area = new Rect();
-            area.X = mX.Min();
-            area.Y = mY.Min();
-            area.Width = mX.Max() - area.X;
-            area.Height = mY.Max() - area.Y;
+            area.X = mGraphData.Min(list => list.getXmin());
+            area.Y = mGraphData.Min(list => list.getYmin());
+            area.Width = mGraphData.Max(list => list.getXmax()) - area.X;
+            area.Height = mGraphData.Max(list => list.getYmax()) - area.Y;
+
             double tmpX = area.X;
             double tmpY = area.Y;
             if (0 < area.Y) {
@@ -284,16 +451,34 @@ namespace KScriptWin
             return area;
         }
 
+        /// <summary>
+        /// データエリアに目盛とタイトル余白を追加
+        /// </summary>
+        /// <param name="dataArea"></param>
+        /// <returns></returns>
         public Box addAxisArea(Box dataArea)
         {
             Box dispArea = dataArea.toCopy();
-            dispArea.Left -= ydraw.screen2worldXlength(50);
-            dispArea.Bottom += ydraw.screen2worldYlength(50);
+            dispArea.Left -= ydraw.screen2worldXlength(mFontSize * 5);
+            dispArea.Right += ydraw.screen2worldXlength(mFontSize);
+            dispArea.Bottom += ydraw.screen2worldYlength(mFontSize * 4);
+            dispArea.Top -= ydraw.screen2worldYlength(mFontSize * 2);
             return dispArea;
         }
 
+        /// <summary>
+        /// 補助線と軸の標示
+        /// </summary>
         public void drawAxis()
         {
+            double cx = (mDispArea.Left + mDispArea.Right) / 2;
+            double cy = (mDispArea.Top + mDispArea.Bottom) / 2;
+            if (0 < mTitle.Length)
+                ydraw.drawWText(mTitle, new PointD(cx, mDispArea.Top), mFontWorldSize, 0, HorizontalAlignment.Center, VerticalAlignment.Top);
+            if (0 < mXTitle.Length)
+                ydraw.drawWText(mXTitle, new PointD(cx, mDispArea.Bottom), mFontWorldSize, 0, HorizontalAlignment.Center, VerticalAlignment.Bottom);
+            if (0 < mYTitle.Length)
+                ydraw.drawWText(mYTitle, new PointD(mDispArea.Left, cy), mFontWorldSize, Math.PI / 2, HorizontalAlignment.Center, VerticalAlignment.Top);
             double x = mDataArea.Left;
             ydraw.mBrush = Brushes.Black;
             ydraw.drawWText(x.ToString(), new PointD(x, mDataArea.Bottom), mFontWorldSize, 0, HorizontalAlignment.Center, VerticalAlignment.Top);
@@ -302,7 +487,7 @@ namespace KScriptWin
                 ydraw.mBrush = Brushes.Aqua;
                 ydraw.drawWLine(new PointD(x, mDataArea.Bottom), new PointD(x, mDataArea.Top));
                 ydraw.mBrush = Brushes.Black;
-                ydraw.drawWText(x.ToString(), new PointD(x, mDataArea.Bottom), mFontWorldSize, 0, HorizontalAlignment.Center, VerticalAlignment.Top);
+                ydraw.drawWText(ylib.roundRound((decimal)x,3).ToString(), new PointD(x, mDataArea.Bottom), mFontWorldSize, 0, HorizontalAlignment.Center, VerticalAlignment.Top);
                 x += mStepXsize;
             }
 
@@ -314,7 +499,7 @@ namespace KScriptWin
                 ydraw.mBrush = Brushes.Aqua;
                 ydraw.drawWLine(new PointD(mDataArea.Left, y), new PointD(mDataArea.Right, y));
                 ydraw.mBrush = Brushes.Black;
-                ydraw.drawWText(y.ToString(), new PointD(mDataArea.Left, y), mFontWorldSize, 0, HorizontalAlignment.Right, VerticalAlignment.Center);
+                ydraw.drawWText(ylib.roundRound((decimal)y,3).ToString(), new PointD(mDataArea.Left, y), mFontWorldSize, 0, HorizontalAlignment.Right, VerticalAlignment.Center);
                 y += mStepYsize;
             }
         }

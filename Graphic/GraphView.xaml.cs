@@ -19,12 +19,10 @@ namespace KScriptWin
         public double[] mY;
 
         public enum MODE { PLOT, GRAPH }
-        public MODE mGraphMode = MODE.GRAPH;
-        public enum GRAPHTYPE { non, scatter, line, bar }
-        public GRAPHTYPE mGraphType = GRAPHTYPE.scatter;
+        public MODE mGraphMode = MODE.GRAPH;                //  表示モード(プロット/グラフ)
         public bool mAspectFix = true;
 
-        private GraphDraw mDraw;
+        public GraphDraw mDraw;
         private YLib ylib = new YLib();
 
         public GraphView()
@@ -111,27 +109,55 @@ namespace KScriptWin
             Properties.Settings.Default.Save();
         }
 
+        /// <summary>
+        /// グラフの種別選択
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void cbGraphType_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
         {
             int index = cbGraphType.SelectedIndex;
             if (0 <= index) {
                 switch (index) {
-                    case 0: mGraphType = GRAPHTYPE.scatter; break;
-                    case 1: mGraphType = GRAPHTYPE.line; break;
-                    case 2: mGraphType = GRAPHTYPE.bar; break;
-                    default: mGraphType = GRAPHTYPE.non; break;
+                    case 0: mDraw.mGraphType = GraphDraw.GRAPHTYPE.SCATTER; break;      //  散布図
+                    case 1: mDraw.mGraphType = GraphDraw.GRAPHTYPE.LINE_GRAPH; break;   //  折れ線
+                    case 2: mDraw.mGraphType = GraphDraw.GRAPHTYPE.BAR_GRAPH; break;    //  棒グラフ
+                    default: mDraw.mGraphType = GraphDraw.GRAPHTYPE.LINE_GRAPH; break;  //  その他
                 }
                 graphDraw();
             }
         }
 
-        /// <summary>
-        /// プロットデータの表示
-        /// </summary>
-        public void plotDraw()
+        public void setGraphType(GraphDraw.GRAPHTYPE graphType)
         {
-            mDraw.drawInit(mAspectFix);
-            mDraw.plotDraw();
+            mDraw.mGraphType = graphType;
+            switch(graphType) {
+                case GraphDraw.GRAPHTYPE.SCATTER: cbGraphType.SelectedIndex = 0; break;
+                case GraphDraw.GRAPHTYPE.LINE_GRAPH: cbGraphType.SelectedIndex = 1; break;
+                case GraphDraw.GRAPHTYPE.BAR_GRAPH: cbGraphType.SelectedIndex = 2; break;
+            }
+        }
+
+        /// <summary>
+        /// Graphモードでデータ設定
+        /// </summary>
+        /// <param name="dataList">データリスト</param>
+        public void setGraph(List<PointD> dataList)
+        {
+            mDraw.dataClear();
+            mDraw.addData(dataList);
+            mGraphMode = MODE.GRAPH;
+            graphDraw();
+        }
+
+        /// <summary>
+        /// グラフデータの追加
+        /// </summary>
+        /// <param name="dataList">データリスト</param>
+        public void addGraph(List<PointD> dataList)
+        {
+            mDraw.addData(dataList);
+            graphDraw();
         }
 
         /// <summary>
@@ -145,20 +171,12 @@ namespace KScriptWin
         }
 
         /// <summary>
-        /// Graphモードでデータ設定
+        /// プロットデータの表示
         /// </summary>
-        /// <param name="x"></param>
-        /// <param name="y"></param>
-        public void setGraph(double[] x, double[] y, string title = "Graph")
+        public void plotDraw()
         {
-            Title = $"GraphView [{title}]"; 
-            mDraw.mX = x;
-            mDraw.mY = y;
-            mGraphMode = MODE.GRAPH;
-
             mDraw.drawInit(mAspectFix);
-            mDraw.setGraphWindow();
-            mDraw.drawGraph();
+            mDraw.plotDraw();
         }
 
         /// <summary>
@@ -193,6 +211,24 @@ namespace KScriptWin
         public void setColor(string color)
         {
             mDraw.plotColor(color);
+        }
+
+        /// <summary>
+        /// 塗潰しカラー設定
+        /// </summary>
+        /// <param name="color">カラー名</param>
+        public void setFillColor(string color)
+        {
+            mDraw.plotFillColor(color);
+        }
+
+        /// <summary>
+        /// 塗潰し設定
+        /// </summary>
+        /// <param name="fill">塗潰し</param>
+        public void setFill(bool fill)
+        {
+            mDraw.mFill = fill;
         }
 
         /// <summary>
@@ -266,6 +302,24 @@ namespace KScriptWin
         public void plotArc(ArcD arc)
         {
             mDraw.plotArc(arc);
+        }
+
+        /// <summary>
+        /// ポリラインの表示
+        /// </summary>
+        /// <param name="polyline">ポリライン</param>
+        public void plotPolyline(PolylineD polyline)
+        {
+            mDraw.plotPolyline(polyline);
+        }
+
+        /// <summary>
+        /// ポリゴンの表示
+        /// </summary>
+        /// <param name="polygon">ポリゴン</param>
+        public void plotPolygon(PolygonD polygon)
+        {
+            mDraw.plotPolygon(polygon);
         }
 
         /// <summary>

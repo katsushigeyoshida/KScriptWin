@@ -54,8 +54,12 @@ namespace KScriptWin
         private Util mUtil = new Util();
         private YLib ylib = new YLib();
 
+        /// <summary>
+        /// コンストラクタ
+        /// </summary>
         public Variable() { }
 
+        /// ===  変数の設定・取得  ===
 
         /// <summary>
         /// 変数の登録(変数名と数値)
@@ -116,11 +120,43 @@ namespace KScriptWin
         private Dictionary<string, Token> getVariables(Dictionary<string, Token> variables, Token key)
         {
             Dictionary<string, Token> varsList = new Dictionary<string, Token>();
-            string keyWord = getKeyWord(key.mValue);
-            if (keyWord.Length == 0) return varsList;
+            List<string> arrayName = mUtil.splitArrayName(key.mValue);
             foreach (var variable in variables) {
-                if (variable.Key.IndexOf(keyWord) == 0)
+                if (mUtil.arrayNameMatch(arrayName, mUtil.splitArrayName(variable.Key)))
                     varsList.Add(variable.Key, variable.Value);
+            }
+            return varsList;
+        }
+
+        /// <summary>
+        /// 変数名リストの取得
+        /// </summary>
+        /// <param name="key">検索キー</param>
+        /// <returns>変数名リスト</returns>
+        public List<string> getVariableNameList(Token key)
+        {
+            if (0 == key.mValue.IndexOf("g_")) {
+                //  グローバル変数
+                return getVariableNameList(mGlobalVar, key);
+            } else {
+                //  ローカル変数
+                return getVariableNameList(mVariables, key);
+            }
+        }
+
+        /// <summary>
+        /// 変数登録リストから変数名リストを取得
+        /// </summary>
+        /// <param name="variables">変数登録リスト</param>
+        /// <param name="key">検索キー</param>
+        /// <returns>へか数名リスト</returns>
+        public List<string>getVariableNameList(Dictionary<string, Token> variables, Token key)
+        {
+            List<string> varsList = new ();
+            List<string> arrayName = mUtil.splitArrayName(key.mValue);
+            foreach (var variable in variables) {
+                if (mUtil.arrayNameMatch(arrayName, mUtil.splitArrayName(variable.Key)))
+                    varsList.Add(variable.Key);
             }
             return varsList;
         }
@@ -269,6 +305,9 @@ namespace KScriptWin
         /// <returns>次数</returns>
         public int getArrayOder(Token var)
         {
+            if (var.mType != TokenType.ARRAY && var.mType != TokenType.VARIABLE
+                && var.mType != TokenType.LITERAL && var.mType != TokenType.STRING)
+                return -1;
             string varStr = var.mValue;
             int sp = varStr.IndexOf('[');
             int ep = varStr.IndexOf("]");
@@ -322,6 +361,61 @@ namespace KScriptWin
         }
 
         /// <summary>
+        /// 配列に値を追加する a[] = {1,2,3} => {1,2,3,4,v}
+        /// </summary>
+        /// <param name="arg">配列名</param>
+        /// <param name="v">追加の値</param>
+        public void appendArray(Token arg, double v)
+        {
+            List<string> splitTargetName = mUtil.splitArrayName(arg.mValue);
+            int col = splitTargetName.IndexOf("");
+            if (col < 0 || 0 < splitTargetName.IndexOf("", col + 1)) return;
+            List<string> arrayList = getArrayNameList(arg);
+            int maxIndex = -1;
+            foreach (string arrayName in arrayList) {
+                List<string> splitName = mUtil.splitArrayName(arrayName);
+                int index = ylib.intParse(splitName[col]);
+                if (maxIndex < index)
+                    maxIndex = index;
+            }
+            if (0 <= maxIndex) {
+                splitTargetName[col] = (maxIndex + 1).ToString();
+                string arrayName = string.Join("", splitTargetName);
+                setVariable(arrayName, new Token(v.ToString()));
+            }
+        }
+
+        /// <summary>
+        /// 配列名から配列名リストを作成 (a[] => a[0],a[1]... , a[1,] => a[1,0],a[1,1]... , a[,1] => a[0,1],a[1,1]... )
+        /// </summary>
+        /// <param name="array">抽出配列名</param>
+        /// <returns>配列名リスト</returns>
+        public List<string> getArrayNameList(Token array)
+        {
+            (string arrayName, int no) = mUtil.getArrayName(array);
+            List<string> splitName = mUtil.splitArrayName(array.mValue);
+            List<string> arrayList = new List<string>();
+            if (0 < no) {
+                if (0 == arrayName.IndexOf("g_")) {
+                    //  グローバル変数
+                    foreach (var variable in mGlobalVar) {
+                        if (mUtil.arrayNameMatch(splitName, mUtil.splitArrayName(variable.Key))) {
+                            arrayList.Add(variable.Key);
+                        }
+                    }
+                } else {
+                    //  ローカル変数
+                    foreach (var variable in mVariables) {
+                        if (mUtil.arrayNameMatch(splitName, mUtil.splitArrayName(variable.Key))) {
+                            arrayList.Add(variable.Key);
+                        }
+                    }
+                }
+            }
+            return mUtil.arrayNameSort(arrayList);
+        }
+
+        /// <summary>
         /// 配列に文字列名があるかの確認
         /// </summary>
         /// <param name="args">配列名</param>
@@ -356,7 +450,7 @@ namespace KScriptWin
         /// <summary>
         /// 配列の最大インデックスを求める
         /// </summary>
-        /// <param name="arrayName">配列名</param>
+        /// <param name="arrayName">配列名([]を含まない)</param>
         /// <returns>最大インデックス値</returns>
         public int getMaxArray(string arrayName)
         {
@@ -407,7 +501,7 @@ namespace KScriptWin
         public List<string> cnvListString(Token arg)
         {
             List<string> listData = new List<string>();
-            string arrayName = mUtil.getSearchName(arg);
+            string arrayName = mUtil.getArraySearchName(arg);
             foreach (var variable in getVariableList(arrayName)) {
                 if (0 == variable.Key.IndexOf(arrayName)) {
                     if (variable.Value.mType == TokenType.STRING)
@@ -638,10 +732,60 @@ namespace KScriptWin
             }
         }
 
+        /// <summary>
+        /// 3D配列の戻り値に設定
+        /// </summary>
+        /// <param name="src">3D配列データ</param>
+        /// <param name="dest">戻り値の配列名</param>
+        public void setReturnArray(double[,,] src, Token dest)
+        {
+            if (src == null || dest == null) return;
+            int dp = dest.mValue.IndexOf("[,,]");
+            if (dp < 0) return;
+            string destName = dest.mValue.Substring(0, dp);
+            for (int i = 0; i < src.GetLength(0); i++) {
+                for (int j = 0; j < src.GetLength(1); j++) {
+                    for (int k = 0; k < src.GetLength(2); k++) {
+                        Token key = new Token($"{destName}[{i},{j},{k}]", TokenType.VARIABLE);
+                        setVariable(key, new Token(src[i, j, k].ToString(), TokenType.LITERAL));
+                    }
+                }
+            }
+        }
+
         //  ===  関数の引数を変数に変換
 
         /// <summary>
-        /// 引数からPointDリストを作成(plist[,]/p0[],p1[].../x0,y0,x1,y1...  → List<PointD>)</PointD>
+        /// 実数配列値の取得 (a[] 
+        /// </summary>
+        /// <param name="arg">配列名</param>
+        /// <returns>実数配列リスト</returns>
+        public List<double> getDoubleArrayList(Token arg)
+        {
+            List<double> doubleList = new List<double>();
+            List<string> arrayNameList = getArrayNameList(arg);
+            foreach (var name in arrayNameList)
+                doubleList.Add(ylib.doubleParse(getVariable(name).mValue));
+            return doubleList;
+        }
+
+        /// <summary>
+        /// 文字配列値の取得
+        /// </summary>
+        /// <param name="arg">配列名</param>
+        /// <returns>文字列配列</returns>
+        public List<string> getStringArrayList(Token arg)
+        {
+            List<string> stringList = new List<string>();
+            List<string> arrayNameList = getArrayNameList(arg);
+            foreach (var name in arrayNameList)
+                stringList.Add(getVariable(name).mValue);
+            return stringList;
+        }
+
+
+        /// <summary>
+        /// 引数からPointDリストを作成(plist[,]/x[],y[]/p0[],p1[].../x0,y0,x1,y1...  → List<PointD>)</PointD>
         /// </summary>
         /// <param name="args"></param>
         /// <returns></returns>
@@ -657,6 +801,12 @@ namespace KScriptWin
                         pointList.Add(p);
                     }
                 }
+            } else if (args.Count == 2 && getArrayOder(args[0]) == 1 && getArrayOder(args[1]) == 1) {
+                //  x[],y[] → List<PointD>
+                List<double> xlist = getDoubleArrayList(args[0]);
+                List<double> ylist = getDoubleArrayList(args[1]);
+                for (int i = 0; i < xlist.Count && i < ylist.Count; i++)
+                    pointList.Add(new PointD(xlist[i], ylist[i]));
             } else if (0 < args.Count && getArrayOder(args[0]) == 1) {
                 //  p0[],p1[]... → List<PointD>
                 for (int i = 0; i < args.Count; i++) {
@@ -781,6 +931,96 @@ namespace KScriptWin
                     return ylib.doubleParse(arg.mValue);
             }
             return 0;
+        }
+
+        //  ====  配列の演算
+
+        /// <summary>
+        /// 配列の値に値を加える
+        /// </summary>
+        /// <param name="arg">配列名</param>
+        /// <param name="v">加算値</param>
+        public void addArrayValue(Token arg, double v)
+        {
+            Dictionary<string, Token> arrayList = getVariables(arg);
+            foreach (var variable in arrayList) {
+                var value = ylib.doubleParse(variable.Value.mValue);
+                setVariable(variable.Key, new Token((value + v).ToString(), TokenType.LITERAL));
+            }
+        }
+
+        /// <summary>
+        /// 配列の値に値を加える
+        /// </summary>
+        /// <param name="arrayNameList">配列名リスト</param>
+        /// <param name="v">加算値</param>
+        public void addArrayValue(List<string> arrayNameList, double v)
+        {
+            foreach (var arrayName in arrayNameList) {
+                var value = ylib.doubleParse(getVariable(arrayName).mValue);
+                setVariable(arrayName, new Token((value + v).ToString(), TokenType.LITERAL));
+            }
+        }
+
+
+        /// <summary>
+        /// 配列の値に値を掛ける
+        /// </summary>
+        /// <param name="arg">配列名</param>
+        /// <param name="v">乗算値</param>
+        public void multiArrayValue(Token arg, double v)
+        {
+            Dictionary<string, Token> arrayList = getVariables(arg);
+            foreach (var variable in arrayList) {
+                var value = ylib.doubleParse(variable.Value.mValue);
+                setVariable(variable.Key, new Token((value * v).ToString(), TokenType.LITERAL));
+            }
+        }
+
+        /// <summary>
+        /// 配列の値に値を掛ける
+        /// </summary>
+        /// <param name="arrayNameList">配列名リスト</param>
+        /// <param name="v">乗算値</param>
+        public void multiArrayValue(List<string> arrayNameList, double v)
+        {
+            foreach (var arrayName in arrayNameList) {
+                var value = ylib.doubleParse(getVariable(arrayName).mValue);
+                setVariable(arrayName, new Token((value * v).ToString(), TokenType.LITERAL));
+            }
+        }
+
+        /// <summary>
+        /// 数式文字列で変数を数値文字列に置き返した数式文字列を作る
+        /// []で囲まれた変数("[x]")はそのまま残す
+        /// </summary>
+        /// <param name="express">数式文字列</param>
+        /// <returns>変換した数式文字列</returns>
+        public string cnvExpress(string express)
+        {
+            List<Token> tokenList = mLexer.tokenList(express);
+            string buf = "";
+            for (int i = 0; i < tokenList.Count; i++) {
+                if (tokenList[i].mType == TokenType.EXPRESS) {
+                    //  括弧内などの数式
+                    buf += cnvExpress(mLexer.stripBracketString(tokenList[i].mValue));
+                } else if (tokenList[i].mType == TokenType.FUNCTION) {
+                    //  関数内の数式
+                    buf += tokenList[i].mValue + "(" + cnvExpress(mLexer.stripBracketString(tokenList[++i].mValue)) + ")";
+                } else if (tokenList[i].mType == TokenType.DELIMITER && tokenList[i].mValue == "[") {
+                    //  []で囲まれた変数(変換なし)
+                    do {
+                        buf += tokenList[i++].mValue;
+                    } while (i < tokenList.Count - 1 && tokenList[i].mType != TokenType.DELIMITER);
+                    buf += tokenList[i].mValue;
+                } else if (tokenList[i].mType == TokenType.VARIABLE) {
+                    //  変数は数値に置き換え
+                    buf += getVariable(tokenList[i]).mValue;
+                } else {
+                    buf += tokenList[i].mValue;
+                }
+            }
+            return buf;
         }
     }
 }

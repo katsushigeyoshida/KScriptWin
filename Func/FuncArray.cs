@@ -30,6 +30,17 @@ namespace KScriptWin
             "array.corrCoeff(x[],y[]); 配列の相関係数",
             "array.concat(a[],b[]); 配列同士の結合c[]=array.add(a[],b[])",
             "array.concat(a[,],b[,]); 配列同士の結合c[,]=array.add(a[,],b[,])",
+            "array.append(a[],v); 配列に値を追加",
+            "array.add(a[],val); 配列に値を足す",
+            "array.sub(a[],val); 配列に値を引く",
+            "array.multi(a[],val); 配列に値を掛ける",
+            "array.divide(a[],val); 配列を値で割る",
+            "array.arrenge(start,end,step); 等間隔のの数値配列作成",
+            "array.linspace(start,end,div); 等分割した数値配列の作成)",
+            "array.create(size,value/express); sizeで指定した配列作成(a[]=array.creat(size, value/express))",
+            "array.create(size1,size2,value/express); sizeで指定した配列作成(a[,]=array.creat(size1, size2, value/express))",
+            "array.create(size1,size2,size3,value/express); sizeで指定した配列作成(a[,,]=array.creat(size1,size2,size3, value/express))",
+            "array.calc(a[],express); 配列のデータを数式処理する express = \"[x]*[x]+2\"",
         };
 
         //  共有クラス
@@ -73,6 +84,15 @@ namespace KScriptWin
                 case "array.covariance": return covariance(args);
                 case "array.corrCoeff": return correlationCoefficient(args);
                 case "array.concat": return concat(args, ret);
+                case "array.append": append(args); break;
+                case "array.add": add(args); break;
+                case "array.sub": sub(args); break;
+                case "array.multi": multi(args); break;
+                case "array.divide": divide(args); break;
+                case "array.arrenge": return arrenge(args, ret);
+                case "array.linspace": return linspace(args, ret);
+                case "array.create": return create(args, ret);
+                case "array.calc": calcArray(args, ret); break;
                 default: return new Token("not found func", TokenType.ERROR);
             }
             return new Token("", TokenType.EMPTY);
@@ -100,35 +120,10 @@ namespace KScriptWin
         /// <returns>サイズ</returns>
         public Token getCount(List<Token> args)
         {
-            int count = 0;
-            string arrayName = "";
-            int n = args[0].mValue.IndexOf("[");
-            if (n < 0)
-                return new Token(mVar.countVariable(args[0].mValue).ToString(), TokenType.LITERAL);
-            //  全配列のデータ数
-            if (0 < args[0].mValue.IndexOf("[]") || 0 < args[0].mValue.IndexOf("[,]")) {
-                arrayName = args[0].mValue.Substring(0, n + 1);
-                count = mVar.countVariable(arrayName);
-                return new Token(count.ToString(), TokenType.LITERAL);
-            }
-            //  2次元配列の行ごとのデータ数(列数)
-            int n2 = args[0].mValue.IndexOf(",]");
-            if (0 < n2) {
-                arrayName = args[0].mValue.Substring(0, n2 + 1);
-                count = mVar.countVariable(arrayName);
-                return new Token(count.ToString(), TokenType.LITERAL);
-            }
-            //  2次元配列の列ごとのデータ数(行数)
-            int n3 = args[0].mValue.IndexOf(",");
-            if (0 < n3) {
-                arrayName = args[0].mValue.Substring(0, n + 1);
-                string last = args[0].mValue.Substring(n3);
-                count = mVar.countVariable(arrayName, last);
-                return new Token(count.ToString(), TokenType.LITERAL);
-            }
-            //  その他
-            count = mVar.countVariable(args[0].mValue);
-            return new Token(count.ToString(), TokenType.LITERAL);
+            if (args.Count == 0)
+                return new Token("", TokenType.EMPTY);
+            List<string> arrayNameList = mVar.getArrayNameList(args[0]);
+            return new Token(arrayNameList.Count.ToString(), TokenType.LITERAL);
         }
 
         /// <summary>
@@ -142,20 +137,18 @@ namespace KScriptWin
         }
 
         /// <summary>
-        /// 配列から範囲指定で要素を削除する(remove(a[],st[,ed]);)
+        /// 配列から範囲指定で要素を削除する
+        /// remove(a[] / a[,] / a[0,] / a[,2] / a[1,2]...)
         /// </summary>
         /// <param name="args">配列名と要素番号</param>
         public void remove(List<Token> args)
         {
-            if (args.Count < 2) return;
-            (string arrayName, int no) = mUtil.getArrayName(new Token(args[0].mValue, TokenType.VARIABLE));
-            int st = ylib.intParse(args[1].mValue);
-            int ed = args.Count > 2 ? ylib.intParse(args[2].mValue) : st;
-            for (int i = st; i <= ed; i++) {
-                string key = $"{arrayName}[{i}]";
-                mVar.removeVariable(key);
-            }
-            squeeze(args);
+            if (args.Count == 0)
+                return ;
+            List<string> arrayNameList = mVar.getArrayNameList(args[0]);
+            foreach (var arrayName in arrayNameList)
+                mVar.removeVariable(arrayName);
+            //squeeze(args);
         }
 
         /// <summary>
@@ -192,6 +185,7 @@ namespace KScriptWin
         {
             (string arrayName, int no) = mUtil.getArrayName(args[0]);
             if (no == 1) {
+                //  1次元配列
                 if (mVar.isStringArray(args[0])) {
                     //  文字列のソート
                     string[]? strArray = mVar.cnvListString(args[0]).ToArray();
@@ -206,6 +200,7 @@ namespace KScriptWin
                     mVar.setReturnArray(doubleArray, args[0]);
                 }
             } else if (no == 2) {
+                //  2次元配列
                 (string name, string row, string col) = mUtil.getArgArray2(args[0].mValue);
                 string outname = name + "[,]";
                 int n = col == "" ? 0 : ylib.intParse(col);
@@ -235,6 +230,7 @@ namespace KScriptWin
             if (1 < args.Count)
                 colRevers = args[1].mValue == "1";
             if (no == 1) {
+                //  1次元配列
                 int maxcol = mVar.getMaxArray(arrayName);
                 if (maxcol <= 0) return;
                 Token[] tokens = new Token[maxcol + 1];
@@ -248,6 +244,7 @@ namespace KScriptWin
                 clear(args);
                 mVar.setReturnArray(tokens, args[0]);
             } else if (no == 2) {
+                //  2次元配列
                 Token[,] arrayData = mVar.cnvArrayToken2(args[0]);
                 Token[,] tokens = new Token[arrayData.GetLength(0), arrayData.GetLength(1)];
                 if (colRevers) {
@@ -278,7 +275,7 @@ namespace KScriptWin
             (string arrayName, int no) = mUtil.getArrayName(args[0]);
             double max = double.MinValue;
             if (no == 1 || no == 2) {
-                arrayName = mUtil.getSearchName(args[0]);
+                arrayName = mUtil.getArraySearchName(args[0]);
             } else
                 return new Token(arrayName, TokenType.ERROR);
             foreach (var variable in mVar.getVariableList(arrayName)) {
@@ -303,7 +300,7 @@ namespace KScriptWin
             (string arrayName, int no) = mUtil.getArrayName(args[0]);
             double min = double.MaxValue;
             if (no == 1 || no == 2) {
-                arrayName = mUtil.getSearchName(args[0]);
+                arrayName = mUtil.getArraySearchName(args[0]);
             } else
                 return new Token(arrayName, TokenType.ERROR);
             foreach (var variable in mVar.getVariableList(arrayName)) {
@@ -446,11 +443,13 @@ namespace KScriptWin
             (string arrayA, int noA) = mUtil.getArrayName(new Token(args[0].mValue, TokenType.VARIABLE));
             (string arrayB, int noB) = mUtil.getArrayName(new Token(args[1].mValue, TokenType.VARIABLE));
             if (noA == 1 && noB == 1) {
+                //  1次元配列同士
                 List<double> a = mVar.cnvListDouble(args[0]);
                 List<double> b = mVar.cnvListDouble(args[1]);
                 a.AddRange(b);
                 mVar.setReturnArray(a.ToArray(), ret);
             } else if (noA ==2 && noB == 2) {
+                //  2次元配列同士
                 double[,] a = mVar.cnvArrayDouble2(args[0]);
                 double[,] b = mVar.cnvArrayDouble2(args[1]);
                 double[,] c = new double[a.GetLength(0) + b.GetLength(0), a.GetLength(1)];
@@ -469,6 +468,362 @@ namespace KScriptWin
             //  戻り値の設定
             mVar.setVariable(new Token("return", TokenType.VARIABLE), ret);
             return mVar.getVariable("return");
+        }
+
+        /// <summary>
+        /// 配列に値を追加 (array.append(a[], 5) , array.append(a[1,], 5))
+        /// </summary>
+        /// <param name="args"></param>
+        private void append(List<Token> args)
+        {
+            double v = 0;
+            if (1 < args.Count && mVar.getArrayOder(args[1]) == 0) {
+                //  数値
+                v = mVar.getDoubleFromArg(args[1]);
+            } else
+                return ;
+            if (0 < args.Count && mVar.getArrayOder(args[0]) != 0) {
+                //  1次元配列
+                mVar.appendArray(args[0], v);
+            }
+        }
+
+        /// <summary>
+        /// 配列に配列を追加 array.extend(a[], b[]);
+        /// </summary>
+        /// <param name="args"></param>
+        private void extend(List<Token> args)
+        {
+
+        }
+
+        /// <summary>
+        /// 配列のn番目に値を挿入 array.insert(a[], n, v);
+        /// </summary>
+        /// <param name="args"></param>
+        private void insert(List<Token> args)
+        {
+
+        }
+
+        /// <summary>
+        /// 等間隔のの数値配列作成
+        /// a[] = array.arrange(start, end, step);
+        /// </summary>
+        /// <param name="args"></param>
+        /// <param name="ret"></param>
+        private Token arrenge(List<Token> args, Token ret)
+        {
+            List<double> arrayList = new();
+            double start =0, end = 1, step = 1;
+            if (args.Count < 2) {
+                return new Token("", TokenType.EMPTY);
+            }
+            //  引数の取得
+            if (mVar.getArrayOder(args[0]) == 0)
+                start = mVar.getDoubleFromArg(args[0]);
+            if (1 < args.Count && mVar.getArrayOder(args[1]) == 0)
+                end = mVar.getDoubleFromArg(args[1]);
+            if (1 < args.Count && mVar.getArrayOder(args[2]) == 0)
+                step = mVar.getDoubleFromArg(args[2]);
+            //  配列の方向を確認
+            if (start < end && 0 < step) {
+            } else if (start > end && step < 0) {
+                double t = start;
+                start = end;
+                end = t;
+                step *= -1;
+            } else {
+                return new Token("", TokenType.EMPTY);
+            }
+            //  配列の作成
+            double v = start;
+            while (v <= end) {
+                arrayList.Add(v);
+                v += step;
+            }
+            mVar.setReturnArray(arrayList.ToArray(), ret);
+
+            //  戻り値の設定
+            mVar.setVariable(new Token("return", TokenType.VARIABLE), ret);
+            return mVar.getVariable("return");
+        }
+
+        /// <summary>
+        /// 等分割した数値配列の作成
+        /// a[]  = array.linspace(start, end, div);
+        /// </summary>
+        /// <param name="args"></param>
+        /// <param name="ret"></param>
+        private Token linspace(List<Token> args, Token ret)
+        {
+            List<double> arrayList = new();
+            double start = 0, end = 1, step = 1;
+            if (args.Count < 2) {
+                return new Token("", TokenType.EMPTY);
+            }
+            //  引数の取得
+            if (mVar.getArrayOder(args[0]) == 0)
+                start = mVar.getDoubleFromArg(args[0]);
+            if (1 < args.Count && mVar.getArrayOder(args[1]) == 0)
+                end = mVar.getDoubleFromArg(args[1]);
+            if (1 < args.Count && mVar.getArrayOder(args[2]) == 0) {
+                double div = mVar.getDoubleFromArg(args[2]);
+                step = Math.Abs(start - end) / div;
+            }
+            //  配列の方向を確認
+            if (start < end && 0 < step) {
+            } else if (start > end && 0 < step) {
+                double t = start;
+                start = end;
+                end = t;
+            } else {
+                return new Token("", TokenType.EMPTY);
+            }
+            //  配列の作成
+            double v = start;
+            while (v <= end) {
+                arrayList.Add(v);
+                v += step;
+            }
+            mVar.setReturnArray(arrayList.ToArray(), ret);
+
+            //  戻り値の設定
+            mVar.setVariable(new Token("return", TokenType.VARIABLE), ret);
+            return mVar.getVariable("return");
+        }
+
+        /// <summary>
+        /// a[]  = array.creat(size, value);            sizeで指定した1次元配列
+        /// a[,] = array.creat(size0, size1, value);    sizeで指定した1次元配列
+        /// </summary>
+        /// <param name="args"></param>
+        /// <param name="ret"></param>
+        private Token create(List<Token> args, Token ret)
+        {
+            YCalc calc = new YCalc();
+            int order = mVar.getArrayOder(ret);
+            string express = "";
+            double initValue = 0;
+            bool cb = false;
+            if (0 < order && args.Count == order + 1) {
+                if (args[order].mType == TokenType.STRING) {
+                    express = args[order].mValue;
+                    cb = true;
+                } else
+                    initValue = mVar.getDoubleFromArg(args[order]);
+                if (order == 1) {
+                    //  1次元配列の作成
+                    int size = (int)mVar.getDoubleFromArg(args[0]);
+                    double[] a = new double[size];
+                    for (int i = 0; i < size; i++) {
+                        if (cb) {
+                            string exp = express.Replace("[x]", i.ToString());
+                            a[i] = calc.expression(exp);
+                        } else
+                            a[i] = initValue;
+                    }
+                    mVar.setReturnArray(a, ret);
+                } else if (order == 2) {
+                    //  2次元配列の作成
+                    int size0 = (int)mVar.getDoubleFromArg(args[0]);
+                    int size1 = (int)mVar.getDoubleFromArg(args[1]);
+                    double[,] a = new double[size0, size1];
+                    for (int i = 0; i < size0; i++)
+                        for (int j = 0; j < size1; j++) {
+                            if (cb) {
+                                string exp = express.Replace("[x]", i.ToString());
+                                exp = exp.Replace("[y]", j.ToString());
+                                a[i,j] = calc.expression(exp);
+                            } else
+                                a[i, j] = initValue;
+                        }
+                    mVar.setReturnArray(a, ret);
+                } else if (order == 3) {
+                    //  3次元配列の作成
+                    int size0 = (int)mVar.getDoubleFromArg(args[0]);
+                    int size1 = (int)mVar.getDoubleFromArg(args[1]);
+                    int size2 = (int)mVar.getDoubleFromArg(args[2]);
+                    double[,,] a = new double[size0, size1, size2];
+                    for (int i = 0; i < size0; i++)
+                        for (int j = 0; j < size1; j++)
+                            for (int k = 0; k < size2; k++) {
+                                if (cb) {
+                                    string exp = express.Replace("[x]", i.ToString());
+                                    exp = exp.Replace("[y]", j.ToString());
+                                    exp = exp.Replace("[z]", k.ToString());
+                                    a[i, j, k] = calc.expression(exp);
+                                } else
+                                    a[i, j, k] = initValue;
+                            }
+                    mVar.setReturnArray(a, ret);
+                } else {
+                    return new Token("", TokenType.EMPTY);
+                }
+            }
+            //  戻り値の設定
+            mVar.setVariable(new Token("return", TokenType.VARIABLE), ret);
+            return mVar.getVariable("return");
+        }
+
+        /// <summary>
+        /// x[]配列から計算式を使ってy[]配列を作成 (calc(x[],"express")
+        /// express = "[x]*2+n";など
+        /// </summary>
+        /// <param name="args">引数</param>
+        /// <param name="ret">返数名</param>
+        private void calcArray(List<Token> args, Token ret)
+        {
+            YCalc calc = new YCalc();
+            string express = ylib.stripBracketString(args[1].mValue, '\"'); //  数式
+            express = mVar.cnvExpress(express);
+            List<string> arrayNameList = mVar.getArrayNameList(args[0]);    //  数式処理する配列リスト
+            foreach(var x in arrayNameList) {
+                //  数式に配列の値を代入して計算
+                string exp = express.Replace("[x]", mVar.getVariable(x).mValue);
+                double result = calc.expression(exp);
+                mVar.setVariable(new Token(x), new Token(result.ToString()));
+                //string exp = ylib.stripBracketString(express.Replace("[x]", mVar.getVariable(x).mValue), '\"');
+                //Token result = mScript.express(new Token(exp, TokenType.EXPRESS));
+                //mVar.setVariable(new Token(x), result);
+            }
+        }
+
+
+        /// <summary>
+        /// 配列に値を足すarray.add(a[], val) / array.add(a[1,], val)
+        /// </summary>
+        /// <param name="args"></param>
+        private void add(List<Token> args)
+        {
+            double v = 0;
+            if (1 < args.Count && mVar.getArrayOder(args[1]) == 0) {
+                //  数値
+                v = mVar.getDoubleFromArg(args[1]);
+            } else
+                return;
+            if (0 < args.Count && 0 < mVar.getArrayOder(args[0])) {
+                //  配列
+                List<string> arrayNameList = mVar.getArrayNameList(args[0]);
+                mVar.addArrayValue(arrayNameList, v);
+            }
+        }
+
+        /// <summary>
+        /// 配列に値を引く array.sub(a[], val);
+        /// </summary>
+        /// <param name="args"></param>
+        private void sub(List<Token> args)
+        {
+            double v = 0;
+            if (1 < args.Count && mVar.getArrayOder(args[1]) == 0) {
+                //  数値
+                v = mVar.getDoubleFromArg(args[1]);
+            } else
+                return;
+            if (0 < args.Count && 0 < mVar.getArrayOder(args[0])) {
+                //  配列
+                List<string> arrayNameList = mVar.getArrayNameList(args[0]);
+                mVar.addArrayValue(arrayNameList, -v);
+            }
+        }
+
+        /// <summary>
+        /// 配列に値を掛ける array.multi(a[], val);
+        /// </summary>
+        /// <param name="args"></param>
+        private void multi(List<Token> args)
+        {
+            double v = 0;
+            if (1 < args.Count && mVar.getArrayOder(args[1]) == 0) {
+                //  数値
+                v = mVar.getDoubleFromArg(args[1]);
+            } else
+                return;
+            if (0 < args.Count && 0 < mVar.getArrayOder(args[0])) {
+                //  配列
+                List<string> arrayNameList = mVar.getArrayNameList(args[0]);
+                mVar.multiArrayValue(arrayNameList, v);
+            }
+        }
+
+        /// <summary>
+        /// 配列に値で割る array.divide(a[], val);
+        /// </summary>
+        /// <param name="args"></param>
+        private void divide(List<Token> args)
+        {
+            double v = 0;
+            if (1 < args.Count && mVar.getArrayOder(args[1]) == 0) {
+                //  数値
+                v = mVar.getDoubleFromArg(args[1]);
+            } else
+                return;
+            if (0 < args.Count && 0 < mVar.getArrayOder(args[0])) {
+                //  配列
+                List<string> arrayNameList = mVar.getArrayNameList(args[0]);
+                mVar.multiArrayValue(arrayNameList, 1 / v);
+            }
+        }
+
+        /// <summary>
+        /// c[] = array.addArray(a[], b[]);                  配列同士の演算
+        /// </summary>
+        /// <param name="args"></param>
+        /// <param name="ret"></param>
+        private void addArray(List<Token> args, Token ret)
+        {
+
+        }
+
+        /// <summary>
+        /// c[] = array.subArray(a[], b[]);
+        /// </summary>
+        /// <param name="args"></param>
+        /// <param name="ret"></param>
+        private void subArray(List<Token> args, Token ret)
+        {
+
+        }
+
+        /// <summary>
+        /// c[] = array.multiArray(a[], b[]);
+        /// </summary>
+        /// <param name="args"></param>
+        /// <param name="ret"></param>
+        private void multiArray(List<Token> args, Token ret)
+        {
+
+        }
+
+        /// <summary>
+        /// c[] = array.divideArray(a[], b[]);
+        /// </summary>
+        /// <param name="args"></param>
+        /// <param name="ret"></param>
+        private void divideArray(List<Token> args, Token ret)
+        {
+
+        }
+
+        /// <summary>
+        /// n = array.indexOf(a[], val, start);         valを検索してindexを返す
+        /// </summary>
+        /// <param name="args"></param>
+        /// <param name="ret"></param>
+        private void indexOf(List<Token> args, Token ret)
+        {
+
+        }
+
+        /// <summary>
+        /// n = array.lastIndexOf(a[], val, lastStart); valを最後から検索してindexを返す
+        /// </summary>
+        /// <param name="args"></param>
+        /// <param name="ret"></param>
+        private void lastIndexOf(List<Token> args, Token ret)
+        {
+
         }
     }
 }
