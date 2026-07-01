@@ -1,4 +1,5 @@
 ﻿using CoreLib;
+using System.ComponentModel;
 using System.Windows;
 
 namespace KScriptWin
@@ -69,9 +70,10 @@ namespace KScriptWin
             mPrevWindowHeight = mWindowHeight;
             //  再描画処理
             if (mDraw != null) {
-                if (mGraphMode == MODE.GRAPH)
+                if (mGraphMode == MODE.GRAPH) {
+                    mDraw.setSplitView();
                     graphDraw();
-                else
+                } else
                     plotDraw();
             }
         }
@@ -128,14 +130,38 @@ namespace KScriptWin
             }
         }
 
-        public void setGraphType(GraphDraw.GRAPHTYPE graphType)
+
+        //  ===  Graph処理  =========
+
+        /// <summary>
+        /// グラフの分割画面のViewリスト作成
+        /// </summary>
+        /// <param name="m">横方向分割数</param>
+        /// <param name="n">縦方向分割数</param>
+        public void setSplitView(int m, int n)
         {
-            mDraw.mGraphType = graphType;
-            switch(graphType) {
-                case GraphDraw.GRAPHTYPE.SCATTER: cbGraphType.SelectedIndex = 0; break;
-                case GraphDraw.GRAPHTYPE.LINE_GRAPH: cbGraphType.SelectedIndex = 1; break;
-                case GraphDraw.GRAPHTYPE.BAR_GRAPH: cbGraphType.SelectedIndex = 2; break;
-            }
+            mDraw.mWidthSplitNo = Math.Max(1, m);
+            mDraw.mHeightSplitNo = Math.Max(1, n);
+            mDraw.setSplitView();
+        }
+
+        /// <summary>
+        /// 使用するView領域を指定する
+        /// </summary>
+        /// <param name="areaNo">表示位置No</param>
+        public void setUseArea(int areaNo)
+        {
+            mDraw.mUseAreaNo = areaNo;
+        }
+
+        /// <summary>
+        /// 棒グラフの属性設定
+        /// </summary>
+        /// <param name="count">棒の数</param>
+        /// <param name="pos"></param>
+        public void setBarProperty(int count, int pos)
+        {
+            mDraw.mBar = (count, pos);
         }
 
         /// <summary>
@@ -144,9 +170,8 @@ namespace KScriptWin
         /// <param name="dataList">データリスト</param>
         public void setGraph(List<PointD> dataList)
         {
-            mDraw.dataClear();
-            mDraw.addData(dataList);
             mGraphMode = MODE.GRAPH;
+            mDraw.setGraphData(dataList);
             graphDraw();
         }
 
@@ -156,8 +181,17 @@ namespace KScriptWin
         /// <param name="dataList">データリスト</param>
         public void addGraph(List<PointD> dataList)
         {
-            mDraw.addData(dataList);
+            mDraw.setGraphData(dataList, true);
             graphDraw();
+        }
+
+        /// <summary>
+        /// データ表示領域を再設定
+        /// </summary>
+        /// <param name="dataArea">データの表示領域</param>
+        public void setDataDispArea(Box dataDispArea)
+        {
+            mDraw.mDataDispArea = dataDispArea;
         }
 
         /// <summary>
@@ -165,10 +199,10 @@ namespace KScriptWin
         /// </summary>
         public void graphDraw()
         {
-            mDraw.drawInit(mAspectFix);
-            mDraw.setGraphWindow();
             mDraw.drawGraph();
         }
+
+        //  ===  Plot処理  =========
 
         /// <summary>
         /// プロットデータの表示

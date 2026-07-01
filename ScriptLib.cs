@@ -52,9 +52,6 @@ namespace KScriptWin
             "dateTimeNow(type); 現在の時刻を文字列で取得(0:\"HH:mm:ss 1:yyyy/MM/dd HH:mm:ss 2:yyyy/MM/dd 3:HH時mm分ss秒 4:yyyy年MM月dd日 HH時mm分ss秒 5:yyyy年MM月dd日",
             "startTime(); 時間計測の開始",
             "lapTime(); 経過時間の取得(秒)",
-            "solve.quadraticEquation(a,b,c); 2次方程式の解(y = a*x^2+b*x+c)(y[] = solv..) ",
-            "solve.qubicEquation(a,b,c,d); 3次方程式の解(y = a*x^3+b*x^2+c*x+d)(y[] = solv..) ",
-            "solve.quarticEquation(a,b,c,d,e); 4次方程式の解(y = a*x^4+b*x^3+c*x^2+d*x+e)(y[] = solv..) ",
         };
 
         //  共有クラス
@@ -97,9 +94,6 @@ namespace KScriptWin
                 case "dateTimeNow"      : return dateTimeNow(args);
                 case "startTime"        : starTime(); break;
                 case "lapTime"          : return lapTime();
-                case "solve.quadraticEquation": return solveQuadraticEquation(args, ret);
-                case "solve.qubicEquation"    : return solveCubicEquation(args, ret);
-                case "solve.quarticEquation"  : return solveQuarticEquation(args, ret);
                 default: return new Token("not found func", TokenType.ERROR);
             }
             return new Token("", TokenType.EMPTY);
@@ -283,69 +277,6 @@ namespace KScriptWin
         private void cmd(List<Token> args)
         {
             ylib.openUrl(ylib.stripBracketString(args[0].mValue,'"'));
-        }
-
-        /// <summary>
-        /// 2次方程式の解を求める
-        /// result[] = a * x^2 + b * x + c
-        /// </summary>
-        /// <param name="args">a,b,c</param>
-        /// <param name="ret"></param>
-        /// <returns></returns>
-        private Token solveQuadraticEquation(List<Token> args, Token ret)
-        {
-            if (args.Count < 3) return new Token("", TokenType.ERROR);
-            double a = ylib.doubleParse(args[0].mValue);
-            double b = ylib.doubleParse(args[1].mValue);
-            double c = ylib.doubleParse(args[2].mValue);
-            double[] result = ylib.solveQuadraticEquation(a, b, c).ToArray();
-            //  戻り値の設定
-            mVar.setReturnArray(result, ret);
-            mVar.setVariable(new Token("return", TokenType.VARIABLE), ret);
-            return mVar.getVariable("return");
-        }
-
-        /// <summary>
-        /// 3次方程式の解を求める
-        /// result[] = a * x^3 + b * x^2 + c * x + d
-        /// </summary>
-        /// <param name="args">a,b,c,d</param>
-        /// <param name="ret"></param>
-        /// <returns></returns>
-        private Token solveCubicEquation(List<Token> args, Token ret)
-        {
-            if (args.Count < 4) return new Token("", TokenType.ERROR);
-            double a = ylib.doubleParse(args[0].mValue);
-            double b = ylib.doubleParse(args[1].mValue);
-            double c = ylib.doubleParse(args[2].mValue);
-            double d = ylib.doubleParse(args[3].mValue);
-            double[] result = ylib.solveCubicEquation(a, b, c, d).ToArray();
-            //  戻り値の設定
-            mVar.setReturnArray(result, ret);
-            mVar.setVariable(new Token("return", TokenType.VARIABLE), ret);
-            return mVar.getVariable("return");
-        }
-
-        /// <summary>
-        /// 4次方程式の解を求める
-        /// result[] = a * x^4 + b * x^3 + c * x^2 + d * x + e
-        /// </summary>
-        /// <param name="args">a,b,c,d,e</param>
-        /// <param name="ret"></param>
-        /// <returns></returns>
-        private Token solveQuarticEquation(List<Token> args, Token ret)
-        {
-            if (args.Count < 5) return new Token("", TokenType.ERROR);
-            double a = ylib.doubleParse(args[0].mValue);
-            double b = ylib.doubleParse(args[1].mValue);
-            double c = ylib.doubleParse(args[2].mValue);
-            double d = ylib.doubleParse(args[3].mValue);
-            double e = ylib.doubleParse(args[4].mValue);
-            double[] result = ylib.solveQuarticEquation(a, b, c, d, e).ToArray();
-            //  戻り値の設定
-            mVar.setReturnArray(result, ret);
-            mVar.setVariable(new Token("return", TokenType.VARIABLE), ret);
-            return mVar.getVariable("return");
         }
     }
 }

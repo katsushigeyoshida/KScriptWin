@@ -312,15 +312,28 @@ namespace KScriptWin
             if (offset < 0)
                 return str;
             str = str.Trim();
-            int sp = str.IndexOf(mBrackets[offset]);
-            int ep = str.LastIndexOf(mBrackets[offset + 1]);
-            if (0 == sp && ep < 0)
-                return str.Substring(sp + 1);
-            else if (0 == sp && ep == str.Length - 1)
-                return str.Substring(sp + 1, ep - sp - 1);
-            else if (sp < 0 && 0 <= ep)
-                return str.Substring(0, ep - 1);
-            return str;
+            string buf = "";
+            int count = 0;
+            int i = str[0] == mBrackets[offset] ? 1 : 0;
+            while (i < str.Length) {
+                if (str[i] == '\"' && mBrackets[offset] == '\"') {
+                    break;
+                } else if (str[i] == mBrackets[offset]) {
+                    count++;
+                } else if (str[i] == mBrackets[offset + 1]) {
+                    count--;
+                } else if (str[i] == '\"') {
+                    do {
+                        buf += str[i].ToString();
+                        i++;
+                        if (str[i] == '\"') break;
+                    } while (i < str.Length);
+                }
+                if (count < 0 || str.Length <= i) break;
+                buf += str[i].ToString();
+                i++;
+            }
+            return buf;
         }
 
         /// <summary>

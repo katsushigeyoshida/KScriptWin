@@ -1,4 +1,6 @@
 ﻿using CoreLib;
+using OpenTK.Graphics.OpenGL;
+using System.Drawing.Drawing2D;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
@@ -13,12 +15,27 @@ namespace KScriptWin
     {
         public List<PointD> mData = new List<PointD>();     //  グラフデータ
         public GRAPHTYPE mGraphType = GRAPHTYPE.LINE_GRAPH; //  グラフの種別
-        public Box mDataArea;                               //  データ領域
+        public bool mDataDispOnly = false;                  //  データのみ表示
+        public int mViewNo = 0;                             //  表示ViewNo
+        public Rect mView;                                  //  View領域(Screen)
+        public Box mDataArea;                               //  データの範囲
+        public Box mDataDispArea;                           //  データの表示領域(World)
+        public Box mDispArea;                               //  データ+目盛タイトルなどの表示領域(World)
+        public double mStepXsize = 0;                       //  X軸補助線と目盛の間隔
+        public double mStepYsize = 0;                       //  Y軸補助線と目盛の間隔
         public Brush mColor = Brushes.Black;                //  折れ線の色
         public LineType mLineType = LineType.solid;         //  折れ線の線種
-        public PointType mPointType = PointType.circle;     //  点の種類
         public double mThickness = 1.0;                     //  折れ線の太さ
+        public PointType mPointType = PointType.circle;     //  点の種類
         public double mPointSize = 1.0;                     //  点の大きさ
+        public Brush mFillColor = Brushes.White;            //  塗潰しの色
+        public (int count, int pos) mBar = (1, 1);          //  棒の数と位置
+        public double mFontSize = 12;                       //  タイトル文字サイズ(Screen)
+        public string mTitle = "";                          //  グラフタイトル                 
+        public string mXTitle = "";                         //  X軸タイトル
+        public string mYTitle = "";                         //  Y軸タイトル
+
+        private YLib ylib = new YLib();
 
         /// <summary>
         /// コンストラクタ
@@ -28,7 +45,30 @@ namespace KScriptWin
         {
             mData = dataList;
             mDataArea = new Box(getXmin(),getYmax(),getXmax(),getYmin());
-            mDataArea.normalize();
+            mDataDispArea = getGraphArea(mDataArea);
+            mDataDispArea.normalize();
+        }
+
+        /// <summary>
+        /// データ領域(ステップサイズを考慮)
+        /// </summary>
+        /// <returns></returns>
+        public Box getGraphArea(Box dataArea)
+        {
+            Box dataDispArea = dataArea.toCopy();
+            mStepXsize = ylib.graphStepSize(dataArea.Width, 10);
+            mStepYsize = ylib.graphStepSize(dataArea.Height, 5);
+            if (dataArea.Bottom < 0) {
+                dataDispArea.Bottom = ((int)(dataArea.Bottom / mStepYsize) - 1) * mStepYsize;
+            } else
+                dataDispArea.Bottom = 0;
+            dataDispArea.Top = ((int)(dataArea.Top / mStepYsize) + 1) * mStepYsize;
+            if (dataArea.Left < 0) {
+                dataDispArea.Left = ((int)(dataArea.Left / mStepXsize) - 1) * mStepXsize;
+            } else
+                dataDispArea.Left = 0;
+            dataDispArea.Right = ((int)(dataArea.Right / mStepXsize) + 1) * mStepXsize;
+            return dataDispArea;
         }
 
         /// <summary>
@@ -63,6 +103,36 @@ namespace KScriptWin
         {
             return mData.Max(p => p.y);
         }
+
+        /// <summary>
+        /// 最も狭い間隔
+        /// </summary>
+        /// <returns></returns>
+        public double getXMinGap()
+        {
+            double min = double.MaxValue;
+            for (int i = 0; i < mData.Count - 1; i++) {
+                double gap = Math.Abs(mData[i].x - mData[i + 1].x);
+                if (min > gap)
+                    min = gap;
+            }
+            return min;
+        }
+
+        /// <summary>
+        /// 最も狭い間隔
+        /// </summary>
+        /// <returns></returns>
+        public double getYMinGap()
+        {
+            double min = double.MaxValue;
+            for (int i = 0; i < mData.Count - 1; i++) {
+                double gap = Math.Abs(mData[i].y - mData[i + 1].y);
+                if (min > gap)
+                    min = gap;
+            }
+            return min;
+        }
     }
 
     /// <summary>
@@ -70,25 +140,30 @@ namespace KScriptWin
     /// </summary>
     public class GraphDraw
     {
-        public Brush mBaseBackColor = Brushes.White;            //  背景色
-        public enum GRAPHTYPE { SCATTER, LINE_GRAPH, BAR_GRAPH, STACKEDLINE_GRAPH, STACKEDBAR_GRAPH }
-        public GRAPHTYPE mGraphType = GRAPHTYPE.LINE_GRAPH;
-        private string[] mGraphTypeTitle = { "散布図", "折線", "棒グラフ", "積上げ式折線", "積上棒グラフ" };
-        private Box mDispArea = new Box();
-        private Box mDataArea = new Box();
-        private double mBottomScreenMagine = 100;
-        private double mLeftScreenMagine   = 100;
-        private double mStepXsize = 1;
-        private double mStepYsize = 1;
-        private double mFontWorldSize = 8;
-
         //  グラフデータ
-        public double mFontSize = 12;
-        public List<GraphData> mGraphData;
+        public double mFontSize = 12;                   //  タイトル文字サイズ(Screen)
+        public List<GraphData> mGraphData;              //  グラフデータリスト
+        public enum GRAPHTYPE { SCATTER, LINE_GRAPH, BAR_GRAPH, STACKEDLINE_GRAPH, STACKEDBAR_GRAPH }       //  グラフの種類
+        private string[] mGraphTypeTitle = { "散布図", "折線", "棒グラフ", "積上げ式折線", "積上棒グラフ" };//   グラフ名
+        public GRAPHTYPE mGraphType = GRAPHTYPE.LINE_GRAPH;                                                 //  グラフの種別
+
+        public int mWidthSplitNo = 1;                   //  Viewの横分割数
+        public int mHeightSplitNo = 1;                  //  Viewの縦分割数
+        public int mUseAreaNo = 0;                      //  表示するViewの位置
+        public Box mDataDispArea;                       //  データ表示領域
+        public (int count, int pos) mBar = (1, 0);      //  棒の数と位置
         public string mTitle = "Title";
         public string mXTitle = "X-Title";
         public string mYTitle = "Y-Title";
 
+        private List<Rect> mViewList;                   //  分割Viewリスト
+        private Box mDispArea = new Box();
+        private double mFontWorldSize = 8;
+
+        public Brush mBaseBackColor = Brushes.White;    //  背景色
+
+
+        //  プロットデータ
         public List<Entity> mEntityList;
         public Brush mColor        = Brushes.Black;
         public LineType mLineType   = LineType.solid;
@@ -110,6 +185,10 @@ namespace KScriptWin
         {
             mCanvas = canvas;
             ydraw = new YWorldDraw(canvas);
+            mViewList = new List<Rect>();
+            Rect view = new Rect(0, 0 ,mCanvas.ActualWidth,mCanvas.ActualHeight);
+            mViewList.Add(view);
+
             mEntityList = new List<Entity>();
             mDispArea = new Box(0, 0, 100, 100);
             mDispArea.normalize();
@@ -325,23 +404,56 @@ namespace KScriptWin
             ent.draw(ydraw);
         }
 
-        //  ===   グラフ処理   ===
+        //  ===   グラフ処理   =======
 
         /// <summary>
-        /// グラフ領域を設定する
+        /// グラフWindowの分割Viewリストの作成
         /// </summary>
-        public void setGraphWindow()
+        public void setSplitView()
         {
-            //  データ領域
-            mDispArea = new Box(getGraphArea());
-            mDispArea.normalize();
-            //  表示領域(データ領域+目盛り領域)
-            mDataArea = mDispArea.toCopy();
-            ydraw.setWorldWindow(mDispArea.Left, mDispArea.Top, mDispArea.Right, mDispArea.Bottom); //  仮の表示領域
-            mDispArea = addAxisArea(mDispArea);
-            mDispArea.normalize();
-            ydraw.setWorldWindow(mDispArea.Left, mDispArea.Top, mDispArea.Right, mDispArea.Bottom); //  調整後の表示領域
-            mFontWorldSize = ydraw.screen2worldYlength(mFontSize);
+            mViewList.Clear();
+            double dx = mCanvas.ActualWidth / mWidthSplitNo;
+            double dy = mCanvas.ActualHeight / mHeightSplitNo;
+            double x = 0, y = 0;
+            for (int i = 0; i < mWidthSplitNo; i++) {
+                y = 0;
+                for (int j = 0; j < mHeightSplitNo; j++) {
+                    Rect view = new Rect(x, y, dx, dy);
+                    mViewList.Add(view);
+                    y += dy;
+                }
+                x += dx;
+            }
+        }
+
+        /// <summary>
+        /// グラフデータの設定
+        /// </summary>
+        /// <param name="dataList">表示データ</param>
+        /// <param name="dataDispOnly">補助線,目盛なし</param>
+        public void setGraphData(List<PointD> dataList, bool dataDispOnly = false)
+        {
+            GraphData graphData = new GraphData(dataList);
+            graphData.mViewNo = mUseAreaNo % mViewList.Count;
+            graphData.mGraphType = mGraphType;
+            graphData.mColor     = mColor;
+            graphData.mLineType  = mLineType;
+            graphData.mThickness = mThickness;
+            graphData.mPointType = mPointType;
+            graphData.mPointSize = mPointSize;
+            graphData.mFontSize  = mFontSize;
+            graphData.mFillColor = mFillColor;
+            graphData.mBar       = mBar;
+            graphData.mTitle  = mTitle;
+            graphData.mXTitle = mXTitle;
+            graphData.mYTitle = mYTitle;
+            graphData.mDataDispOnly = dataDispOnly;
+            if (mDataDispArea != null) {
+                graphData.mDataDispArea = mDataDispArea.toCopy();
+                mDataDispArea = null;
+            }
+
+            mGraphData.Add(graphData);
         }
 
         /// <summary>
@@ -349,12 +461,39 @@ namespace KScriptWin
         /// </summary>
         public void drawGraph()
         {
-            ydraw.drawWRectangle(mDispArea);    //  表示枠
-            ydraw.mBrush = Brushes.Green;
-            ydraw.drawWRectangle(mDataArea);    //  データ枠
-            drawAxis();
+            ydraw.clear();
             for (int i = 0; i < mGraphData.Count; i++)
-                drawGraphData(mGraphData[i]);
+                drawGraph(mGraphData[i]);
+        }
+
+        /// <summary>
+        /// データを表示する
+        /// </summary>
+        /// <param name="graphData">グラフデータ</param>
+        public void drawGraph(GraphData graphData)
+        {
+            if (!graphData.mDataDispOnly) {
+                ydraw.mClipping = false;
+                ydraw.mFillColor = mBaseBackColor;
+                ydraw.mBrush = Brushes.Black;
+                ydraw.mAspectFix = false;                       //  アスペクト比保持
+                //  表示位置(View)設定
+                Rect graphView = mViewList[graphData.mViewNo];
+                ydraw.setViewArea(graphView.Left, graphView.Top, graphView.Right, graphView.Bottom);
+                graphData.mDispArea = addAxisArea(graphData.mDataDispArea);
+                ydraw.setWorldWindow(graphData.mDispArea.Left, graphData.mDispArea.Top, graphData.mDispArea.Right, graphData.mDispArea.Bottom);
+                mFontWorldSize = ydraw.screen2worldYlength(graphData.mFontSize);
+
+                //  表示枠
+                ydraw.drawWRectangle(graphData.mDispArea);
+                //  データ枠
+                ydraw.mBrush = Brushes.Green;
+                ydraw.drawWRectangle(graphData.mDataDispArea);
+                //  補助線と目盛、タイトル表示
+                drawAxis(graphData);
+            }
+            //  データ表示
+            drawGraphData(graphData);
         }
 
         /// <summary>
@@ -363,92 +502,35 @@ namespace KScriptWin
         /// <param name="data"></param>
         public void drawGraphData(GraphData data)
         {
+            ydraw.mClipping = true;
+            ydraw.mClipBox = data.mDataDispArea;
             ydraw.mBrush = data.mColor;
+            ydraw.mFillColor = data.mFillColor;
             if (data.mGraphType == GRAPHTYPE.SCATTER) {
+                //  散布図
                 ydraw.mPointType = (int)mPointType;
                 ydraw.mPointSize = mPointSize;
                 for (int i = 0; i < data.mData.Count; i++) {
                     ydraw.drawWPoint(data.mData[i]);
                 }
             } else if (data.mGraphType == GRAPHTYPE.LINE_GRAPH) {
+                //  折れ線
                 ydraw.mLineType = (int)data.mLineType;
                 ydraw.mThickness = data.mThickness;
                 for (int i = 0; i < data.mData.Count - 1; i++) {
                     LineD l = new LineD(data.mData[i], data.mData[i + 1]);
                     ydraw.drawWLine(l);
                 }
+            } else if (data.mGraphType == GRAPHTYPE.BAR_GRAPH) {
+                //  棒グラフ
+                double barWidth = data.getXMinGap() * 0.8 / data.mBar.count;
+                int pos = data.mBar.pos % data.mBar.count;
+                for (int i = 0; i < data.mData.Count; i++) {
+                    double xs = data.mData[i].x - barWidth * data.mBar.count / 2 + barWidth * pos;
+                    Rect rect = new Rect(new Point(xs, 0.0), new Point(xs + barWidth, data.mData[i].y));
+                    ydraw.drawWRectangle(rect);
+                }
             }
-        }
-
-        /// <summary>
-        /// 全データクリア
-        /// </summary>
-        public void dataClear()
-        {
-            if (mGraphData == null)
-                mGraphData = new List<GraphData>();
-            mGraphData.Clear();
-        }
-
-        /// <summary>
-        /// データの追加
-        /// </summary>
-        /// <param name="dataList"></param>
-        public void addData(List<PointD> dataList)
-        {
-
-            if (mGraphData == null)
-                mGraphData = new List<GraphData>();
-            GraphData data = new GraphData(dataList);
-            data.mColor = mColor;
-            data.mGraphType = mGraphType;
-            data.mLineType = mLineType;
-            data.mThickness = mThickness;
-            mGraphData.Add(data);
-
-        }
-
-        /// <summary>
-        /// データ領域(ステップサイズを考慮)
-        /// </summary>
-        /// <returns></returns>
-        public Rect getGraphArea()
-        {
-            //  データ領域
-            Rect area = new Rect();
-            area.X = mGraphData.Min(list => list.getXmin());
-            area.Y = mGraphData.Min(list => list.getYmin());
-            area.Width = mGraphData.Max(list => list.getXmax()) - area.X;
-            area.Height = mGraphData.Max(list => list.getYmax()) - area.Y;
-
-            double tmpX = area.X;
-            double tmpY = area.Y;
-            if (0 < area.Y) {
-                area.Y = 0;
-                area.Height += tmpY - area.Y;
-            }
-            if (0 < area.X) {
-                area.X = 0;
-                area.Width += tmpX - area.X;
-            }
-
-            mStepXsize = ylib.graphStepSize(area.Width, 10);
-            mStepYsize = ylib.graphStepSize(area.Height, 5);
-            if (area.Y < 0) {
-                area.Y = ((int)(area.Y / mStepYsize) - 1) * mStepYsize;
-                area.Height += tmpY - area.Y;
-            }
-            if (area.X < 0) {
-                area.X = ((int)(area.X / mStepXsize) - 1) * mStepXsize;
-                area.Width += tmpX - area.X;
-            }
-            int n = 2;
-            while (area.Height > mStepYsize * n++) ;
-            area.Height = mStepYsize * n;
-            n = 2;
-            while (area.Width > mStepXsize * n++) ;
-            area.Width = mStepXsize * n;
-            return area;
         }
 
         /// <summary>
@@ -458,49 +540,53 @@ namespace KScriptWin
         /// <returns></returns>
         public Box addAxisArea(Box dataArea)
         {
+            ydraw.setWorldWindow(dataArea.Left, dataArea.Top, dataArea.Right, dataArea.Bottom); //  仮の表示領域
             Box dispArea = dataArea.toCopy();
-            dispArea.Left -= ydraw.screen2worldXlength(mFontSize * 5);
-            dispArea.Right += ydraw.screen2worldXlength(mFontSize);
+            dispArea.Left   -= ydraw.screen2worldXlength(mFontSize * 5);
+            dispArea.Right  += ydraw.screen2worldXlength(mFontSize * 2);
             dispArea.Bottom += ydraw.screen2worldYlength(mFontSize * 4);
-            dispArea.Top -= ydraw.screen2worldYlength(mFontSize * 2);
+            dispArea.Top    -= ydraw.screen2worldYlength(mFontSize * 3);
             return dispArea;
         }
 
         /// <summary>
         /// 補助線と軸の標示
         /// </summary>
-        public void drawAxis()
+        public void drawAxis(GraphData graphData)
         {
-            double cx = (mDispArea.Left + mDispArea.Right) / 2;
-            double cy = (mDispArea.Top + mDispArea.Bottom) / 2;
-            if (0 < mTitle.Length)
-                ydraw.drawWText(mTitle, new PointD(cx, mDispArea.Top), mFontWorldSize, 0, HorizontalAlignment.Center, VerticalAlignment.Top);
-            if (0 < mXTitle.Length)
-                ydraw.drawWText(mXTitle, new PointD(cx, mDispArea.Bottom), mFontWorldSize, 0, HorizontalAlignment.Center, VerticalAlignment.Bottom);
-            if (0 < mYTitle.Length)
-                ydraw.drawWText(mYTitle, new PointD(mDispArea.Left, cy), mFontWorldSize, Math.PI / 2, HorizontalAlignment.Center, VerticalAlignment.Top);
-            double x = mDataArea.Left;
-            ydraw.mBrush = Brushes.Black;
-            ydraw.drawWText(x.ToString(), new PointD(x, mDataArea.Bottom), mFontWorldSize, 0, HorizontalAlignment.Center, VerticalAlignment.Top);
-            x += mStepXsize;
-            while (x < mDataArea.Right) {
-                ydraw.mBrush = Brushes.Aqua;
-                ydraw.drawWLine(new PointD(x, mDataArea.Bottom), new PointD(x, mDataArea.Top));
-                ydraw.mBrush = Brushes.Black;
-                ydraw.drawWText(ylib.roundRound((decimal)x,3).ToString(), new PointD(x, mDataArea.Bottom), mFontWorldSize, 0, HorizontalAlignment.Center, VerticalAlignment.Top);
-                x += mStepXsize;
-            }
+            //  タイトル表示
+            double cx = graphData.mDispArea.getCenter().x;
+            double cy = graphData.mDispArea.getCenter().y;
+            if (0 < graphData.mTitle.Length)
+                ydraw.drawWText(graphData.mTitle, new PointD(cx, graphData.mDispArea.Top), mFontWorldSize, 0, HorizontalAlignment.Center, VerticalAlignment.Top);
+            if (0 < graphData.mXTitle.Length)
+                ydraw.drawWText(graphData.mXTitle, new PointD(cx, graphData.mDispArea.Bottom), mFontWorldSize, 0, HorizontalAlignment.Center, VerticalAlignment.Bottom);
+            if (0 < graphData.mYTitle.Length)
+                ydraw.drawWText(graphData.mYTitle, new PointD(graphData.mDispArea.Left, cy), mFontWorldSize, Math.PI / 2, HorizontalAlignment.Center, VerticalAlignment.Top);
 
-            double y = mDataArea.Bottom;
+            //  X軸の補助線と目盛
+            double x = graphData.mDataDispArea.Left;
             ydraw.mBrush = Brushes.Black;
-            ydraw.drawWText(y.ToString(), new PointD(mDataArea.Left, y), mFontWorldSize, 0, HorizontalAlignment.Right, VerticalAlignment.Center);
-            y += mStepYsize;
-            while (y < mDataArea.Top) {
+            ydraw.drawWText(x.ToString(), new PointD(x, graphData.mDataDispArea.Bottom), mFontWorldSize, 0, HorizontalAlignment.Center, VerticalAlignment.Top);
+            x += graphData.mStepXsize;
+            while (x <= graphData.mDataDispArea.Right) {
                 ydraw.mBrush = Brushes.Aqua;
-                ydraw.drawWLine(new PointD(mDataArea.Left, y), new PointD(mDataArea.Right, y));
+                ydraw.drawWLine(new PointD(x, graphData.mDataDispArea.Bottom), new PointD(x, graphData.mDataDispArea.Top));
                 ydraw.mBrush = Brushes.Black;
-                ydraw.drawWText(ylib.roundRound((decimal)y,3).ToString(), new PointD(mDataArea.Left, y), mFontWorldSize, 0, HorizontalAlignment.Right, VerticalAlignment.Center);
-                y += mStepYsize;
+                ydraw.drawWText(ylib.axisScaleForm(x,4).ToString(), new PointD(x, graphData.mDataDispArea.Bottom), mFontWorldSize, 0, HorizontalAlignment.Center, VerticalAlignment.Top);
+                x += graphData.mStepXsize;
+            }
+            //  Y軸の補助線と目盛
+            double y = graphData.mDataDispArea.Bottom;
+            ydraw.mBrush = Brushes.Black;
+            ydraw.drawWText(y.ToString(), new PointD(graphData.mDataDispArea.Left, y), mFontWorldSize, 0, HorizontalAlignment.Right, VerticalAlignment.Center);
+            y += graphData.mStepYsize;
+            while (y <= graphData.mDataDispArea.Top) {
+                ydraw.mBrush = Brushes.Aqua;
+                ydraw.drawWLine(new PointD(graphData.mDataDispArea.Left, y), new PointD(graphData.mDataDispArea.Right, y));
+                ydraw.mBrush = Brushes.Black;
+                ydraw.drawWText(ylib.axisScaleForm(y,4).ToString(), new PointD(graphData.mDataDispArea.Left, y), mFontWorldSize, 0, HorizontalAlignment.Right, VerticalAlignment.Center);
+                y += graphData.mStepYsize;
             }
         }
     }

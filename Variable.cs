@@ -42,6 +42,12 @@ namespace KScriptWin
     /// string getStringFromArg(Token arg)                  一引数から文字列を取得
     /// double getDoubleFromArg(Token arg)                  一引数から数値を取得
     /// 
+    /// ====  配列の演算
+    /// void addArrayValue(Token arg, double v)                     配列の値に値を加える
+    /// void addArrayValue(List<string> arrayNameList, double v)    配列の値に値を加える
+    /// void multiArrayValue(Token arg, double v)                   配列の値に値を掛ける
+    /// void multiArrayValue(List<string> arrayNameList, double v)  配列の値に値を掛ける
+    /// 
     /// 
     /// </summary>
     public class Variable
@@ -305,17 +311,20 @@ namespace KScriptWin
         /// <returns>次数</returns>
         public int getArrayOder(Token var)
         {
-            if (var.mType != TokenType.ARRAY && var.mType != TokenType.VARIABLE
-                && var.mType != TokenType.LITERAL && var.mType != TokenType.STRING)
-                return -1;
-            string varStr = var.mValue;
-            int sp = varStr.IndexOf('[');
-            int ep = varStr.IndexOf("]");
-            if (sp < 0 && ep < 0)
+            if (var.mType == TokenType.ARRAY) {
+                //  配列の次数
+                string varStr = var.mValue;
+                int sp = varStr.IndexOf('[');
+                int ep = varStr.IndexOf("]");
+                if (sp < 0 && ep < 0)
+                    return 0;
+                if (0 < sp && sp < ep) {
+                    string arg = varStr.Substring(sp, ep - sp);
+                    return arg.Count(c => c == ',') + 1;
+                }
+            } else if (var.mType == TokenType.STRING || var.mType == TokenType.VARIABLE || var.mType == TokenType.LITERAL) {
+                //  配列以外の変数や定数
                 return 0;
-            if (0 < sp && sp < ep) {
-                string arg = varStr.Substring(sp, ep - sp);
-                return arg.Count(c => c == ',') + 1;
             }
             return -1;
         }
@@ -912,7 +921,8 @@ namespace KScriptWin
         /// <returns></returns>
         public string getStringFromArg(Token arg)
         {
-            if (getArrayOder(arg) == 0) {
+            int oder = getArrayOder(arg);
+            if (oder <= 0) {
                 if (getVariable(arg).mType == TokenType.STRING)
                     return ylib.stripBracketString(getVariable(arg).mValue, '"');
             }
@@ -932,6 +942,29 @@ namespace KScriptWin
             }
             return 0;
         }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="arg"></param>
+        /// <returns></returns>
+        public List<double> getDoubleListfromArg(Token arg)
+        {
+            List<double> doubleList = new List<double>();
+            int order = getArrayOder(arg);
+            if (order == 0 && getVariable(arg).mType == TokenType.LITERAL) {
+                doubleList.Add(ylib.doubleParse(arg.mValue));
+            } else if (0 < order) {
+                List<string> arrayNameList = getArrayNameList(arg);
+                foreach (string arrayName in arrayNameList) {
+                    Token value = getVariable(arrayName);
+                    if (value.mType == TokenType.LITERAL)
+                        doubleList.Add(ylib.doubleParse(value.mValue));
+                }
+            }
+            return doubleList;
+        }
+
 
         //  ====  配列の演算
 
@@ -988,39 +1021,6 @@ namespace KScriptWin
                 var value = ylib.doubleParse(getVariable(arrayName).mValue);
                 setVariable(arrayName, new Token((value * v).ToString(), TokenType.LITERAL));
             }
-        }
-
-        /// <summary>
-        /// 数式文字列で変数を数値文字列に置き返した数式文字列を作る
-        /// []で囲まれた変数("[x]")はそのまま残す
-        /// </summary>
-        /// <param name="express">数式文字列</param>
-        /// <returns>変換した数式文字列</returns>
-        public string cnvExpress(string express)
-        {
-            List<Token> tokenList = mLexer.tokenList(express);
-            string buf = "";
-            for (int i = 0; i < tokenList.Count; i++) {
-                if (tokenList[i].mType == TokenType.EXPRESS) {
-                    //  括弧内などの数式
-                    buf += cnvExpress(mLexer.stripBracketString(tokenList[i].mValue));
-                } else if (tokenList[i].mType == TokenType.FUNCTION) {
-                    //  関数内の数式
-                    buf += tokenList[i].mValue + "(" + cnvExpress(mLexer.stripBracketString(tokenList[++i].mValue)) + ")";
-                } else if (tokenList[i].mType == TokenType.DELIMITER && tokenList[i].mValue == "[") {
-                    //  []で囲まれた変数(変換なし)
-                    do {
-                        buf += tokenList[i++].mValue;
-                    } while (i < tokenList.Count - 1 && tokenList[i].mType != TokenType.DELIMITER);
-                    buf += tokenList[i].mValue;
-                } else if (tokenList[i].mType == TokenType.VARIABLE) {
-                    //  変数は数値に置き換え
-                    buf += getVariable(tokenList[i]).mValue;
-                } else {
-                    buf += tokenList[i].mValue;
-                }
-            }
-            return buf;
         }
     }
 }

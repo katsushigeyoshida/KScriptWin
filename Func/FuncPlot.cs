@@ -27,16 +27,23 @@ namespace KScriptWin
             "plot.Text(text,x,y[,size[,rot[,ha[,va]]]]); 文字列の表示(文字列,X座標,Y座標,サイズ,回転角,水平アライメント,垂直アライメント)",
             "graph.SetData(x[],y[]); グラフデータの設定 Set(x[],y[])/set(pl[,])",
             "graph.AddData(x[],y[]); グラフデータの追加 Add(x[],y[]/p[,])",
+            "graph.SetSplitArea(m,n); グラフの画面を分割する SetSplitArea(横方向の分割数,縦方向の分割数)",
+            "graph.SetUseArea(n); 画面分割したときのグラフの表示位置",
+            "graph.SetDataArea(xs,ys,xe,ye); データの表示領域の設定 SetDataArea(xs,ys,xe,ye/ps[],pe[]/plist[,])",
+            "graph.SetdataArea(xs,ys,xe,ye); データの表示領域を設定",
             "graph.GraphType(\"line\"); グラフの種別設定(折れ線\"line\",散布図\"scatter\",棒グラフ\"bar\")",
-            "graph.LineColor(\"Blue\"); グラフの線の色設定",
+            "graph.SetColor(\"Blue\"); グラフの線の色設定",
+            "graph.FontSize(5); グラフのフォントサイズの設定",
             "graph.LineType(\"dash\"); 線種の設定(\"solid\", \"dash\", \"center\", \"phantom\")",
             "graph.LineThickness(1); 線の太さ",
             "graph.PointType(\"cross\"); 点種の設定(\"dot\", \"cross\", \"plus\", \"box\", \"circle\", \"triangle\")",
             "graph.PointSize(3); 点サイズの設定",
+            "graph.SetFillColor(\"Blue\"); 塗潰しの色設定",
+            "graph.BarCount(count); 棒グラフの棒の数",
+            "graph.BarPosition(position); 棒グラフの棒の位置",
             "graph.Title(\"title\"); グラフのタイトル",
             "graph.XTitle(\"title\"); グラフのX軸タイトル\"",
             "graph.YTitle(\"title\"); グラフのY軸タイトル",
-            "graph.FontSize(5); グラフのフォントサイズの設定",
         };
 
         //  共有クラス
@@ -51,9 +58,17 @@ namespace KScriptWin
         private double mLineThickness = 1;
         private string mPointType = "circle";
         private double mPointSize = 1;
+        private string mFillColor = "White";
+        private int mBarCount = 1;
+        private int mBarPosition = 0;
         private string mTitle = "";
         private string mXTitle = "";
         private string mYTitle = "";
+        private int mWidthSplitNo = 1;                  //  Viewの横分割数
+        private int mHeightSplitNo = 1;                 //  Viewの縦分割数
+        private int mUseAreaNo = 0;                     //  表示するViewの位置
+        private Box mDataDispArea;                      //  データの表示領域
+        public bool mGraphInit = true;                  //  グラフダイヤログの初期化
 
         private KParse mParse;
         private Variable mVar;
@@ -72,38 +87,46 @@ namespace KScriptWin
         {
             List<Token> args = mScript.getFuncArgs(arg.mValue);
             switch (funcName.mValue) {
-                case "plot.Window"       : plotWindow(args); break;
-                case "plot.Disp"         : plotDisp(); break;
-                case "plot.Aspect"       : plotAspect(args); break;
-                case "plot.Color"        : plotColor(args); break;
-                case "plot.Fill"         : plotSetFill(args); break;
-                case "plot.FillColor"    : plotFillColor(args); break;
-                case "plot.PointType"    : plotPointType(args); break;
-                case "plot.LineType"     : plotLineType(args); break;
-                case "plot.PointSize"    : plotPointSize(args); break;
-                case "plot.LineThickness": plotLineThickness(args); break;
-                case "plot.Point"        : plotPoint(args); break;
-                case "plot.Line"         : plotLine(args); break;
-                case "plot.Arc"          : plotArc(args); break;
-                case "plot.Polyline"     : plotPolyline(args); break;
-                case "plot.Polygon"      : plotPolygon(args); break;
-                case "plot.Text"         : plotText(args); break;
-                case "graph.SetData"     : setGraphData(args); break;
-                case "graph.AddData"     : addtGraphData(args); break;
-                case "graph.FontSize"    : graphFontSize(args); break;
-                case "graph.GraphType"   : setGraphType(args); break;
-                case "graph.SetColor"    : setLineColor(args); break;
-                case "graph.LineType"    : setLineType(args); break;
+                case "plot.Window"        : plotWindow(args); break;
+                case "plot.Disp"          : plotDisp(); break;
+                case "plot.Aspect"        : plotAspect(args); break;
+                case "plot.Color"         : plotColor(args); break;
+                case "plot.Fill"          : plotSetFill(args); break;
+                case "plot.FillColor"     : plotFillColor(args); break;
+                case "plot.PointType"     : plotPointType(args); break;
+                case "plot.LineType"      : plotLineType(args); break;
+                case "plot.PointSize"     : plotPointSize(args); break;
+                case "plot.LineThickness" : plotLineThickness(args); break;
+                case "plot.Point"         : plotPoint(args); break;
+                case "plot.Line"          : plotLine(args); break;
+                case "plot.Arc"           : plotArc(args); break;
+                case "plot.Polyline"      : plotPolyline(args); break;
+                case "plot.Polygon"       : plotPolygon(args); break;
+                case "plot.Text"          : plotText(args); break;
+                case "graph.SetData"      : setGraphData(args); break;
+                case "graph.AddData"      : addtGraphData(args); break;
+                case "graph.SetSplitArea" : setSplitArea(args); break;
+                case "graph.SetUseArea"   : setUseArea(args); break;
+                case "graph.SetDataArea"  : setDataArea(args); break;
+                case "graph.GraphType"    : setGraphType(args); break;
+                case "graph.SetColor"     : setLineColor(args); break;
+                case "graph.FontSize"     : graphFontSize(args); break;
+                case "graph.LineType"     : setLineType(args); break;
                 case "graph.LineThickness": setLineThickness(args); break;
-                case "graph.PointType"   : setPointType(args); break;
-                case "graph.PointSize"   : setPointSize(args); break;
-                case "graph.Title"       : setTitle(args); break;
-                case "graph.XTitle"      : setXTitle(args); break;
-                case "graph.YTitle"      : setYTitle(args); break;
+                case "graph.PointType"    : setPointType(args); break;
+                case "graph.PointSize"    : setPointSize(args); break;
+                case "graph.SetFillColor" : setFillColor(args); break;
+                case "graph.BarCount"     : setBarCount(args); break;
+                case "graph.BarPosition"  : setBarPosition(args); break;
+                case "graph.Title"        : setTitle(args); break;
+                case "graph.XTitle"       : setXTitle(args); break;
+                case "graph.YTitle"       : setYTitle(args); break;
                 default: return new Token("not found func", TokenType.ERROR);
             }
             return new Token("", TokenType.EMPTY);
         }
+
+        /// ===  プロット処理 ========
 
         /// <summary>
         /// 表示領域の設定(left,bottom,right,top)(inner function)
@@ -369,6 +392,83 @@ namespace KScriptWin
             mGraph.plotText(text);
         }
 
+        /// ===  グラフ処理 ========
+
+        /// <summary>
+        /// グラフデータの設定(X[], Y[][, Title])(inner function)
+        /// set(x[],y[],title)/set(pl[,],title)
+        /// </summary>
+        /// <param name="args">引数(x[],y[][,title]</param>
+        public void setGraphData(List<Token> args)
+        {
+            List<PointD> dataList = mVar.args2PointList(args);
+            if (dataList.Count == 0)
+                return;
+            if (mGraphInit) {
+                //  グラフダイヤログの初期化
+                graphInit();
+            }
+            //  画面分割のViewリストの作成と
+            mGraph.setSplitView(mWidthSplitNo, mHeightSplitNo);
+            mGraph.setUseArea(mUseAreaNo);
+
+            if (mDataDispArea != null) {
+                //  データ表示領域が指定されているとき
+                mGraph.setDataDispArea(mDataDispArea);
+                mDataDispArea = null;
+            }
+
+            mGraph.mDraw.mTitle = mTitle;
+            mGraph.mDraw.mXTitle = mXTitle;
+            mGraph.mDraw.mYTitle = mYTitle;
+
+            setProperty();
+            mGraph.setGraph(dataList);
+        }
+
+        /// <summary>
+        /// グラフデータを追加 addGraphData(p[,]/x[],y[])
+        /// </summary>
+        /// <param name="args"></param>
+        private void addtGraphData(List<Token> args)
+        {
+            List<PointD> dataList = mVar.args2PointList(args);
+            if (dataList.Count == 0)
+                return;
+            setProperty();
+            mGraph.addGraph(dataList);
+        }
+
+        /// <summary>
+        /// 表示データの属性設定
+        /// </summary>
+        private void setProperty()
+        {
+            mGraph.setFontSize(mGraphFontSize);
+            mGraph.mDraw.mGraphType = mGraphType;
+            mGraph.setColor(mLineColor);
+            mGraph.setLineType(mLineType);
+            mGraph.setLineThickness(mLineThickness);
+            mGraph.setPointType(mPointType);
+            mGraph.setPointSize(mPointSize);
+            mGraph.setFillColor(mFillColor);
+            mGraph.setBarProperty(mBarCount, mBarPosition);
+        }
+
+        /// <summary>
+        /// グラフダイヤログの初期化
+        /// </summary>
+        private void graphInit()
+        {
+            if (mGraph != null)
+                mGraph.Close();
+            mGraph = new GraphView();
+            mScript.mGraph = mGraph;
+            mGraph.Show();
+            mGraph.mAspectFix = false;
+            mGraphInit = false;
+        }
+
         /// <summary>
         /// グラフのフォントサイズの設定(inner function)
         /// </summary>
@@ -381,55 +481,42 @@ namespace KScriptWin
         }
 
         /// <summary>
-        /// グラフデータの設定(X[], Y[][, Title])(inner function)
-        /// set(x[],y[],title)/set(pl[,],title)
+        /// 画面の分割設定 Set
         /// </summary>
-        /// <param name="args">引数(x[],y[][,title]</param>
-        public void setGraphData(List<Token> args)
+        /// <param name="args"></param>
+        private void setSplitArea(List<Token> args)
         {
-            List<PointD> dataList = mVar.args2PointList(args);
-            if (dataList.Count == 0)
-                return;
-            if (mGraph != null)
-                mGraph.Close();
-            mGraph = new GraphView();
-            mScript.mGraph = mGraph;
-            mGraph.Show();
-
-            mGraph.mDraw.mTitle = mTitle;
-            mGraph.mDraw.mXTitle = mXTitle;
-            mGraph.mDraw.mYTitle = mYTitle;
-            mGraph.mAspectFix = false;
-            mGraph.setFontSize(mGraphFontSize);
-            
-            mGraph.mDraw.mGraphType = mGraphType;
-            mGraph.setColor(mLineColor);
-            mGraph.setLineType(mLineType);
-            mGraph.setLineThickness(mLineThickness);
-            mGraph.setPointType(mPointType);
-            mGraph.setPointSize(mPointSize);
-
-            mGraph.setGraph(dataList);
+            List<double> splitCount =  mVar.getDoubleListFromArgs(args);
+            if (1 < splitCount.Count) {
+                mWidthSplitNo = (int)splitCount[0];
+                mHeightSplitNo = (int)splitCount[1];
+            }
         }
 
         /// <summary>
-        /// グラフデータを追加 addGraphData(p[,]/x[],y[])
+        /// 表示する画面分割領域を指定 SetUseArea(areaNo)
         /// </summary>
         /// <param name="args"></param>
-        private void addtGraphData(List<Token> args )
+        private void setUseArea(List<Token> args)
         {
-            List<PointD> dataList = mVar.args2PointList(args);
-            if (dataList.Count == 0)
-                return;
-            mGraph.mDraw.mGraphType = mGraphType;
-            mGraph.setColor(mLineColor);
-            mGraph.setLineType(mLineType);
-            mGraph.setLineThickness(mLineThickness);
-            mGraph.setPointType(mPointType);
-            mGraph.setPointSize(mPointSize);
-
-            mGraph.addGraph(dataList); 
+            List<double> splitCount = mVar.getDoubleListFromArgs(args);
+            if (0 < splitCount.Count)
+                mUseAreaNo = (int)splitCount[0];
         }
+
+        /// <summary>
+        /// グラフの表示エリアの設定 SeDataArea(xs,ys,xe,ye/ps[],pe[]/plist[,])
+        /// </summary>
+        /// <param name="args"></param>
+        private void setDataArea(List<Token> args)
+        {
+            List<PointD> plist = mVar.args2PointList(args);
+            if (1 < plist.Count) {
+                mDataDispArea = new Box(plist[0], plist[1]);
+                mDataDispArea.normalize();
+            }
+        }
+
 
         /// <summary>
         /// グラフの種類を設定 (setGraphType = scatter(散布図) / line(折れ線) / bar(棒グラフ) )
@@ -463,7 +550,7 @@ namespace KScriptWin
         }
 
         /// <summary>
-        /// グラフの線種設定
+        /// グラフの線種設定("solid", "dash", "center", "phantom")
         /// </summary>
         /// <param name="args"></param>
         public void setLineType(List<Token> args)
@@ -497,6 +584,33 @@ namespace KScriptWin
         public void setPointSize(List<Token> args)
         {
             mPointSize = ylib.doubleParse(args[0].mValue);
+        }
+
+        /// <summary>
+        /// 塗潰し色の設定(棒グラフ)
+        /// </summary>
+        /// <param name="args"></param>
+        public void setFillColor(List<Token> args)
+        {
+            mFillColor = args[0].getValue();
+        }
+
+        /// <summary>
+        /// 棒グラフの棒の位置
+        /// </summary>
+        /// <param name="args"></param>
+        public void setBarCount(List<Token> args)
+        {
+            mBarCount = ylib.intParse(args[0].getValue());
+        }
+
+        /// <summary>
+        /// 棒グラフの棒の位置
+        /// </summary>
+        /// <param name="args"></param>
+        public void setBarPosition(List<Token> args)
+        {
+            mBarPosition = ylib.intParse(args[0].getValue());
         }
 
         /// <summary>

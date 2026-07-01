@@ -91,6 +91,8 @@ namespace KScriptWin
                 mGraph.Close();
             if (mPlot3D != null)
                 mPlot3D.Close();
+            if (mScript.mControlData.mPause)
+                mScript.mControlData.mAbort = true;
 
             closeCheck();
             saveFolderList();
@@ -768,6 +770,7 @@ namespace KScriptWin
             mSnippet.add(FuncMatrix.mFuncNames);
             mSnippet.add(FuncString.mFuncNames);
             mSnippet.add(FuncFile.mFuncNames);
+            mSnippet.add(FuncMath.mFuncNames);
             mSnippet.add(FuncPlot.mFuncNames);
             mSnippet.add(FuncPlot3D.mFuncNames);
             mSnippet.add(YCalc.mFuncList);

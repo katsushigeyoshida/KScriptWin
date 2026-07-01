@@ -119,6 +119,7 @@ namespace KScriptWin
         public FuncMatrix mFuncMatrix;                          //  マトリックス関数
         public FuncString mFuncString;                          //  文字列関数
         public FuncFile mFuncFile;                              //  ファイル関連関数
+        public FuncMath mFuncMath;                              //  数値計算関数
         public string mScriptFolder = "";                       //  プログラムファイルフォルダ
 
         public bool mDebug = false;
@@ -141,9 +142,10 @@ namespace KScriptWin
             mFuncArray  = new FuncArray(this);
             mFuncMatrix = new FuncMatrix(this);
             mFuncString = new FuncString(this);
-            mFuncFile = new FuncFile(this);
-            mFuncPlot = new FuncPlot(this);
+            mFuncFile   = new FuncFile(this);
+            mFuncPlot   = new FuncPlot(this);
             mFuncPlot3D = new FuncPlot3D(this);
+            mFuncMath   = new FuncMath(this);
             mControlData = new ControlData();
         }
 
@@ -161,9 +163,10 @@ namespace KScriptWin
             mFuncArray  = new FuncArray(this);
             mFuncMatrix = new FuncMatrix(this);
             mFuncString = new FuncString(this);
-            mFuncFile = new FuncFile(this);
-            mFuncPlot = new FuncPlot(this);
+            mFuncFile   = new FuncFile(this);
+            mFuncPlot   = new FuncPlot(this);
             mFuncPlot3D = new FuncPlot3D(this);
+            mFuncMath   = new FuncMath(this);
             mControlData = new ControlData();
 
             //  字句解析・ スクリプト登録(mFunctionsに登録)
@@ -184,7 +187,10 @@ namespace KScriptWin
             mVar.mGlobalVar.Clear();
             mVar.mVariables.Clear();
             mParse.mFunctions.Clear();
-            if (mGraph != null) mGraph.Close();
+            if (mGraph != null) {
+                mGraph.Close();
+                mFuncPlot.mGraphInit = true;
+            }
             if (mPlot3D != null) mPlot3D.Close();
         }
 
@@ -530,6 +536,9 @@ namespace KScriptWin
                             if (v != null)
                                 buf += v.getValue();
                             expList = new List<Token>();
+                        } else if (tokenList[i].mType == TokenType.STRING) {
+                            //  文字列
+                            buf += tokenList[i].getValue();
                         } else if (0 < mVar.getArrayOder(tokenList[i])) {
                             //  配列変数から値を抽出
                             List<string> arrayNameList = mVar.getArrayNameList(getVariableName(tokenList[i]));
@@ -633,6 +642,8 @@ namespace KScriptWin
                     result = mFuncString.function(funcName, arg, ret);  //  文字列関数
                 else if (0 == funcName.mValue.IndexOf("file."))
                     result = mFuncFile.function(funcName, arg, ret);    //  ファイル関連関数
+                else if (0 == funcName.mValue.IndexOf("math."))
+                    result = mFuncMath.function(funcName, arg, ret);    //  数値計算関数
                 else {
                     result = mScriptLib.innerFunc(funcName, arg, ret);  //  内部関数処理
                     if (result.mType == TokenType.ERROR && result.mValue == "not found func") {
@@ -868,6 +879,41 @@ namespace KScriptWin
         }
 
         /// <summary>
+        /// 数式文字列を評価する(変数を数値に置き換える)
+        /// </summary>
+        /// <param name="expstring">数式文字列</param>
+        /// <param name="exceptVari">変数から除外する文字</param>
+        /// <returns></returns>
+        public string cnvExpress(string expstring, List<string> exceptVar=null)
+        {
+            string buf = "";
+            List<Token> tokens = mLexer.tokenList(expstring);
+            for (int i = 0; i < tokens.Count; i++) {
+                if (tokens[i].mType == TokenType.DELIMITER && tokens[i].mValue == "[") {
+                    //  []で囲まれた変数(変換なし)
+                    do {
+                        buf += tokens[i++].mValue;
+                    } while (i < tokens.Count - 1 && tokens[i].mType != TokenType.DELIMITER);
+                    buf += tokens[i].mValue;
+                } else if (tokens[i].mType == TokenType.VARIABLE) {
+                    if (exceptVar == null || exceptVar.IndexOf(tokens[i].getValue()) < 0)
+                        buf += getVariableValue(tokens[i]).getValue();
+                    else
+                        buf += tokens[i].getValue();
+                } else if (tokens[i].mType == TokenType.ARRAY) {
+                    buf += getVariableValue(tokens[i]).getValue();
+                } else if (tokens[i].mType == TokenType.EXPRESS) {
+                    buf += "(" + cnvExpress(ylib.stripBracketString(tokens[i].getValue()), exceptVar)+ ")";
+                } else if (tokens[i].mType == TokenType.FUNCTION) {
+                    buf += tokens[i].getValue() + "(" + cnvExpress(ylib.stripBracketString(tokens[++i].getValue()), exceptVar) + ")";
+                } else {
+                    buf += tokens[i].getValue();
+                }
+            }
+            return buf;
+        }
+
+        /// <summary>
         /// 数式関数の処理
         /// </summary>
         /// <param name="funcName">数式関数</param>
@@ -921,8 +967,9 @@ namespace KScriptWin
         }
 
         /// <summary>
-        /// プログラム関数引数をリストに変換
+        /// プログラム関数引数をリストに変換しかつ変数は値に変換する
         /// funcName(args) { staetment .. } → List(args)
+        /// arg : 変数や個別の配列(a[2]など) => 値 , 配列全体(a[],b[,])はそのまま、配列内の変数や数式 => 値に変換
         /// </summary>
         /// <param name="func">引数文字列</param>
         /// <param name="sp">開始位置</param>

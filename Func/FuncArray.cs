@@ -20,14 +20,7 @@ namespace KScriptWin
             "array.reverse(a[]); 配列の逆順",
             "array.reverse(a[,]); 配列の行を逆順",
             "array.reverse(a[,],1); 配列の列を逆順",
-            "array.max(a[]); 配列の最大値",
-            "array.min(a[,]); 配列の最小値",
-            "array.sum(a[]);  配列の合計",
-            "array.average(a[,]); 配列の平均",
-            "array.variance(a[]); 配列の分散",
-            "array.stdDeviation(a[]); 配列の標準偏差",
-            "array.covariance(a[], b[]); 共分散",
-            "array.corrCoeff(x[],y[]); 配列の相関係数",
+            "array.copy(a[],start,end); 配列からデータを抽出する(b[]=array.copy(a[],start,end))",
             "array.concat(a[],b[]); 配列同士の結合c[]=array.add(a[],b[])",
             "array.concat(a[,],b[,]); 配列同士の結合c[,]=array.add(a[,],b[,])",
             "array.append(a[],v); 配列に値を追加",
@@ -35,12 +28,12 @@ namespace KScriptWin
             "array.sub(a[],val); 配列に値を引く",
             "array.multi(a[],val); 配列に値を掛ける",
             "array.divide(a[],val); 配列を値で割る",
-            "array.arrenge(start,end,step); 等間隔のの数値配列作成",
-            "array.linspace(start,end,div); 等分割した数値配列の作成)",
+            "array.arrange(start,end,step); 等間隔のの数値配列作成",
+            "array.linspace(start,end,div); 等分割した数値配列の作成",
             "array.create(size,value/express); sizeで指定した配列作成(a[]=array.creat(size, value/express))",
             "array.create(size1,size2,value/express); sizeで指定した配列作成(a[,]=array.creat(size1, size2, value/express))",
             "array.create(size1,size2,size3,value/express); sizeで指定した配列作成(a[,,]=array.creat(size1,size2,size3, value/express))",
-            "array.calc(a[],express); 配列のデータを数式処理する express = \"[x]*[x]+2\"",
+            "array.calc(a[],express); 配列のデータを数式で処理する express = \"[x]*[x]+2\"",
         };
 
         //  共有クラス
@@ -75,21 +68,14 @@ namespace KScriptWin
                 case "array.squeeze": squeeze(args); break;
                 case "array.sort": sort(args); break;
                 case "array.reverse": reverse(args); break;
-                case "array.max": return max(args);
-                case "array.min": return min(args);
-                case "array.sum": return sum(args);
-                case "array.average": return average(args);
-                case "array.variance": return variance(args);
-                case "array.stdDeviation": return standardDeviation(args);
-                case "array.covariance": return covariance(args);
-                case "array.corrCoeff": return correlationCoefficient(args);
+                case "array.copy": return copy(args, ret);
                 case "array.concat": return concat(args, ret);
                 case "array.append": append(args); break;
                 case "array.add": add(args); break;
                 case "array.sub": sub(args); break;
                 case "array.multi": multi(args); break;
                 case "array.divide": divide(args); break;
-                case "array.arrenge": return arrenge(args, ret);
+                case "array.arrange": return arrange(args, ret);
                 case "array.linspace": return linspace(args, ret);
                 case "array.create": return create(args, ret);
                 case "array.calc": calcArray(args, ret); break;
@@ -152,7 +138,7 @@ namespace KScriptWin
         }
 
         /// <summary>
-        /// 配列の圧縮(未使用インデックス削除)(inner function)
+        /// 配列の圧縮(未使用インデックス削除)
         /// </summary>
         /// <param name="args">配列名</param>
         public void squeeze(List<Token> args)
@@ -176,7 +162,7 @@ namespace KScriptWin
         }
 
         /// <summary>
-        /// ソート(inner function)
+        /// ソート
         /// 2D配列の時 array[m,n] n : ソート列位置
         /// 配列のインデックスが0以上の数値のみに対応
         /// </summary>
@@ -219,7 +205,7 @@ namespace KScriptWin
         }
 
         /// <summary>
-        /// 配列を逆順にする(inner function)
+        /// 配列を逆順にする
         /// 配列のインデックスが0以上の数値のみに対応
         /// </summary>
         /// <param name="args">配列名[,colReverse]</param>
@@ -265,167 +251,33 @@ namespace KScriptWin
             }
         }
 
+
         /// <summary>
-        /// 最大値を求める(a[] / a[,] / a[x,])(inner function)
+        /// 配列のコピーを作成  a[] = array.copy(b[], start, end);
         /// </summary>
-        /// <param name="args">配列名</param>
-        /// <returns>最大値</returns>
-        public Token max(List<Token> args)
+        /// <param name="args"></param>
+        /// <param name="ret"></param>
+        /// <returns></returns>
+        public Token copy(List<Token> args, Token ret)
         {
-            (string arrayName, int no) = mUtil.getArrayName(args[0]);
-            double max = double.MinValue;
-            if (no == 1 || no == 2) {
-                arrayName = mUtil.getArraySearchName(args[0]);
+            List<double> src = new List<double>();
+            List<double> dest = new List<double>();
+            int start = 0, end = 0;
+            if (0 < args.Count && mVar.getArrayOder(args[0]) == 1) {
+                src = mVar.getDoubleArrayList(args[0]);
+                end = src.Count;
+                if (1 < args.Count && mVar.getArrayOder(args[1]) == 0)
+                    start = (int)mVar.getDoubleFromArg(args[1]);
+                if (2 < args.Count && mVar.getArrayOder(args[2]) == 0)
+                    end = Math.Min((int)mVar.getDoubleFromArg(args[2]), end);
+                dest = src.Skip(start).Take(end - start).ToList();
+                mVar.setReturnArray(dest.ToArray(), ret);
             } else
-                return new Token(arrayName, TokenType.ERROR);
-            foreach (var variable in mVar.getVariableList(arrayName)) {
-                if (0 == variable.Key.IndexOf(arrayName)) {
-                    if (variable.Value.mType != TokenType.STRING) {
-                        double x = ylib.doubleParse(variable.Value.mValue);
-                        if (max < x)
-                            max = x;
-                    }
-                }
-            }
-            return new Token(max.ToString(), TokenType.LITERAL);
-        }
+                return new Token("", TokenType.EMPTY);
 
-        /// <summary>
-        /// 最小値を求める(a[] / a[,] / a[x,])(inner function)
-        /// </summary>
-        /// <param name="args">配列名</param>
-        /// <returns>最小値</returns>
-        public Token min(List<Token> args)
-        {
-            (string arrayName, int no) = mUtil.getArrayName(args[0]);
-            double min = double.MaxValue;
-            if (no == 1 || no == 2) {
-                arrayName = mUtil.getArraySearchName(args[0]);
-            } else
-                return new Token(arrayName, TokenType.ERROR);
-            foreach (var variable in mVar.getVariableList(arrayName)) {
-                if (0 == variable.Key.IndexOf(arrayName)) {
-                    if (variable.Value.mType != TokenType.STRING) {
-                        double x = ylib.doubleParse(variable.Value.mValue);
-                        if (min > x)
-                            min = x;
-                    }
-                }
-            }
-            return new Token(min.ToString(), TokenType.LITERAL);
-        }
-
-        /// <summary>
-        /// 配列の合計(inner function)
-        /// </summary>
-        /// <param name="args">配列名</param>
-        /// <returns>合計</returns>
-        public Token sum(List<Token> args)
-        {
-            (string arrayName, int no) = mUtil.getArrayName(args[0]);
-            List<double> listData = new();
-            if (no == 1 || no == 2) {
-                listData = mVar.cnvListDouble(args[0]);
-            } else
-                return new Token(arrayName, TokenType.ERROR);
-            double sum = listData.Sum();
-            return new Token(sum.ToString(), TokenType.LITERAL);
-        }
-
-        /// <summary>
-        /// 平均値を求める(inner function)
-        /// </summary>
-        /// <param name="args">配列名</param>
-        /// <returns>平均値</returns>
-        public Token average(List<Token> args)
-        {
-            (string arrayName, int no) = mUtil.getArrayName(args[0]);
-            List<double> listData = new();
-            if (no == 1 || no == 2) {
-                listData = mVar.cnvListDouble(args[0]);
-            } else
-                return new Token(arrayName, TokenType.ERROR);
-            double ave = listData.Sum() / listData.Count;
-            return new Token(ave.ToString(), TokenType.LITERAL);
-        }
-
-        /// <summary>
-        /// 分散(inner function)
-        /// </summary>
-        /// <param name="args">配列</param>
-        /// <returns>分散値</returns>
-        public Token variance(List<Token> args)
-        {
-            (string arrayName, int no) = mUtil.getArrayName(args[0]);
-            List<double> listData = new();
-            if (no == 1 || no == 2) {
-                listData = mVar.cnvListDouble(args[0]);
-            } else
-                return new Token(arrayName, TokenType.ERROR);
-            double ave = listData.Sum() / listData.Count;
-            double vari = listData.Sum(p => (p - ave) * (p - ave)) / listData.Count;
-            return new Token(vari.ToString(), TokenType.LITERAL);
-        }
-
-        /// <summary>
-        /// 標準偏差(inner function)
-        /// </summary>
-        /// <param name="args">配列</param>
-        /// <returns>標準偏差</returns>
-        public Token standardDeviation(List<Token> args)
-        {
-            Token token = variance(args);
-            if (token.mType != TokenType.ERROR)
-                return new Token(Math.Sqrt(ylib.doubleParse(token.mValue)).ToString(), TokenType.LITERAL);
-            else
-                return token;
-        }
-
-        /// <summary>
-        /// 共分散(a[],b[])(inner function)
-        /// </summary>
-        /// <param name="args">配列</param>
-        /// <returns>共分散</returns>
-        public Token covariance(List<Token> args)
-        {
-            if (args.Count < 2)
-                return new Token("", TokenType.ERROR);
-            List<double> listData0 = mVar.cnvListDouble(args[0]);
-            List<double> listData1 = mVar.cnvListDouble(args[1]);
-            if (listData0.Count != listData1.Count)
-                return new Token("", TokenType.ERROR);
-            double ave0 = listData0.Average();
-            double ave1 = listData1.Average();
-            double total = 0;
-            for (int i = 0; i < listData0.Count; i++) {
-                total += (listData0[i] - ave0) * (listData1[i] - ave1);
-            }
-            return new Token((total / listData0.Count).ToString(), TokenType.LITERAL);
-        }
-
-        /// <summary>
-        /// 相関係数(x[],y[])(inner function)
-        /// </summary>
-        /// <param name="args">配列</param>
-        /// <returns>相関係数</returns>
-        public Token correlationCoefficient(List<Token> args)
-        {
-            if (args.Count < 2)
-                return new Token("", TokenType.ERROR);
-            List<double> x = mVar.cnvListDouble(args[0]);
-            List<double> y = mVar.cnvListDouble(args[1]);
-            if (x.Count != y.Count)
-                return new Token("", TokenType.ERROR);
-            double avex = x.Average();
-            double avey = y.Average();
-            double cov = 0;
-            for (int i = 0; i < x.Count; i++) {
-                cov += (x[i] - avex) * (y[i] - avey);
-            }
-            cov /= x.Count;
-            double stdx = Math.Sqrt(x.Sum(p => (p - avex) * (p - avex)) / x.Count);
-            double stdy = Math.Sqrt(y.Sum(p => (p - avey) * (p - avey)) / y.Count);
-            return new Token((cov / (stdx * stdy)).ToString(), TokenType.LITERAL);
+            //  戻り値の設定
+            mVar.setVariable(new Token("return", TokenType.VARIABLE), ret);
+            return mVar.getVariable("return");
         }
 
         /// <summary>
@@ -512,7 +364,7 @@ namespace KScriptWin
         /// </summary>
         /// <param name="args"></param>
         /// <param name="ret"></param>
-        private Token arrenge(List<Token> args, Token ret)
+        private Token arrange(List<Token> args, Token ret)
         {
             List<double> arrayList = new();
             double start =0, end = 1, step = 1;
@@ -527,20 +379,21 @@ namespace KScriptWin
             if (1 < args.Count && mVar.getArrayOder(args[2]) == 0)
                 step = mVar.getDoubleFromArg(args[2]);
             //  配列の方向を確認
+            double v = start;
             if (start < end && 0 < step) {
+                //  配列の作成(増加方向)
+                while (v <= end) {
+                    arrayList.Add(v);
+                    v += step;
+                }
             } else if (start > end && step < 0) {
-                double t = start;
-                start = end;
-                end = t;
-                step *= -1;
+                //  配列の作成(減少方向)
+                while (v >= end) {
+                    arrayList.Add(v);
+                    v += step;
+                }
             } else {
                 return new Token("", TokenType.EMPTY);
-            }
-            //  配列の作成
-            double v = start;
-            while (v <= end) {
-                arrayList.Add(v);
-                v += step;
             }
             mVar.setReturnArray(arrayList.ToArray(), ret);
 
@@ -602,13 +455,14 @@ namespace KScriptWin
         private Token create(List<Token> args, Token ret)
         {
             YCalc calc = new YCalc();
+            List<string> exceptVar = new List<string>() { "x" };
             int order = mVar.getArrayOder(ret);
             string express = "";
             double initValue = 0;
             bool cb = false;
             if (0 < order && args.Count == order + 1) {
                 if (args[order].mType == TokenType.STRING) {
-                    express = args[order].mValue;
+                    express = mScript.cnvExpress(args[order].getValue());
                     cb = true;
                 } else
                     initValue = mVar.getDoubleFromArg(args[order]);
@@ -675,17 +529,13 @@ namespace KScriptWin
         private void calcArray(List<Token> args, Token ret)
         {
             YCalc calc = new YCalc();
-            string express = ylib.stripBracketString(args[1].mValue, '\"'); //  数式
-            express = mVar.cnvExpress(express);
+            string express = mScript.cnvExpress(args[1].getValue());
             List<string> arrayNameList = mVar.getArrayNameList(args[0]);    //  数式処理する配列リスト
             foreach(var x in arrayNameList) {
                 //  数式に配列の値を代入して計算
                 string exp = express.Replace("[x]", mVar.getVariable(x).mValue);
                 double result = calc.expression(exp);
                 mVar.setVariable(new Token(x), new Token(result.ToString()));
-                //string exp = ylib.stripBracketString(express.Replace("[x]", mVar.getVariable(x).mValue), '\"');
-                //Token result = mScript.express(new Token(exp, TokenType.EXPRESS));
-                //mVar.setVariable(new Token(x), result);
             }
         }
 
