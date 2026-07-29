@@ -540,10 +540,23 @@ namespace KScriptWin
                             //  文字列
                             buf += tokenList[i].getValue();
                         } else if (0 < mVar.getArrayOder(tokenList[i])) {
+                            //  配列の一括表示(a[1],a[],a[,],a[n,]...)
                             //  配列変数から値を抽出
                             List<string> arrayNameList = mVar.getArrayNameList(getVariableName(tokenList[i]));
-                            foreach (string name in arrayNameList) {
-                                buf += mVar.getVariable(name).getValue() + " ";
+                            if (0 < arrayNameList.Count) {
+                                //  配列のインデックスの初期値
+                                List<int?> preIndexList = mVar.getArrayIndexList(arrayNameList[0]);
+                                foreach (string name in arrayNameList) {
+                                    //  2次元以上の配列でインデックスが変わったときに改行コードを挿入
+                                    List<int?> indexList = mVar.getArrayIndexList(name);
+                                    for (int j = 1; j < indexList.Count; j++) {
+                                        if (indexList[j] != null && indexList[j] != preIndexList[j]) {
+                                            buf += '\n';
+                                            preIndexList[j] = indexList[j];
+                                        }
+                                    }
+                                    buf += mVar.getVariable(name).getValue() + " ";
+                                }
                             }
                         } else if (i == tokenList.Count - 1) {
                             //  変数
@@ -1117,7 +1130,7 @@ namespace KScriptWin
         private bool setArrayData(Token name, Token data)
         {
             string arrayName = name.mValue.Substring(0, name.mValue.IndexOf('['));
-            mVar.clearVariables(name);
+            mVar.remove(name);
             if (0 <= data.mValue.IndexOf("{")) {
                 // a[] = { 1,2,3..};
                 List<Token> dataList= convLiteralList(data);
@@ -1160,7 +1173,7 @@ namespace KScriptWin
         private bool setArrayData2(Token name, Token data)
         {
             string arrayName = name.mValue.Substring(0, name.mValue.IndexOf('['));
-            mVar.clearVariables(name);
+            mVar.remove(name);
             if (0 <= data.mValue.IndexOf("{")) {
                 //  一括設定(a[,] = {{1,2,3},{3,4,5}..};)
                 if (0 <= name.mValue.IndexOf("[,]")) {

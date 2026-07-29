@@ -19,9 +19,10 @@ namespace KScriptWin
             "file.getDirectory(path); ディレクトリ名の抽出",
             "file.getExtention(path); 拡張子の抽出",
             "file.getFileNameWithoutExtension(path); 拡張子なしのファイル名",
+            "file.setEncordingType(encode);  ファイルのエンコードタイプを設定(encode = UTF8/ShiftJis/EUC)",
             "file.loadText(path); テキストファイルの読込",
             "file.saveText(path,text); テキストのファイル保存",
-            "file.loadCsv(path); CSVファイルの読込",
+            "file.loadCsv(path); CSVファイルの読込(data[,]=file.loadCsv(path);)",
             "file.saveCsv(path,text[,]); テキストのCSV保存",
             "file.size(path); ファイルサイズの取得",
             "file.lastWrite(path[,form[,\"jp\"]); ファイルの日時の取得",
@@ -69,6 +70,7 @@ namespace KScriptWin
                 case "file.getDirectory": return getDirectory(args);
                 case "file.getExtention": return getExtention(args);
                 case "file.getFileNameWithoutExtension": return getFileNameWithoutExtension(args);
+                case "file.setEncordingType": return setEncordingType(args);
                 case "file.loadText": return loadText(args);
                 case "file.saveText": return saveText(args);
                 case "file.loadCsv": return loadCsvData(args, ret);
@@ -284,7 +286,26 @@ namespace KScriptWin
         }
 
         /// <summary>
-        /// テキストファイルの読込
+        /// ファイルのload/saveのエンコードを設定(file.setEncode(encode);  encode = UTF8/ShiftJis/EUC)
+        /// </summary>
+        /// <param name="args"></param>
+        /// <returns></returns>
+        private Token setEncordingType(List<Token> args)
+        {
+            if (0 < args.Count) {
+                string encode = args[0].getValue();
+                switch (encode.ToLower()) {
+                    case "utf8"    : ylib.mEncordingType = 0; break;
+                    case "shiftjis": ylib.mEncordingType = 1; break;
+                    case "euc"     : ylib.mEncordingType = 2; break;
+                    default        : ylib.mEncordingType = 0; break;
+                }
+            }
+            return new Token("", TokenType.EMPTY);
+        }
+
+        /// <summary>
+        /// テキストファイルの読込(text = file.loadText(path);)
         /// </summary>
         /// <param name="args"></param>
         /// <returns></returns>
@@ -300,7 +321,7 @@ namespace KScriptWin
         }
 
         /// <summary>
-        /// テキストのファイル保存
+        /// テキストのファイル保存(file.saveText(path,text);)
         /// </summary>
         /// <param name="args"></param>
         /// <returns></returns>

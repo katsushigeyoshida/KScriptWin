@@ -82,7 +82,9 @@ namespace KScriptWin
         {
             if (mType == TokenType.STRING) {
                 //  文字列は前後の'"'を除く
-                if (0 <= mValue.IndexOf('"'))
+                if (mValue == null)
+                    return "";
+                else if (0 <= mValue.IndexOf('"'))
                     return mLexer.stripBracketString(mValue, '"');
             } else if (mType == TokenType.LITERAL) {
                 //  数値は有効桁数(13桁)で丸めて文字列に変換
@@ -135,6 +137,7 @@ namespace KScriptWin
 
     /// <summary>
     /// 字句解析
+    /// 
     /// SKIP CHAR               :  ' ', '\t', '\r', '\n'
     /// コメント  (COMMENT)     : // ... \n, /* ...*/
     /// 計算式    (EXPRESS)     : ( 計算式 )
@@ -151,14 +154,15 @@ namespace KScriptWin
     /// 条件演算子(CONDITINAL)  : ==|!=|<|>|<=|>=
     /// 区切り文字(DELIMITER)   : (|)|{|}| |,|;
     /// 
-    /// List<Token> tokenList(string str)               字句解析 文字列をトークンリストに変換
+    /// List<Token> tokenList(string str)                           字句解析 文字列をトークンリストに変換
     /// 
     /// List<List<Token>> tokensList(List<Token> tokens, char sep = ',')    トークンをセパレータで区切ってまとめる
     /// string stripBracketString(string str, char bracket = '(')   括弧付き文字列で前後の括弧を除いた文字列
-    /// getBracketString(string str, int n, char bracket = '(')     括弧で囲まれた文字列の抽出(括弧含む)
+    /// string　getBracketString(string str, int n, char bracket = '(')  括弧で囲まれた文字列の抽出(括弧含む)
     /// List<string> getBracketStringList(string str, int n, char bracket = '(')    複数の括弧で囲まれた文字列の抽出(括弧含む)
-    /// List<string> commaSplit(string str)             カンマで文字列を分割する("",(),{},[]内は無視)
-    /// List<Token> splitArgList(string args)           引数文字列の分解(args[a,b] → args,[,a,,,b,])
+    /// (string, int) getString(string str, int n)                  コントロール文字(\?)を含むダブルクォーテーションで囲まれた文字列を抽出し\なし文字列に変換
+    /// List<string> commaSplit(string str)                         カンマで文字列を分割する("",(),{},[]内は無視)
+    /// List<Token> splitArgList(string args)                       引数文字列の分解(args[a,b] → args,[,a,,,b,])
     /// 
     /// </summary>
     public class KLexer
@@ -185,7 +189,7 @@ namespace KScriptWin
                 if (i + 1 < str.Length)
                     twoChar = str.Substring(i, 2);
                 if (0 <= Array.IndexOf(Token.skipChar, str[i])) {
-                    //  読み飛ばし
+                    //  スペースまたはコントロールコードは読み飛ばす
                 } else if (twoChar != "" && 0 <= Array.IndexOf(Token.comment, twoChar)) {
                     //  コメント
                     if (twoChar == "//") {
@@ -251,9 +255,7 @@ namespace KScriptWin
                     }
                 } else if (str[i] == '\"') {
                     //  文字列
-                    buf = getBracketString(str, i, str[i]);
-                    i += buf.Length - 1;
-                    buf = buf.Replace("\\n", "\n");
+                    (buf, i) = getString(str, i);
                     tokens.Add(new Token(buf, TokenType.STRING));
                 } else if (0 <= Array.IndexOf(Token.operators, str[i])) {
                     //  識別子(演算子/条件演算子)
@@ -399,6 +401,41 @@ namespace KScriptWin
         }
 
         /// <summary>
+        /// コントロール文字(\?)を含むダブルクォーテーションで囲まれた文字列を抽出し、\なし文字列に変換
+        /// </summary>
+        /// <param name="str">文字列</param>
+        /// <param name="n">開始位置</param>
+        /// <returns>(変換文字列,次の位置)</returns>
+        public (string, int) getString(string str, int n)
+        {
+            string buf = "";
+            int pos = n;
+            int count = 0;
+            while (pos < str.Length) {
+                if (str[pos] == '"') break;
+                pos++;
+            }
+            while (pos < str.Length) {
+                if (str[pos] == '\\' && pos < str.Length - 1) {
+                    pos++;
+                    if (str[pos] == 't') buf += '\t';        //  0x09
+                    else if (str[pos] == 'n') buf += '\n';   //  0x0a
+                    else if (str[pos] == '\f') buf += '\f';  //  0x0c
+                    else if (str[pos] == 'r') buf += '\r';   //  0x0d
+                    else buf += str[pos];
+                } else if (str[pos] == '"') {
+                    buf += str[pos];
+                    if (0 < count) break;
+                    count++;
+                } else {
+                    buf += str[pos];
+                }
+                pos++;
+            }
+            return (buf, pos);
+        }
+
+        /// <summary>
         /// カンマで文字列を分割する("",(),{},[]内は無視)
         /// </summary>
         /// <param name="str">文字列</param>
@@ -434,7 +471,7 @@ namespace KScriptWin
         }
 
         /// <summary>
-        /// 引数文字列の分解(args[a,b] → args,[,a,,,b,])
+        /// 引数文字列の分解(args[a,b] → args:[:,a:,:b:] , args[a,] → args:[:a:,:])
         /// </summary>
         /// <param name="args">引数文字列</param>
         /// <returns>文字列リスト</returns>

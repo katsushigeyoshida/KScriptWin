@@ -13,7 +13,7 @@ namespace KScriptWin
             "array.count(a[,]); 2次元配列のサイズ",
             "array.count(a[1,]); 2次元配列1列目のサイズ",
             "array.clear(a[]); 配列クリア",
-            "array.remove(a[],start[,end]); 配列要素を範囲指定で削除",
+            "array.remove(a[]); 配列要素を範囲指定で削除",
             "array.squeeze(a[]); 配列の未使用データを削除圧縮",
             "array.sort(a[]); 配列のソート",
             "array.sort(a[,n]); 配列をn列でソート",
@@ -131,34 +131,19 @@ namespace KScriptWin
         {
             if (args.Count == 0)
                 return ;
-            List<string> arrayNameList = mVar.getArrayNameList(args[0]);
-            foreach (var arrayName in arrayNameList)
-                mVar.removeVariable(arrayName);
-            //squeeze(args);
+            mVar.remove(args[0]);
+            //mVar.squeeze(args[0]);
         }
 
         /// <summary>
-        /// 配列の圧縮(未使用インデックス削除)
+        /// 配列の圧縮(空き配列を詰める)
         /// </summary>
         /// <param name="args">配列名</param>
         public void squeeze(List<Token> args)
         {
-            (string arrayName, int no) = mUtil.getArrayName(args[0]);
-            if (no != 1)
+            if (args.Count == 0)
                 return;
-            List<Token> listToken = new();
-            int maxcol = mVar.getMaxArray(arrayName);
-            for (int i = 0; i < maxcol + 1; i++) {
-                string key = $"{arrayName}[{i}]";
-                if (mVar.containsVariable(key)) {
-                    listToken.Add(mVar.getVariable(key));
-                    mVar.removeVariable(key);
-                }
-            }
-            for (int i = 0; i < listToken.Count; i++) {
-                string key = $"{arrayName}[{i}]";
-                mVar.setVariable(new Token(key), listToken[i]);
-            }
+            mVar.squeeze(args[0]);
         }
 
         /// <summary>

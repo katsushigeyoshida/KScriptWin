@@ -30,40 +30,40 @@ namespace KScriptWin
             "graph.SetSplitArea(m,n); グラフの画面を分割する SetSplitArea(横方向の分割数,縦方向の分割数)",
             "graph.SetUseArea(n); 画面分割したときのグラフの表示位置",
             "graph.SetDataArea(xs,ys,xe,ye); データの表示領域の設定 SetDataArea(xs,ys,xe,ye/ps[],pe[]/plist[,])",
-            "graph.SetdataArea(xs,ys,xe,ye); データの表示領域を設定",
             "graph.GraphType(\"line\"); グラフの種別設定(折れ線\"line\",散布図\"scatter\",棒グラフ\"bar\")",
             "graph.SetColor(\"Blue\"); グラフの線の色設定",
             "graph.FontSize(5); グラフのフォントサイズの設定",
+            "graph.SetFillColor(\"Blue\"); 塗潰しの色設定",
             "graph.LineType(\"dash\"); 線種の設定(\"solid\", \"dash\", \"center\", \"phantom\")",
             "graph.LineThickness(1); 線の太さ",
             "graph.PointType(\"cross\"); 点種の設定(\"dot\", \"cross\", \"plus\", \"box\", \"circle\", \"triangle\")",
             "graph.PointSize(3); 点サイズの設定",
-            "graph.SetFillColor(\"Blue\"); 塗潰しの色設定",
             "graph.BarCount(count); 棒グラフの棒の数",
             "graph.BarPosition(position); 棒グラフの棒の位置",
             "graph.Title(\"title\"); グラフのタイトル",
             "graph.XTitle(\"title\"); グラフのX軸タイトル\"",
             "graph.YTitle(\"title\"); グラフのY軸タイトル",
+            "graph.Reset(); グラフパラメータをリセットする",
         };
 
         //  共有クラス
         public KScript mScript;
         public GraphView mGraph;
 
-        private double mGraphFontSize = 12;
-        private bool mAspectFix = true;
-        private GraphDraw.GRAPHTYPE mGraphType = GraphDraw.GRAPHTYPE.LINE_GRAPH;
+        private double mGraphFontSize = 12;             //  文字サイズ
+        private bool mAspectFix = true;                 //  アスペクト比固定
+        private GraphDraw.GRAPHTYPE mGraphType = GraphDraw.GRAPHTYPE.LINE_GRAPH;    //  グラフの種別
         private string mLineColor = "Black";
         private string mLineType = "solid";
         private double mLineThickness = 1;
         private string mPointType = "circle";
         private double mPointSize = 1;
         private string mFillColor = "White";
-        private int mBarCount = 1;
-        private int mBarPosition = 0;
-        private string mTitle = "";
-        private string mXTitle = "";
-        private string mYTitle = "";
+        private int mBarCount = 1;                      //  棒の数
+        private int mBarPosition = 0;                   //  棒の位置
+        private string mTitle = "";                     //  グラフのタイトル
+        private string mXTitle = "";                    //  X軸タイトル
+        private string mYTitle = "";                    //  Y軸タイトル
         private int mWidthSplitNo = 1;                  //  Viewの横分割数
         private int mHeightSplitNo = 1;                 //  Viewの縦分割数
         private int mUseAreaNo = 0;                     //  表示するViewの位置
@@ -78,11 +78,18 @@ namespace KScriptWin
         public FuncPlot(KScript script)
         {
             mScript = script;
-            mParse = script.mParse;
-            mGraph = script.mGraph;
-            mVar = script.mVar;
+            mParse  = script.mParse;
+            mGraph  = script.mGraph;
+            mVar    = script.mVar;
         }
 
+        /// <summary>
+        /// 追加内部関数
+        /// </summary>
+        /// <param name="funcName">関数名</param>
+        /// <param name="arg">引数</param>
+        /// <param name="ret">戻り値変数</param>
+        /// <returns>実行状態</returns>
         public Token plotFunc(Token funcName, Token arg, Token ret)
         {
             List<Token> args = mScript.getFuncArgs(arg.mValue);
@@ -121,6 +128,7 @@ namespace KScriptWin
                 case "graph.Title"        : setTitle(args); break;
                 case "graph.XTitle"       : setXTitle(args); break;
                 case "graph.YTitle"       : setYTitle(args); break;
+                case "graph.Reset"        : graphReset(); break;
                 default: return new Token("not found func", TokenType.ERROR);
             }
             return new Token("", TokenType.EMPTY);
@@ -163,7 +171,6 @@ namespace KScriptWin
         {
             int aspect = ylib.intParse(args[0].mValue);
             mAspectFix = aspect == 1 ? true : false;
-            //mGraph.setAspectFix(aspect);
         }
 
         /// <summary>
@@ -392,16 +399,59 @@ namespace KScriptWin
             mGraph.plotText(text);
         }
 
-        /// ===  グラフ処理 ========
+        //  ===  グラフ処理 ========
+
+        
+        /// <summary>
+        /// グラフ処理のパラメータの初期化
+        /// </summary>
+        public void graphReset()
+        {
+            mGraphFontSize = 12;                //  文字サイズ
+            mAspectFix = true;                  //  アスペクト比固定
+            mGraphType = GraphDraw.GRAPHTYPE.LINE_GRAPH;    //  グラフの種別
+            mLineColor = "Black";
+            mLineType = "solid";
+            mLineThickness = 1;
+            mPointType = "circle";
+            mPointSize = 1;
+            mFillColor = "White";
+            mBarCount = 1;                      //  棒の数
+            mBarPosition = 0;                   //  棒の位置
+            mTitle = "";                        //  グラフのタイトル
+            mXTitle = "";                       //  X軸タイトル
+            mYTitle = "";                       //  Y軸タイトル
+            mWidthSplitNo = 1;                  //  Viewの横分割数
+            mHeightSplitNo = 1;                 //  Viewの縦分割数
+            mUseAreaNo = 0;                     //  表示するViewの位置
+        }
+
 
         /// <summary>
-        /// グラフデータの設定(X[], Y[][, Title])(inner function)
+        /// グラフデータの設定(X[], Y[][, Title])
         /// set(x[],y[],title)/set(pl[,],title)
         /// </summary>
         /// <param name="args">引数(x[],y[][,title]</param>
         public void setGraphData(List<Token> args)
         {
-            List<PointD> dataList = mVar.args2PointList(args);
+            List<PointD> dataList = new();
+            List<string> xLabelList = new();
+            if (1 < args.Count) {
+                if (mVar.getArrayOder2(args[0]) == 1 && mVar.isStringArrayList(args[0])) {
+                    //  X軸データがテキストの場合
+                    xLabelList = mVar.getStringArrayList(args[0]);
+                    List<double> xdata = new();
+                    for (int i = 0; i < xLabelList.Count; i++)
+                        xdata.Add(i);
+                    List<double> ydata = mVar.getDoubleArrayList(args[1]);
+                    for (int i = 0; i < xdata.Count && i < ydata.Count; i++)
+                        dataList.Add(new PointD(xdata[i], ydata[i]));
+                } else {
+                    dataList = mVar.args2PointList(args);
+                }
+            } else {
+                dataList = mVar.args2PointList(args);
+            }
             if (dataList.Count == 0)
                 return;
             if (mGraphInit) {
@@ -423,7 +473,7 @@ namespace KScriptWin
             mGraph.mDraw.mYTitle = mYTitle;
 
             setProperty();
-            mGraph.setGraph(dataList);
+            mGraph.setGraph(dataList, xLabelList);
         }
 
         /// <summary>
@@ -432,11 +482,28 @@ namespace KScriptWin
         /// <param name="args"></param>
         private void addtGraphData(List<Token> args)
         {
-            List<PointD> dataList = mVar.args2PointList(args);
+            List<PointD> dataList = new();
+            List<string> xLabelList = new();
+            if (1 < args.Count) {
+                if (mVar.getArrayOder2(args[0]) == 1 && mVar.isStringArrayList(args[0])) {
+                    //  X軸データがテキストの場合
+                    xLabelList = mVar.getStringArrayList(args[0]);
+                    List<double> xdata = new();
+                    for (int i = 0; i < xLabelList.Count; i++)
+                        xdata.Add(i);
+                    List<double> ydata = mVar.getDoubleArrayList(args[1]);
+                    for (int i = 0; i < xdata.Count && i < ydata.Count; i++)
+                        dataList.Add(new PointD(xdata[i], ydata[i]));
+                } else {
+                    dataList = mVar.args2PointList(args);
+                }
+            } else {
+                dataList = mVar.args2PointList(args);
+            }
             if (dataList.Count == 0)
                 return;
             setProperty();
-            mGraph.addGraph(dataList);
+            mGraph.addGraph(dataList, xLabelList);
         }
 
         /// <summary>
@@ -516,7 +583,6 @@ namespace KScriptWin
                 mDataDispArea.normalize();
             }
         }
-
 
         /// <summary>
         /// グラフの種類を設定 (setGraphType = scatter(散布図) / line(折れ線) / bar(棒グラフ) )

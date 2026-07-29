@@ -1,5 +1,4 @@
 ﻿using CoreLib;
-using System.ComponentModel;
 using System.Windows;
 
 namespace KScriptWin
@@ -168,10 +167,10 @@ namespace KScriptWin
         /// Graphモードでデータ設定
         /// </summary>
         /// <param name="dataList">データリスト</param>
-        public void setGraph(List<PointD> dataList)
+        public void setGraph(List<PointD> dataList, List<string> xLabelList)
         {
             mGraphMode = MODE.GRAPH;
-            mDraw.setGraphData(dataList);
+            mDraw.setGraphData(dataList, xLabelList);
             graphDraw();
         }
 
@@ -179,9 +178,9 @@ namespace KScriptWin
         /// グラフデータの追加
         /// </summary>
         /// <param name="dataList">データリスト</param>
-        public void addGraph(List<PointD> dataList)
+        public void addGraph(List<PointD> dataList, List<string> xLabelList)
         {
-            mDraw.setGraphData(dataList, true);
+            mDraw.setGraphData(dataList, xLabelList, true);
             graphDraw();
         }
 

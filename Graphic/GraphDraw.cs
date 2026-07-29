@@ -1,6 +1,4 @@
 ﻿using CoreLib;
-using OpenTK.Graphics.OpenGL;
-using System.Drawing.Drawing2D;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
@@ -34,6 +32,7 @@ namespace KScriptWin
         public string mTitle = "";                          //  グラフタイトル                 
         public string mXTitle = "";                         //  X軸タイトル
         public string mYTitle = "";                         //  Y軸タイトル
+        public List<string> mXLabelData = new List<string>();  //  X軸データがテキストのコピー
 
         private YLib ylib = new YLib();
 
@@ -41,9 +40,10 @@ namespace KScriptWin
         /// コンストラクタ
         /// </summary>
         /// <param name="dataList">座標データ</param>
-        public GraphData(List<PointD> dataList)
+        public GraphData(List<PointD> dataList, GRAPHTYPE graphType = GRAPHTYPE.LINE_GRAPH)
         {
             mData = dataList;
+            mGraphType = graphType;
             mDataArea = new Box(getXmin(),getYmax(),getXmax(),getYmin());
             mDataDispArea = getGraphArea(mDataArea);
             mDataDispArea.normalize();
@@ -58,16 +58,25 @@ namespace KScriptWin
             Box dataDispArea = dataArea.toCopy();
             mStepXsize = ylib.graphStepSize(dataArea.Width, 10);
             mStepYsize = ylib.graphStepSize(dataArea.Height, 5);
+            //  上下領域
             if (dataArea.Bottom < 0) {
                 dataDispArea.Bottom = ((int)(dataArea.Bottom / mStepYsize) - 1) * mStepYsize;
             } else
                 dataDispArea.Bottom = 0;
             dataDispArea.Top = ((int)(dataArea.Top / mStepYsize) + 1) * mStepYsize;
-            if (dataArea.Left < 0) {
-                dataDispArea.Left = ((int)(dataArea.Left / mStepXsize) - 1) * mStepXsize;
-            } else
-                dataDispArea.Left = 0;
-            dataDispArea.Right = ((int)(dataArea.Right / mStepXsize) + 1) * mStepXsize;
+            //  左右領域
+            if (mGraphType == GRAPHTYPE.BAR_GRAPH) {
+                //  棒グラフ
+                double barWidth = getXMinGap();
+                dataDispArea.Left -= barWidth / 2;
+                dataDispArea.Right += barWidth / 2;
+            } else {
+                if (dataArea.Left < 0) {
+                    dataDispArea.Left = ((int)(dataArea.Left / mStepXsize) - 1) * mStepXsize;
+                } else
+                    dataDispArea.Left = 0;
+                dataDispArea.Right = ((int)(dataArea.Right / mStepXsize) + 1) * mStepXsize;
+            }
             return dataDispArea;
         }
 
@@ -79,6 +88,7 @@ namespace KScriptWin
         {
             return mData.Min(p => p.x);
         }
+
         /// <summary>
         /// Xデータの最大値
         /// </summary>
@@ -87,6 +97,7 @@ namespace KScriptWin
         {
             return mData.Max(p => p.x);
         }
+
         /// <summary>
         /// Yデータの最小値
         /// </summary>
@@ -95,6 +106,7 @@ namespace KScriptWin
         {
             return mData.Min(p => p.y);
         }
+
         /// <summary>
         /// Yデータの最大値
         /// </summary>
@@ -105,11 +117,12 @@ namespace KScriptWin
         }
 
         /// <summary>
-        /// 最も狭い間隔
+        /// Xデータの最小間隔
         /// </summary>
         /// <returns></returns>
         public double getXMinGap()
         {
+            if (mData.Count < 2) return 0;
             double min = double.MaxValue;
             for (int i = 0; i < mData.Count - 1; i++) {
                 double gap = Math.Abs(mData[i].x - mData[i + 1].x);
@@ -120,11 +133,12 @@ namespace KScriptWin
         }
 
         /// <summary>
-        /// 最も狭い間隔
+        /// Yデータの最小間隔
         /// </summary>
         /// <returns></returns>
         public double getYMinGap()
         {
+            if (mData.Count < 2) return 0;
             double min = double.MaxValue;
             for (int i = 0; i < mData.Count - 1; i++) {
                 double gap = Math.Abs(mData[i].y - mData[i + 1].y);
@@ -430,23 +444,25 @@ namespace KScriptWin
         /// グラフデータの設定
         /// </summary>
         /// <param name="dataList">表示データ</param>
+        /// <param name="xLabelList">X軸ラベルデータ</param>
         /// <param name="dataDispOnly">補助線,目盛なし</param>
-        public void setGraphData(List<PointD> dataList, bool dataDispOnly = false)
+        public void setGraphData(List<PointD> dataList, List<string> xLabelList, bool dataDispOnly = false)
         {
-            GraphData graphData = new GraphData(dataList);
+            GraphData graphData = new GraphData(dataList, mGraphType);
             graphData.mViewNo = mUseAreaNo % mViewList.Count;
-            graphData.mGraphType = mGraphType;
-            graphData.mColor     = mColor;
-            graphData.mLineType  = mLineType;
-            graphData.mThickness = mThickness;
-            graphData.mPointType = mPointType;
-            graphData.mPointSize = mPointSize;
-            graphData.mFontSize  = mFontSize;
-            graphData.mFillColor = mFillColor;
-            graphData.mBar       = mBar;
-            graphData.mTitle  = mTitle;
-            graphData.mXTitle = mXTitle;
-            graphData.mYTitle = mYTitle;
+            //graphData.mGraphType = mGraphType;
+            graphData.mXLabelData = xLabelList;
+            graphData.mColor      = mColor;
+            graphData.mLineType   = mLineType;
+            graphData.mThickness  = mThickness;
+            graphData.mPointType  = mPointType;
+            graphData.mPointSize  = mPointSize;
+            graphData.mFontSize   = mFontSize;
+            graphData.mFillColor  = mFillColor;
+            graphData.mBar        = mBar;
+            graphData.mTitle      = mTitle;
+            graphData.mXTitle     = mXTitle;
+            graphData.mYTitle     = mYTitle;
             graphData.mDataDispOnly = dataDispOnly;
             if (mDataDispArea != null) {
                 graphData.mDataDispArea = mDataDispArea.toCopy();
@@ -566,28 +582,52 @@ namespace KScriptWin
 
             //  X軸の補助線と目盛
             double x = graphData.mDataDispArea.Left;
+            bool xLabelType = 0 < graphData.mXLabelData.Count ? true : false;
             ydraw.mBrush = Brushes.Black;
-            ydraw.drawWText(x.ToString(), new PointD(x, graphData.mDataDispArea.Bottom), mFontWorldSize, 0, HorizontalAlignment.Center, VerticalAlignment.Top);
-            x += graphData.mStepXsize;
-            while (x <= graphData.mDataDispArea.Right) {
-                ydraw.mBrush = Brushes.Aqua;
-                ydraw.drawWLine(new PointD(x, graphData.mDataDispArea.Bottom), new PointD(x, graphData.mDataDispArea.Top));
-                ydraw.mBrush = Brushes.Black;
-                ydraw.drawWText(ylib.axisScaleForm(x,4).ToString(), new PointD(x, graphData.mDataDispArea.Bottom), mFontWorldSize, 0, HorizontalAlignment.Center, VerticalAlignment.Top);
+            if (graphData.mGraphType == GRAPHTYPE.BAR_GRAPH) {
+                for (int i = 0; i < graphData.mData.Count; i++) {
+                    x = graphData.mData[i].x;
+                    ydraw.mBrush = Brushes.Aqua;
+                    ydraw.drawWLine(new PointD(x, graphData.mDataDispArea.Bottom), new PointD(x, graphData.mDataDispArea.Top));
+                    ydraw.mBrush = Brushes.Black;
+                    string xlabel = getXlabel(xLabelType, graphData, x);
+                    ydraw.drawWText(xlabel, new PointD(x, graphData.mDataDispArea.Bottom), mFontWorldSize, 0, HorizontalAlignment.Center, VerticalAlignment.Top);
+                }
+            } else {
+                string xlabel = getXlabel(xLabelType, graphData, x);
+                ydraw.drawWText(xlabel, new PointD(x, graphData.mDataDispArea.Bottom), mFontWorldSize, 0, HorizontalAlignment.Center, VerticalAlignment.Top);
                 x += graphData.mStepXsize;
+                while (0 < graphData.mStepXsize && x <= graphData.mDataDispArea.Right) {
+                    ydraw.mBrush = Brushes.Aqua;
+                    ydraw.drawWLine(new PointD(x, graphData.mDataDispArea.Bottom), new PointD(x, graphData.mDataDispArea.Top));
+                    ydraw.mBrush = Brushes.Black;
+                    xlabel = getXlabel(xLabelType, graphData, x);
+                    ydraw.drawWText(xlabel, new PointD(x, graphData.mDataDispArea.Bottom), mFontWorldSize, 0, HorizontalAlignment.Center, VerticalAlignment.Top);
+                    x += graphData.mStepXsize;
+                }
             }
             //  Y軸の補助線と目盛
             double y = graphData.mDataDispArea.Bottom;
             ydraw.mBrush = Brushes.Black;
             ydraw.drawWText(y.ToString(), new PointD(graphData.mDataDispArea.Left, y), mFontWorldSize, 0, HorizontalAlignment.Right, VerticalAlignment.Center);
             y += graphData.mStepYsize;
-            while (y <= graphData.mDataDispArea.Top) {
+            while (0 < graphData.mStepYsize && y <= graphData.mDataDispArea.Top) {
                 ydraw.mBrush = Brushes.Aqua;
                 ydraw.drawWLine(new PointD(graphData.mDataDispArea.Left, y), new PointD(graphData.mDataDispArea.Right, y));
                 ydraw.mBrush = Brushes.Black;
                 ydraw.drawWText(ylib.axisScaleForm(y,4).ToString(), new PointD(graphData.mDataDispArea.Left, y), mFontWorldSize, 0, HorizontalAlignment.Right, VerticalAlignment.Center);
                 y += graphData.mStepYsize;
             }
+        }
+
+        private string getXlabel(bool xLabelType, GraphData graphData, double x)
+        {
+            string xlabel = "";
+            if (xLabelType)
+                xlabel = x < graphData.mXLabelData.Count ? graphData.mXLabelData[(int)x] : "";
+            else
+                xlabel = ylib.axisScaleForm(x, 4).ToString();
+            return xlabel;
         }
     }
 }

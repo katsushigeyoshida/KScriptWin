@@ -65,6 +65,7 @@ if (a > b) println(a);
 
 
 ### 履歴
+2026/07/20 配列変数処理の修正、file関数の修正(Encodeの対応追加)、graph関数で棒グラフの修正
 2026/06/05 array関数を拡張、graph関数を強化  
 2025/09/14 matrix関数の追加
 2025/01/26 Point3D.cnvPlaneLocation()のバグ修正  
