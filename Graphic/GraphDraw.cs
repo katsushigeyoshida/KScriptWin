@@ -620,6 +620,13 @@ namespace KScriptWin
             }
         }
 
+        /// <summary>
+        /// X軸目盛の作成
+        /// </summary>
+        /// <param name="xLabelType">ラベルタイプ(テキスト/数値)</param>
+        /// <param name="graphData">グラフデータ</param>
+        /// <param name="x">X位置</param>
+        /// <returns></returns>
         private string getXlabel(bool xLabelType, GraphData graphData, double x)
         {
             string xlabel = "";
