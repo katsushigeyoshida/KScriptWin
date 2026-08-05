@@ -72,6 +72,7 @@ namespace KScriptWin
                 if (mGraphMode == MODE.GRAPH) {
                     mDraw.setSplitView();
                     graphDraw();
+                    mDraw.plotDraw();
                 } else
                     plotDraw();
             }

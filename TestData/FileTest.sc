@@ -25,9 +25,17 @@ println(str);
 println("size:",file.size(path));
 println("LastWrite: ",file.lastWrite(path,"","jp"));
 println("LastWrite: ",file.lastWrite(path,"D","jp"));
-	file.delete(path);
+file.delete(path);
 if (0 < file.fileExists(path)) {
-	println("ファイルの削除:　",path);
+	println("ファイルが存在:　",path);
 } else {
 	println("ファイルがない");
 }
+
+println(file.getCurrentDirectory());
+
+file.setCurrentDirectory("D:\\temp");
+println(file.getCurrentDirectory());
+scriptpath = file.getScriptPath();
+println(scriptpath);
+println(file.getDirectory(scriptpath);

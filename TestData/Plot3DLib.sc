@@ -59,7 +59,7 @@ plateQuads(w, h, t) {
 }
 
 //	穴付き平板データ(幅,高さ,板厚,半径,穴位置X,穴位置Y)(QUADS)
-hallPlateQuads(w, h, t, r, cx, cy) {
+holePlateQuads(w, h, t, r, cx, cy) {
    // 四角の側面
    rect[,] = rectanglePolygon(w, h);
    rectside[,] = plot3D.polygonSideQuads(rect[,],t);

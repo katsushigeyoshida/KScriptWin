@@ -22,7 +22,7 @@ namespace KScriptWin
         private WindowState mWindowState = WindowState.Normal;  //  ウィンドウの状態(最大化/最小化)
 
         private string mDataFolder = "";        //  スクリプトファイルのフォルダ
-        private string mFilePath = "";          //  スクリプトファイルパス
+        private string mScriptPath = "";        //  スクリプトファイルパス
         private byte[] mSrcHash;                //  スクリプトの読み込み時ハッシュコード
         private double mFontSize = 12;          //  AvalonEditorのフォントサイズ
         private string mFontFamily = "Consolas";//  AvalonEditorのフォントファミリ
@@ -59,6 +59,11 @@ namespace KScriptWin
             WindowFormLoad();
         }
 
+        /// <summary>
+        /// 起動時処理
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
             //   int index = cbFontFamily.Items.IndexOf(mFontFamily);
@@ -85,6 +90,11 @@ namespace KScriptWin
             }
         }
 
+        /// <summary>
+        /// 終了処理
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
         {
             if (mGraph != null)
@@ -418,7 +428,7 @@ namespace KScriptWin
         {
             closeCheck();
             avalonEditor.Text = "";
-            mFilePath = "";
+            mScriptPath = "";
             setTitle();
             mSearchWordIndex = 0;
         }
@@ -428,15 +438,16 @@ namespace KScriptWin
         /// </summary>
         private void exeute()
         {
-            outMessage($"Start : [{Path.GetFileNameWithoutExtension(mFilePath)}]");
+            outMessage($"Start : [{Path.GetFileNameWithoutExtension(mScriptPath)}]");
             mScript.mControlData.mAbort = false;
             mScript.mControlData.mPause = false;
             mScript.mScriptFolder = mDataFolder;
+            mScript.mScriptPath = mScriptPath;
             mScript.setScript(avalonEditor.Text);
-            mScript.execute("main");
+            mScript.execute("main", null, true);
             mGraph = mScript.mGraph;
             mPlot3D = mScript.mPlot3D;
-            outMessage($"End : [{Path.GetFileNameWithoutExtension(mFilePath)}]");
+            outMessage($"End : [{Path.GetFileNameWithoutExtension(mScriptPath)}]");
         }
 
         /// <summary>
@@ -560,8 +571,8 @@ namespace KScriptWin
         /// </summary>
         private void save()
         {
-            if (0 < mFilePath.Length) {
-                ylib.saveTextFile(mFilePath, avalonEditor.Text);
+            if (0 < mScriptPath.Length) {
+                ylib.saveTextFile(mScriptPath, avalonEditor.Text);
                 setHash(avalonEditor.Text);
             } else
                 saveAs();
@@ -573,13 +584,13 @@ namespace KScriptWin
         private void saveAs()
         {
             List<string[]> filters = new List<string[]>() { new string[] { "scファイル", "*.sc" } };
-            mFilePath = ylib.fileSaveSelectDlg("ファイル保存", mDataFolder, filters);
-            if (0 < mFilePath.Length) {
-                string ext = Path.GetExtension(mFilePath);
+            mScriptPath = ylib.fileSaveSelectDlg("ファイル保存", mDataFolder, filters);
+            if (0 < mScriptPath.Length) {
+                string ext = Path.GetExtension(mScriptPath);
                 if (ext == "")
-                    mFilePath += ".sc";
-                ylib.saveTextFile(mFilePath, avalonEditor.Text);
-                mDataFolder = Path.GetDirectoryName(mFilePath);
+                    mScriptPath += ".sc";
+                ylib.saveTextFile(mScriptPath, avalonEditor.Text);
+                mDataFolder = Path.GetDirectoryName(mScriptPath);
                 setHash(avalonEditor.Text);
                 setTitle();
             }
@@ -608,7 +619,7 @@ namespace KScriptWin
         {
             if (!File.Exists(path) || Path.GetExtension(path).ToLower() != ".sc") return;
             mDataFolder = Path.GetDirectoryName(path);
-            mFilePath = path;
+            mScriptPath = path;
             string text = ylib.loadTextFile(path);
             avalonEditor.Text = text;
             setHash(text);
@@ -707,7 +718,7 @@ namespace KScriptWin
         /// </summary>
         private void setTitle()
         {
-            Title = $"KScriptWin [ {Path.GetFileNameWithoutExtension(mFilePath)} ]";
+            Title = $"KScriptWin [ {Path.GetFileNameWithoutExtension(mScriptPath)} ]";
         }
 
         /// <summary>

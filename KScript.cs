@@ -120,13 +120,16 @@ namespace KScriptWin
         public FuncString mFuncString;                          //  文字列関数
         public FuncFile mFuncFile;                              //  ファイル関連関数
         public FuncMath mFuncMath;                              //  数値計算関数
-        public string mScriptFolder = "";                       //  プログラムファイルフォルダ
 
+        
         public bool mDebug = false;
         public bool mDebugConsole = false;
 
+        public string mScriptFolder = "";                       //  プログラムファイルフォルダ
+        public string mScriptPath = "";                         //  スクリプトパス
         public Action printCallback;                            //  print文のコールバック関数
         public ControlData mControlData;                        //  データを参照渡しするため
+        public bool mGraphInit = true;                          //  グラフダイヤログの初期化状態
 
         private string mFuncName = "";                          //  実行中の関数名
         private Util mUtil = new Util();
@@ -222,8 +225,9 @@ namespace KScriptWin
         /// </summary>
         /// <param name="funcName">関数名</param>
         /// <param name="arg">引数</param>
-        public void execute(string funcName, List<Token> arg = null)
+        public void execute(string funcName, List<Token> arg = null, bool init = false)
         {
+            if (init) mGraphInit = true;
             try {
                 //  スクリプト関数処理部の抽出・登録
                 mFuncName = funcName;
@@ -643,21 +647,24 @@ namespace KScriptWin
         {
             try {
                 Token result;
-                if (0 == funcName.mValue.IndexOf("plot.") || 0 == funcName.mValue.IndexOf("graph."))
+                if (0 == funcName.mValue.IndexOf("plot.") || 0 == funcName.mValue.IndexOf("graph.")) {
+                    mFuncPlot.mGraphInit = mGraphInit;                  //  グラフWindowの初期化状態
                     result = mFuncPlot.plotFunc(funcName, arg, ret);    //  グラフィック関数
-                else if (0 == funcName.mValue.IndexOf("plot3D."))
+                    mGraphInit = mFuncPlot.mGraphInit;
+                } else if (0 == funcName.mValue.IndexOf("plot3D.")) {
                     result = mFuncPlot3D.plotFunc(funcName, arg, ret);  //  3Dグラフィック関数
-                else if (0 == funcName.mValue.IndexOf("array."))
+                } else if (0 == funcName.mValue.IndexOf("array.")) {
                     result = mFuncArray.function(funcName, arg, ret);   //  配列関数
-                else if (0 == funcName.mValue.IndexOf("matrix."))
+                } else if (0 == funcName.mValue.IndexOf("matrix.")) {
                     result = mFuncMatrix.function(funcName, arg, ret);  //  マトリックス関数
-                else if (0 == funcName.mValue.IndexOf("string."))
+                } else if (0 == funcName.mValue.IndexOf("string.")) {
                     result = mFuncString.function(funcName, arg, ret);  //  文字列関数
-                else if (0 == funcName.mValue.IndexOf("file."))
+                } else if (0 == funcName.mValue.IndexOf("file.")) {
+                    mFuncFile.mScriptPath = mScriptPath;
                     result = mFuncFile.function(funcName, arg, ret);    //  ファイル関連関数
-                else if (0 == funcName.mValue.IndexOf("math."))
+                } else if (0 == funcName.mValue.IndexOf("math.")) {
                     result = mFuncMath.function(funcName, arg, ret);    //  数値計算関数
-                else {
+                } else {
                     result = mScriptLib.innerFunc(funcName, arg, ret);  //  内部関数処理
                     if (result.mType == TokenType.ERROR && result.mValue == "not found func") {
                         if (mParse.mFunctions.ContainsKey(funcName.mValue))
@@ -690,17 +697,21 @@ namespace KScriptWin
         private Token programFunc(string funcName, Token arg, Token ret)
         {
             KScript script = new KScript(mParse.mFunctions[funcName].mValue, mGraph, mPlot3D);
-            script.mControlData = mControlData;
-            script.printCallback = printCallback;
+            script.mControlData = mControlData;                 //  コントロールデータ(KeyCode,Abort,Pause,Key)
+            script.printCallback = printCallback;               //  print文コールバック
             script.mVar.mGlobalVar = mVar.mGlobalVar;           //  グローバル変数
             script.mParse.mFunctions = mParse.mFunctions;       //  参照関数の設定
+            script.mGraphInit = mGraphInit;                     //  グラフWindowの初期化状態
+            script.mScriptFolder = mScriptFolder;               //  スクリプトファイルのフォルダ
+            script.mScriptPath = mScriptPath;                   //  実行中のスクリプトのパス
             List<Token> callArgs = getFuncArgs(arg.mValue);     //  呼出し側引数の取得(配列以外は数値に変換)
             List<Token> funcArgs = getFuncArgNames(mParse.mFunctions[funcName].mValue, 1);  //  関数側引数名の取得
             setFuncArg(callArgs, funcArgs, script);             //  呼出し側から関数側に値を渡す
 
             script.execute(funcName, null);                     //  関数の実行
-            mGraph = script.mGraph;
-            mPlot3D = script.mPlot3D;
+            mGraph = script.mGraph;                             //  グラフィックWindow(GraphView)
+            mPlot3D = script.mPlot3D;                           //  3DWindow(Plot3DView)
+            mGraphInit = script.mGraphInit;                     //  グラフWindowの初期化状態
 
             //  戻り値の設定
             if (script.mVar.mVariables.ContainsKey("return")) {
@@ -1488,7 +1499,7 @@ namespace KScriptWin
         {
             if (mControlData.mAbort) return true;
             if (0 < msg.Length && mControlData.mPause)
-                outputString($"[{DateTime.Now.ToString("HH:mm:ss")}] puse: [{msg}]\n");
+                outputString($"[{DateTime.Now.ToString("HH:mm:ss")}] pause: [{msg}]\n");
             while (mControlData.mPause) {
                 if (mControlData.mAbort) return true;
                 Thread.Sleep(100);

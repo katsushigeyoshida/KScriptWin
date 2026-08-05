@@ -82,14 +82,10 @@ KScriptWinの特徴
     m[,] = matrix.add(a[,],b[,]);           行列の和 A+B c[,]=...)
     m[,] = matrix.inverse(a[,]);            逆行列 A^-1 (b[,]=...)
     m[,] = matrix.copy(a[,]);               行列のコピー(b[,]=...)
-方程式の解
-    r[] = solve.quadraticEquation(a,b,c);   2次方程式の解(y = a*x^2+b*x+c)(y[] = solv..)
-    r[] = solve.qubicEquation(a,b,c,d);     3次方程式の解(y = a*x^3+b*x^2+c*x+d)(y[] = solv..)
-    r[] = solve.quarticEquation(a,b,c,d,e); 4次方程式の解(y = a*x^4+b*x^3+c*x^2+d*x+e)(y[] = solv..)
 
 配列関数
     array.clear(a[]);                           配列クリア
-    array.remove(a[],start[,end]);              配列要素を範囲指定で削除
+    array.remove(a[]);                          配列要素を範囲指定で削除
     array.squeeze(a[]);                         配列の未使用データを削除圧縮
     n    = array.contains(c[2]);                配列の有無(0:なし 1:あり)
     n    = array.count(a[]);                    1次元配列のサイズ
@@ -102,35 +98,41 @@ KScriptWinの特徴
     a[,] = array.reverse(a[,],1);               配列の列を逆順
     c[]  = array.concat(a[],b[]);               配列同士の結合c[]=array.add(a[],b[])
     c[,] = array.concat(a[,],b[,]);             配列同士の結合c[,]=array.add(a[,],b[,])
-    m    = array.max(a[]);                      配列の最大値
-    m    = array.min(a[,]);                     配列の最小値
-    sum  = array.sum(a[]);                      配列の合計
-    ave  = array.average(a[,]);                 配列の平均
-    v    = array.variance(a[]);                 配列の分散
-    std  = array.stdDeviation(a[]);             配列の標準偏差
-    c    = array.covariance(a[], b[]);          共分散
-    c    = array.corrCoeff(x[],y[]);            配列の相関係数
-    追加予定
-    array.append(a[], 5);                       配列に値を追加
-    array.append(a[1,], 5);                     配列に値を追加
-    array.extend(a[], b[]);                     配列に配列を追加
-    array.insert(a[], n, v);                    配列のn番目に値を挿入
-    array.remove(a[], n);                       配列のn番目の値を削除
+    array.append(a[],v);                        配列に値を追加
+    array.add(a[],val);                         配列に値を足す
+    array.sub(a[],val);                         配列に値を引く
+    array.multi(a[],val);                       配列に値を掛ける
+    array.divide(a[],val);                      配列を値で割る
     a[]  = array.arrange(start, end, step);     等間隔のの数値配列作成
     a[]  = array.linspace(start, end, div);     等分割した数値配列の作成
     a[]  = array.creat(size, value);            sizeで指定した1次元配列
     a[,] = array.creat(size0, size1, value);    sizeで指定した1次元配列
-    array.add(a[], val);                        配列に値を足す
-    array.add(a[1,], val);                      配列に値を足す
-    array.sub(a[], val);                        配列に値を引く
-    array.multi(a[], val);                      配列に値を掛ける
-    array.divide(a[], val);                     配列に値で割る
+    array.calc(a[],express);                    配列のデータを数式で処理する express = "[x]*[x]+2"
+
+    追加予定
+    array.extend(a[], b[]);                     配列に配列を追加
+    array.insert(a[], n, v);                    配列のn番目に値を挿入
     c[] = array.add(a[], b[]);                  配列同士の演算
     c[] = array.sub(a[], b[]);
     c[] = array.multi(a[], b[]);
     c[] = array.divide(a[], b[]);
     n = array.indexOf(a[], val, start);         valを検索してindexを返す
     n = array.lastIndexOf(a[], val, lastStart); valを最後から検索してindexを返す
+
+数学関数
+    m    = math.max(a[]);                       配列の最大値
+    m    = math.min(a[,]);                      配列の最小値
+    sum  = math.sum(a[]);                       配列の合計
+    ave  = math.average(a[,]);                  配列の平均
+    v    = math.variance(a[]);                  配列の分散
+    std  = math.stdDeviation(a[]);              配列の標準偏差
+    c    = math.covariance(a[], b[]);           共分散
+    c    = math.corrCoeff(x[],y[]);             配列の相関係数
+    方程式の解
+    r[] = math.quadraticEquation(a,b,c);        2次方程式の解(y = a*x^2+b*x+c)(y[] = solv..)
+    r[] = math.qubicEquation(a,b,c,d);          3次方程式の解(y = a*x^3+b*x^2+c*x+d)(y[] = solv..)
+    r[] = math.quarticEquation(a,b,c,d,e);      4次方程式の解(y = a*x^4+b*x^3+c*x^2+d*x+e)(y[] = solv..)
+
 文字列関数
     str = string.concat(a, b);                          文字列の接続
     len = string.length(a);                             文字列の長さ
@@ -194,6 +196,26 @@ plot関数(2Dグラフィック)
     plot.Polyline(plist[,]);                    ポリラインの表示
     plot.Polygon(plist[,]);                     ポリゴンの標示
     plot.Text(text,x,y,size,rotate,ha,va);      文字列表示(文字列,座標[,大きさ[,回転角[,水平アライメント[,垂直アライメント]]]])
+Graph関数
+    graph.SetData(x[],y[]);                     グラフデータの設定 Set(x[],y[])/set(pl[,])
+    graph.AddData(x[],y[]);                     グラフデータの追加 Add(x[],y[]/p[,])
+    graph.SetSplitArea(m,n);                    グラフの画面を分割する SetSplitArea(横方向の分割数,縦方向の分割数)
+    graph.SetUseArea(n);                        画面分割したときのグラフの表示位置
+    graph.SetDataArea(xs,ys,xe,ye);             データの表示領域の設定 SetDataArea(xs,ys,xe,ye/ps[],pe[]/plist[,])
+    graph.GraphType("line");                    グラフの種別設定(折れ線"line",散布図"scatter",棒グラフ"bar")
+    graph.SetColor(0"Blue");                    グラフの線の色設定
+    graph.FontSize(5);                          グラフのフォントサイズの設定
+    graph.SetFillColor("Blue");                 塗潰しの色設定
+    graph.LineType("dash");                     線種の設定("solid", "dash", "center", "phantom")
+    graph.LineThickness(1);                     線の太さ
+    graph.PointType("cross");                   点種の設定("dot", "cross", "plus", "box", "circle", "triangle")
+    graph.PointSize(3);                         点サイズの設定
+    graph.BarCount(count);                      棒グラフの棒の数
+    graph.BarPosition(position);                棒グラフの棒の位置
+    graph.Title("title");                       グラフのタイトル
+    graph.XTitle("title");                      グラフのX軸タイトル
+    graph.YTitle("title");                      グラフのY軸タイトル
+    graph.Reset();                              グラフパラメータをリセットする
 
 plot3D関数(3Dグラフィック)
     plot3D.setArea(min[],max[]);             3DViewの初期化
@@ -338,6 +360,8 @@ plot3D関数(3Dグラフィック)
 ・2次元配列インデックスの入れ子不可 n = a[b[1,2],0];  (2025/01/30)
 
 問題点
+・カレントディレクトリ、プログラムディレクトリの取得設定が必要
+・関数を通してgraphダイヤログを使うと関数を呼び出すごとに初期化される => mGraphInitで状態を引き継ぐ(2026/7/29)
 ・return で関数が使えない(return array.add();) 引数内で関数が使えない(holePlateQuads(array.reverse());)
 ・代入文で演算の優先順位がつけられず左から処理される (20024/10/23)
 ・有効桁の末尾の誤差のまるめが必要 (roundRound関数をスクリプトで作成 2024/11/02)
@@ -351,13 +375,15 @@ plot3D関数(3Dグラフィック)
 ■開発環境
 開発ソフト : Microsoft Visual Studio 2022  
 開発言語　 : C# 10.0 Windows アプリケーション  
-フレームワーク　:  .NET 8.0
+フレームワーク　: .NET 8.0
 NuGetライブラリ : AvalonEditor
 自作ライブラリ  : CoreLib (YCalc,YWordDraw,YDraw,InputBox,MenuDialog)
 
 
 履歴
-2025/01/26 Point3D.cnvPlaneLocation()のバグ修正
+2026/07/20 配列変数処理の修正、file関数の修正(Encodeの対応追加)、graph関数で棒グラフの修正
+2026/06/05 array関数を拡張、graph関数を強化  
+2025/09/14 matrix関数の追加2025/01/26 Point3D.cnvPlaneLocation()のバグ修正
 2025/01/12 配列の代入追加 (a[] = b[], a[,] = b[,], a[n,] = b[m,])
 2024/12/05 関数名変更 array.add()  →  array.concat()
 2024/12/02 inKey(),sleep(),plot3D.dataClear()追加 (アニメーション機能用)

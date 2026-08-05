@@ -4,14 +4,6 @@
 
 g_colors[] = { "Blue", "Green", "Red", "Yellow" };
 //	正多面体 Polyhedron
-sp = -0.5;
-ep =  0.5;
-min[] = { sp, sp, sp };
-max[] = { ep, ep, ep };
-plot3D.setArea(min[],max[]);
-plot3D.setAxisFrame(1,0);
-plot3D.setColor("Green");
-
 title = "図形の種類";
 menu[] = {  "正四面体wire", "正四面体face",
 			"正六面体wire", "正六面体face",
@@ -20,6 +12,14 @@ menu[] = {  "正四面体wire", "正四面体face",
 			"正二十面体wire","正二十面体face"
 		};
 menuNo = menuSelect(menu[], title);
+
+sp = -0.5;
+ep =  0.5;
+min[] = { sp, sp, sp };
+max[] = { ep, ep, ep };
+plot3D.setArea(min[],max[]);
+plot3D.setAxisFrame(1,0);
+plot3D.setColor("Green");
 
 if (menuNo == 0) tetrahedron(0);
 else if (menuNo == 1) tetrahedron(1);

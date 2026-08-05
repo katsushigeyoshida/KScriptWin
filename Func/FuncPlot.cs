@@ -75,12 +75,13 @@ namespace KScriptWin
         private KLexer mLexer = new KLexer();
         private YLib ylib = new YLib();
 
-        public FuncPlot(KScript script)
+        public FuncPlot(KScript script, bool graphInit = true)
         {
             mScript = script;
             mParse  = script.mParse;
             mGraph  = script.mGraph;
             mVar    = script.mVar;
+            mGraphInit = graphInit;
         }
 
         /// <summary>

@@ -181,14 +181,16 @@ namespace KScriptWin
         public Token inputBox(List<Token> args)
         {
             InputBox dlg = new InputBox();
-            dlg.Title = args.Count < 1 ? "入力" : args[0].mValue.Trim('"');
+            dlg.Title = args.Count < 1 ? "入力" : args[0].getValue();
+            dlg.mEditText = 1 < args.Count ? args[1].getValue() : "";
             if (dlg.ShowDialog() == true) {
                 if (ylib.IsNumberString(dlg.mEditText.ToString(), true))
                     return new Token(dlg.mEditText.ToString(), TokenType.LITERAL);
                 else
                     return new Token(dlg.mEditText.ToString(), TokenType.STRING);
+            } else {
+                return new Token("", TokenType.STRING);
             }
-            return new Token("", TokenType.EMPTY);
         }
 
         /// <summary>
@@ -218,11 +220,13 @@ namespace KScriptWin
                     for (int i = 0; i < dlg.mDataList.Count; i++) {
                         data[i, 1] = dlg.mDataList[i][1];
                     }
-                    //  戻り値の設定
-                    mVar.setReturnArray(data, ret);
-                    mVar.setVariable(new Token("return", TokenType.VARIABLE), ret);
-                    return mVar.getVariable("return");
+                } else {
+                    data = new string[0,0];
                 }
+                //  戻り値の設定
+                mVar.setReturnArray(data, ret);
+                mVar.setVariable(new Token("return", TokenType.VARIABLE), ret);
+                return mVar.getVariable("return");
             }
             return new Token("", TokenType.EMPTY);
         }

@@ -1,28 +1,35 @@
 ﻿#include "scriptLib.sc";
 #include "Plot3DLib.sc";
 
+w = 2; h = 4; d = 2; t = 0.2; r = 0.5; cx = 0; cy = 1;
+para[,] = {{"幅", w}, {"高さ", h}, {"奥行", d}, {"板厚",t},
+	{"穴半径", r}, {"穴位置x", cx}, {"穴位置y", cy}};
+para[,] = inputBoxMulti(para[,]);
+if (array.count(para[,]) == 0)
+	exit();
+println(para[,]);
+
+w = para[0,1];
+h = para[1,1];
+d = para[2,1];
+t = para[3,1];
+r = para[4,1];
+cx = para[5,1];
+cy = para[6,1];
+
+println(w," ",h," ",d," ",t," ",r," ",cx," ",cy);
 sp = -0.5;
 ep =  0.5;
 min[] = { sp, sp, sp };
 max[] = { ep, ep, ep };
 plot3D.setArea(min[],max[]);
 plot3D.setAxisFrame(1,0);
-
 plot3D.setColor("SandyBrown");
-w = 2; h = 4; d = 2; t = 0.2; r = 0.5; cx = 0; cy = 1;
 
-count = 144;
 p[,] = box(w, h, d, t, r, cx, cy);
-//plot3D.plotRotate(RAD(10),"X");
-while (0 < count) {
-	plot3D.dataClear();
-	plot3D.plotRotate(RAD(5),"Y");
-	plot3D.plotQuads(p[,]);
-	plot3D.disp();
-	sleep(1);
-	count--;
-}
-
+plot3D.dataClear();
+plot3D.plotQuads(p[,]);
+plot3D.disp();
 
 box(w, h, d, t, r, cx,cy) {
     //  側板

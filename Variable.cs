@@ -7,7 +7,6 @@ namespace KScriptWin
     /// 
     /// ===  変数の設定・取得  ===
     /// void setVariable(Token key, Token value = null)     変数の登録(変数名と数値)
-    /// void setVariable(string key, Token value = null)    変数の登録(変数名と数値)
     /// Dictionary<string, Token> getVariables(Token key)   配列変数の抽出(a[],a[,],a[n,])
     /// List<string>getVariableNameList(Dictionary<string, Token> variables, Token key)     変数登録リストから変数名リストを取得
     /// Token getVariable(Token key)                        変数の値の取得
@@ -174,8 +173,10 @@ namespace KScriptWin
                 return new Token(key, TokenType.STRING);
             else if (0 < key.IndexOf('['))
                 return new Token(key, TokenType.ARRAY);
-            else
+            else if (ylib.IsNumberString(key))
                 return new Token(key, TokenType.LITERAL);
+            else
+                return new Token(key, TokenType.STRING);
         }
 
         /// <summary>
@@ -389,7 +390,6 @@ namespace KScriptWin
                 }
             }
             return arrayNameSort(arrayList);
-            //return mUtil.arrayNameSort(arrayList);
         }
 
         /// <summary>
@@ -542,7 +542,7 @@ namespace KScriptWin
                 int index = mUtil.indexOfArray(variable.Key);
                 if (0 <= index) {
                     if (variable.Value.mType != TokenType.STRING)
-                        arrayData[index] = ylib.doubleParse(variable.Value.mValue);
+                        arrayData[index] = ylib.doubleParse(variable.Value.mValue.Trim('\"'));
                 }
             }
             return arrayData.ToList();
@@ -605,14 +605,14 @@ namespace KScriptWin
                 //  1次元配列
                 for (int j = 0; j <= maxCol; j++) {
                     string name = $"{arrayName}[{j}]";
-                    ret[0, j] = ylib.doubleParse(getVariable(name).mValue);
+                    ret[0, j] = ylib.doubleParse(getVariable(name).mValue.Trim('\"'));
                 }
             } else if (no == 2) {
                 //  2次元配列
                 for (int i = 0; i <= maxRow; i++) {
                     for (int j = 0; j <= maxCol; j++) {
                         string name = $"{arrayName}[{i},{j}]";
-                        ret[i, j] = ylib.doubleParse(getVariable(name).mValue);
+                        ret[i, j] = ylib.doubleParse(getVariable(name).mValue.Trim('\"'));
                     }
                 }
             }
@@ -688,6 +688,7 @@ namespace KScriptWin
             if (src == null || dest == null) return;
             int dp = dest.mValue.IndexOf("[]");
             if (dp < 0) return;
+            remove(dest);
             string destName = dest.mValue.Substring(0, dp);
             for (int i = 0; i < src.Length; i++) {
                 Token key = new Token($"{destName}[{i}]", TokenType.VARIABLE);
@@ -705,6 +706,7 @@ namespace KScriptWin
             if (src == null || dest == null) return;
             int dp = dest.mValue.IndexOf("[,]");
             if (dp < 0) return;
+            remove(dest);
             string destName = dest.mValue.Substring(0, dp);
             string srcName = src[0, 0].mValue;
             for (int i = 0; i < src.GetLength(0); i++) {
@@ -725,6 +727,7 @@ namespace KScriptWin
             if (src == null || dest == null) return;
             int dp = dest.mValue.IndexOf("[]");
             if (dp < 0) return;
+            remove(dest);
             string destName = dest.mValue.Substring(0, dp);
             for (int i = 0; i < src.Length; i++) {
                 Token key = new Token($"{destName}[{i}]", TokenType.VARIABLE);
@@ -742,6 +745,7 @@ namespace KScriptWin
             if (src == null || dest == null) return;
             int dp = dest.mValue.IndexOf("[]");
             if (dp < 0) return;
+            remove(dest);
             string destName = dest.mValue.Substring(0, dp);
             for (int i = 0; i < src.Length; i++) {
                 Token key = new Token($"{destName}[{i}]", TokenType.VARIABLE);
@@ -759,6 +763,7 @@ namespace KScriptWin
             if (src == null || dest == null) return;
             int dp = dest.mValue.IndexOf("[,]");
             if (dp < 0) return;
+            remove(dest);
             string destName = dest.mValue.Substring(0, dp);
             for (int i = 0; i < src.GetLength(0); i++) {
                 for (int j = 0; j < src.GetLength(1); j++) {
@@ -779,6 +784,7 @@ namespace KScriptWin
             int dp = dest.mValue.IndexOf("[,]");
             if (dp < 0) return;
             string destName = dest.mValue.Substring(0, dp);
+            remove(dest);
             for (int i = 0; i < src.GetLength(0); i++) {
                 for (int j = 0; j < src.GetLength(1); j++) {
                     Token key = new Token($"{destName}[{i},{j}]", TokenType.VARIABLE);
@@ -797,6 +803,7 @@ namespace KScriptWin
             if (src == null || dest == null) return;
             int dp = dest.mValue.IndexOf("[,,]");
             if (dp < 0) return;
+            remove(dest);
             string destName = dest.mValue.Substring(0, dp);
             for (int i = 0; i < src.GetLength(0); i++) {
                 for (int j = 0; j < src.GetLength(1); j++) {
@@ -820,7 +827,7 @@ namespace KScriptWin
             List<double> doubleList = new List<double>();
             List<string> arrayNameList = getArrayNameList(arg);
             foreach (var name in arrayNameList)
-                doubleList.Add(ylib.doubleParse(getVariable(name).mValue));
+                doubleList.Add(ylib.doubleParse(getVariable(name).mValue.Trim('\"')));
             return doubleList;
         }
 
@@ -834,7 +841,7 @@ namespace KScriptWin
             List<string> stringList = new List<string>();
             List<string> arrayNameList = getArrayNameList(arg);
             foreach (var name in arrayNameList)
-                stringList.Add(getVariable(name).mValue);
+                stringList.Add(getVariable(name).getValue());
             return stringList;
         }
 
@@ -876,7 +883,7 @@ namespace KScriptWin
                 for (int i = 0; i < args.Count - 1; i += 2) {
                     if (getArrayOder(args[i]) == 0 && getArrayOder(args[i + 1]) == 0) {
                         if (getVariable(args[i]).mType == TokenType.LITERAL && getVariable(args[i + 1]).mType == TokenType.LITERAL) {
-                            PointD p = new PointD(ylib.doubleParse(args[i].mValue), ylib.doubleParse(args[i + 1].mValue));
+                            PointD p = new PointD(ylib.doubleParse(args[i].mValue.Trim('\"')), ylib.doubleParse(args[i + 1].mValue.Trim('\"')));
                             pointList.Add(p);
                         }
                     }
@@ -897,7 +904,7 @@ namespace KScriptWin
             for (int i = 0; i < args.Count; i++) {
                 if (getArrayOder(args[i]) == 0) {
                     if (getVariable(args[i]).mType == TokenType.LITERAL)
-                        doubleList.Add(ylib.doubleParse(args[i].mValue));
+                        doubleList.Add(ylib.doubleParse(args[i].mValue.Trim('\"')));
                 }
             }
             return doubleList;
@@ -950,7 +957,7 @@ namespace KScriptWin
                 } else if (i < args.Count - 1 && getArrayOder(args[i]) == 0 && getArrayOder(args[i + 1]) == 0) {
                     if (getVariable(args[i]).mType == TokenType.LITERAL && getVariable(args[i + 1]).mType == TokenType.LITERAL) {
                         //  x0,y0,x1,y1... → List<PointD>
-                        PointD p = new PointD(ylib.doubleParse(args[i].mValue), ylib.doubleParse(args[i + 1].mValue));
+                        PointD p = new PointD(ylib.doubleParse(args[i].mValue.Trim('\"')), ylib.doubleParse(args[i + 1].mValue.Trim('\"')));
                         pointList.Add(p);
                         i++;
                     }
@@ -984,7 +991,7 @@ namespace KScriptWin
         {
             if (getArrayOder(arg) == 0) {
                 if (getVariable(arg).mType == TokenType.LITERAL)
-                    return ylib.doubleParse(arg.mValue);
+                    return ylib.doubleParse(arg.mValue.Trim('\"'));
             }
             return 0;
         }
@@ -999,13 +1006,13 @@ namespace KScriptWin
             List<double> doubleList = new List<double>();
             int order = getArrayOder(arg);
             if (order == 0 && getVariable(arg).mType == TokenType.LITERAL) {
-                doubleList.Add(ylib.doubleParse(arg.mValue));
+                doubleList.Add(ylib.doubleParse(arg.mValue.Trim('\"')));
             } else if (0 < order) {
                 List<string> arrayNameList = getArrayNameList(arg);
                 foreach (string arrayName in arrayNameList) {
                     Token value = getVariable(arrayName);
                     if (value.mType == TokenType.LITERAL)
-                        doubleList.Add(ylib.doubleParse(value.mValue));
+                        doubleList.Add(ylib.doubleParse(value.mValue.Trim('\"')));
                 }
             }
             return doubleList;
@@ -1061,7 +1068,7 @@ namespace KScriptWin
         {
             Dictionary<string, Token> arrayList = getVariables(arg);
             foreach (var variable in arrayList) {
-                var value = ylib.doubleParse(variable.Value.mValue);
+                var value = ylib.doubleParse(variable.Value.mValue.Trim('\"'));
                 setVariable(variable.Key, new Token((value + v).ToString(), TokenType.LITERAL));
             }
         }
@@ -1074,7 +1081,7 @@ namespace KScriptWin
         public void addArrayValue(List<string> arrayNameList, double v)
         {
             foreach (var arrayName in arrayNameList) {
-                var value = ylib.doubleParse(getVariable(arrayName).mValue);
+                var value = ylib.doubleParse(getVariable(arrayName).mValue.Trim('\"'));
                 setVariable(arrayName, new Token((value + v).ToString(), TokenType.LITERAL));
             }
         }
@@ -1089,7 +1096,7 @@ namespace KScriptWin
         {
             Dictionary<string, Token> arrayList = getVariables(arg);
             foreach (var variable in arrayList) {
-                var value = ylib.doubleParse(variable.Value.mValue);
+                var value = ylib.doubleParse(variable.Value.mValue.Trim('\"'));
                 setVariable(variable.Key, new Token((value * v).ToString(), TokenType.LITERAL));
             }
         }
@@ -1102,7 +1109,7 @@ namespace KScriptWin
         public void multiArrayValue(List<string> arrayNameList, double v)
         {
             foreach (var arrayName in arrayNameList) {
-                var value = ylib.doubleParse(getVariable(arrayName).mValue);
+                var value = ylib.doubleParse(getVariable(arrayName).mValue.Trim('\"'));
                 setVariable(arrayName, new Token((value * v).ToString(), TokenType.LITERAL));
             }
         }

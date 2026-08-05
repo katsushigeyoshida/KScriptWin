@@ -9,6 +9,9 @@ namespace KScriptWin
         public static string[] mFuncNames = new string[] {
             "file.fileExists(path); ファイルの存在確認",
             "file.dirExists(path); ディレクトリの存在確認",
+            "file.getCurrentDirectory(); カレントディレクトリの取得",
+            "file.setCurrentDirectory(Directory); カレントディレクトリの設定",
+            "file.getScriptPath(); 実行中のスクリプトのパスの取得",
             "file.makeDir(dir); ディレクトリの作成",
             "file.copy(src,dest); ファイルのコピー",
             "file.move(path,dir); ファイルの移動",
@@ -33,6 +36,8 @@ namespace KScriptWin
         private KParse mParse;
         private Util mUtil = new Util();
         private Variable mVar;
+
+        public string mScriptPath;
 
         private YLib ylib = new YLib();
 
@@ -61,6 +66,9 @@ namespace KScriptWin
                 case "file.fileExists": return fileExists(args);
                 case "file.dirExists": return dirExists(args);
                 case "file.makeDir": return makeDir(args);
+                case "file.getCurrentDirectory": return getCurrentDirectory();
+                case "file.setCurrentDirectory": setCurrentDirectory(args); break;
+                case "file.getScriptPath": return getScriptPath();
                 case "file.copy": return copy(args);
                 case "file.move": return move(args);
                 case "file.rename": return rename(args);
@@ -115,6 +123,36 @@ namespace KScriptWin
                     return new Token("0", TokenType.LITERAL);
             }
             return new Token("", TokenType.EMPTY);
+        }
+
+        /// <summary>
+        /// カレントディレクトリの取得
+        /// </summary>
+        /// <returns></returns>
+        private Token getCurrentDirectory()
+        {
+            return new Token(Directory.GetCurrentDirectory(), TokenType.STRING);
+        }
+
+        /// <summary>
+        /// カレントディレクトリの設定
+        /// </summary>
+        /// <param name="args">ディレクトリ名</param>
+        /// <returns></returns>
+        private Token setCurrentDirectory(List<Token> args)
+        {
+            if (0 < args.Count)
+                Directory.SetCurrentDirectory(args[0].getValue());
+            return new Token("", TokenType.EMPTY);
+        }
+
+        /// <summary>
+        /// スクリプトのパス
+        /// </summary>
+        /// <returns></returns>
+        private Token getScriptPath()
+        {
+            return new Token(mScriptPath, TokenType.STRING);
         }
 
         /// <summary>

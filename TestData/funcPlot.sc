@@ -3,17 +3,17 @@
 //	2次方程式の解
 g_a = 1; g_b = 0; g_c = -1;
 xmin = -2; xmax = 2;
-y[] = solve.quadraticEquation(g_a, g_b, g_c);
+y[] = math.quadraticEquation(g_a, g_b, g_c);
 
 //	3次方程式の解
 //g_a = 1; g_b = 0; g_c = -1; g_d = 0;
 //xmin = -1.7; xmax = 1.7;
-//y[] = solve.qubicEquation(g_a, g_b, g_c, g_d);
+//y[] = math.qubicEquation(g_a, g_b, g_c, g_d);
 
 //	4次方程式の解
 //g_a = 2; g_b = 3; g_c = -4; g_d = -1.2; g_e = 2;
 //xmin = -1; xmax = 0.5;
-//y[] = solve.quarticEquation(g_a, g_b, g_c, g_d, g_e);
+//y[] = math.quarticEquation(g_a, g_b, g_c, g_d, g_e);
 
 print("方程式の解 : ");
 for (i = 0; i < array.count(y[]); i++)

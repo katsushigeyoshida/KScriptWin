@@ -68,8 +68,11 @@ namespace KScriptWin
         /// <param name="type">種別</param>
         public Token(string value, TokenType type)
         {
-            mValue = value;     //  データの値
-            mType = type;       //  データの種類
+            if (type == TokenType.STRING && value != null && 0 < value.Length && value[0] != '\"')
+                mValue = "\"" + value + "\"";   //  STRINGの場合
+            else
+                mValue = value;                 //  データの値
+            mType = type;                       //  データの種類
         }
 
         /// <summary>
