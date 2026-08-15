@@ -9,20 +9,13 @@ namespace KScriptWin
     {
         public static string[] mFuncNames = new string[] {
             "array.contains(c[2]); 配列の有無(0:なし 1:あり)",
-            "array.count(a[]); 1次元配列のサイズ",
-            "array.count(a[,]); 2次元配列のサイズ",
-            "array.count(a[1,]); 2次元配列1列目のサイズ",
-            "array.clear(a[]); 配列クリア",
-            "array.remove(a[]); 配列要素を範囲指定で削除",
+            "array.count(a[]); 配列のサイズ(arg=a[]/b[,]/b[n,])/b[,m]...)",
+            "array.remove(a[]); 配列要素を範囲指定で削除(arg=a[n]/a[]/b[,]/b[n,]/b[,m]...)",
             "array.squeeze(a[]); 配列の未使用データを削除圧縮",
-            "array.sort(a[]); 配列のソート",
-            "array.sort(a[,n]); 配列をn列でソート",
-            "array.reverse(a[]); 配列の逆順",
-            "array.reverse(a[,]); 配列の行を逆順",
-            "array.reverse(a[,],1); 配列の列を逆順",
+            "array.sort(a[]); 配列のソート(arg=a[]/b[,]/b[n,])/b[,m]...)",
+            "array.reverse(a[]); 配列の逆順(arg=a[]/b[,]/b[n,])/b[,m]...)",
             "array.copy(a[],start,end); 配列からデータを抽出する(b[]=array.copy(a[],start,end))",
             "array.concat(a[],b[]); 配列同士の結合c[]=array.add(a[],b[])",
-            "array.concat(a[,],b[,]); 配列同士の結合c[,]=array.add(a[,],b[,])",
             "array.append(a[],v); 配列に値を追加",
             "array.add(a[],val); 配列に値を足す",
             "array.sub(a[],val); 配列に値を引く",
@@ -154,39 +147,7 @@ namespace KScriptWin
         /// <param name="args">配列名</param>
         public void sort(List<Token> args)
         {
-            (string arrayName, int no) = mUtil.getArrayName(args[0]);
-            if (no == 1) {
-                //  1次元配列
-                if (mVar.isStringArray(args[0])) {
-                    //  文字列のソート
-                    string[]? strArray = mVar.cnvListString(args[0]).ToArray();
-                    Array.Sort(strArray);
-                    clear(args);
-                    mVar.setReturnArray(strArray, args[0]);
-                } else {
-                    //  実数のソート
-                    double[]? doubleArray = mVar.cnvListDouble(args[0]).ToArray();
-                    Array.Sort(doubleArray);
-                    clear(args);
-                    mVar.setReturnArray(doubleArray, args[0]);
-                }
-            } else if (no == 2) {
-                //  2次元配列
-                (string name, string row, string col) = mUtil.getArgArray2(args[0].mValue);
-                string outname = name + "[,]";
-                int n = col == "" ? 0 : ylib.intParse(col);
-                if (mVar.isStringArray(args[0])) {
-                    string[,] stringArray = mVar.cnvArrayString2(args[0]);
-                    stringArray = ylib.stringArray2Sort(stringArray, n);
-                    clear(args);
-                    mVar.setReturnArray(stringArray, new Token(outname));
-                } else {
-                    double[,] doubleArray = mVar.cnvArrayDouble2(args[0]);
-                    doubleArray = ylib.doubleArray2Sort(doubleArray, n);
-                    clear(args);
-                    mVar.setReturnArray(doubleArray, new Token(outname));
-                }
-            }
+            mVar.sort(args[0]);
         }
 
         /// <summary>
@@ -196,44 +157,7 @@ namespace KScriptWin
         /// <param name="args">配列名[,colReverse]</param>
         public void reverse(List<Token> args)
         {
-            (string arrayName, int no) = mUtil.getArrayName(args[0]);
-            bool colRevers = false;
-            if (1 < args.Count)
-                colRevers = args[1].mValue == "1";
-            if (no == 1) {
-                //  1次元配列
-                int maxcol = mVar.getMaxArray(arrayName);
-                if (maxcol <= 0) return;
-                Token[] tokens = new Token[maxcol + 1];
-                arrayName += "[";
-                foreach (var variable in mVar.getVariableList(arrayName)) {
-                    if (0 <= variable.Key.IndexOf(arrayName)) {
-                        (string name, int col) = mUtil.getArrayNo(variable.Key);
-                        tokens[maxcol - col] = variable.Value;
-                    }
-                }
-                clear(args);
-                mVar.setReturnArray(tokens, args[0]);
-            } else if (no == 2) {
-                //  2次元配列
-                Token[,] arrayData = mVar.cnvArrayToken2(args[0]);
-                Token[,] tokens = new Token[arrayData.GetLength(0), arrayData.GetLength(1)];
-                if (colRevers) {
-                    for (int i = 0; i < arrayData.GetLength(0); i++) {
-                        for (int j = 0; j < arrayData.GetLength(1); j++) {
-                            tokens[i, tokens.GetLength(1) - j - 1] = arrayData[i, j].copy();
-                        }
-                    }
-                } else {
-                    for (int i = 0; i < arrayData.GetLength(0); i++) {
-                        for (int j = 0; j < arrayData.GetLength(1); j++) {
-                            tokens[tokens.GetLength(0) - i - 1, j] = arrayData[i, j].copy();
-                        }
-                    }
-                }
-                clear(args);
-                mVar.setReturnArray(tokens, args[0]);
-            }
+            mVar.reverse(args[0]);
         }
 
 
@@ -323,15 +247,6 @@ namespace KScriptWin
                 //  1次元配列
                 mVar.appendArray(args[0], v);
             }
-        }
-
-        /// <summary>
-        /// 配列に配列を追加 array.extend(a[], b[]);
-        /// </summary>
-        /// <param name="args"></param>
-        private void extend(List<Token> args)
-        {
-
         }
 
         /// <summary>

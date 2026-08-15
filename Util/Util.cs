@@ -20,52 +20,7 @@ namespace KScriptWin
         private KLexer mLexer = new KLexer();                    //  字句解析
         private YLib ylib = new YLib();
 
-        /// <summary>
-        /// 配列名をソートする
-        /// </summary>
-        /// <param name="arrayNameList">配列名リスト</param>
-        /// <returns>配列名リスト</returns>
-        public List<String> arrayNameSort(List<string> arrayNameList)
-        {
-            arrayNameList.Sort((x,y) => arrayNameCompare(x, y));
-            return arrayNameList;
-        }
-
-        /// <summary>
-        /// 配列のインデックスの比較
-        /// </summary>
-        /// <param name="x">配列名x</param>
-        /// <param name="y">配列名y</param>
-        /// <returns>比較結果</returns>
-        private int arrayNameCompare(string x, string y)
-        {
-            List<int> xorder = arrayIndexNoList(x);
-            List<int> yorder = arrayIndexNoList(y);
-            for (int i = 0; i < xorder.Count; i++) {
-                int diff = xorder[i] - yorder[i];
-                if (diff != 0)
-                    return diff;
-            }
-            return 0;
-        }
-
-        /// <summary>
-        /// 配列名からインデックスの抽出
-        /// </summary>
-        /// <param name="arrayName">配列名</param>
-        /// <returns>インデックスリスト</returns>
-        private List<int> arrayIndexNoList(string arrayName)
-        {
-            List<int> orderNo = new List<int>();
-            int sp = arrayName.IndexOf('[');
-            int ep = arrayName.IndexOf(']');
-            if (0 < sp && 0 < ep) {
-                string[] splitNo = arrayName.Substring(sp + 1, ep - sp - 1).Split(',');
-                for (int i = 0; i < splitNo.Length; i++)
-                    orderNo.Add(ylib.intParse(splitNo[i]));
-            }
-            return orderNo;
-        }
+ 
 
         /// <summary>
         /// 配列変数を分解する(abc[m,n] → abc [ m , n ]  , abc[,n] → abc [ "" , n ])
@@ -235,5 +190,103 @@ namespace KScriptWin
                 col = splitName[3].mValue;
             return (name, row, col);
         }
+
+        /// <summary>
+        /// 配列変数を分解する (a[b[n,0],0] →  a[ b[n,0] , 0 ]
+        /// </summary>
+        /// <param name="text">配列変数文字列</param>
+        /// <returns>分解リスト</returns>
+        public List<string> splitArrayVariable(string text)
+        {
+            List<string> extractList = new List<string>();
+            int pos = 0;
+            int count = 0;
+            string buf = "";
+            while (pos < text.Length) {
+                if (text[pos] == '[') {
+                    count++;
+                    buf += text[pos++];
+                    extractList.Add(buf);
+                    buf = "";
+                    while (pos < text.Length) {
+                        if (text[pos] == ']') {
+                            count--;
+                            if (count == 0) {
+                                if (0 < buf.Length)
+                                    extractList.Add(buf);
+                                extractList.Add(text[pos++].ToString());
+                                buf = "";
+                                break;
+                            } else {
+                                buf += text[pos++];
+                            }
+                        } else if (1 == count && text[pos] == ',') {
+                            if (0 < buf.Length)
+                                extractList.Add(buf);
+                            extractList.Add(text[pos++].ToString());
+                            buf = "";
+                        } else if (text[pos] == '[') {
+                            count++;
+                            buf += text[pos++];
+                        } else if (text[pos] == ' ' || text[pos] == '\n' || text[pos] == '\r') {
+                            pos++;
+                        } else {
+                            buf += text[pos++];
+                        }
+                    }
+                } else if (text[pos] == ',' || text[pos] == ']'
+                     || text[pos] == '{' || text[pos] == '}') {
+                    if (0 < buf.Length)
+                        extractList.Add(buf);
+                    extractList.Add(text[pos++].ToString());
+                    buf = "";
+                } else if (text[pos] == '"') {
+                    buf += text[pos++];
+                    while (pos < text.Length && text[pos] != '"') {
+                        buf += text[pos++];
+                    }
+                } else if (text[pos] == ' ' || text[pos] == '\t'
+                    || text[pos] == '\n' || text[pos] == '\r') {
+                    pos++;
+                } else {
+                    buf += text[pos++];
+                }
+            }
+            if (0 < buf.Length)
+                extractList.Add(buf);
+            return extractList;
+        }
+
+        /// <summary>
+        /// 文字列が配列変数かの確認 ([]の対応があっていないものは配列とはみなさない)
+        /// </summary>
+        /// <param name="vari">変数文字列</param>
+        /// <returns>配列変数</returns>
+        public bool isArrayVariable(string vari)
+        {
+            int sc = 0, ec = 0;
+            for (int i = 0; i < vari.Length; i++) {
+                if (vari[i] == '[') sc++;
+                if (vari[i] == ']') ec++;
+            }
+            if (0 < sc && sc == ec)
+                return true;
+            return false;
+        }
+
+        /// <summary>
+        /// デバッグ用トークンリストの文字列化
+        /// </summary>
+        /// <param name="tokens">トークンリスト</param>
+        /// <returns>文字列</returns>
+        public string tokensString(List<Token> tokens)
+        {
+            string buf = "";
+            foreach (var token in tokens)
+                buf += token.mValue + " ";
+            buf.Trim();
+            return buf;
+        }
+
     }
 }

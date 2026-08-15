@@ -327,7 +327,7 @@ namespace KScriptWin
                 } else if (tokens[0].mValue == "#include") {
                     return includeStatemant(tokens);
                 } else {
-                    outputString($"Error: not found statement [{tokensString(tokens)}]\n");
+                    outputString($"Error: not found statement [{mUtil.tokensString(tokens)}]\n");
                     return RETURNTYPE.ERROR;
                 }
             } else if (tokens[0].mType == TokenType.FUNCTION) {
@@ -335,7 +335,7 @@ namespace KScriptWin
             } else if (tokens[0].mType == TokenType.COMMENT) {
                 System.Diagnostics.Debug.WriteLine($"Comment: {tokens[0].mValue} ");
             } else {
-                outputString($"Error: not found statement [{tokensString(tokens)}]\n");
+                outputString($"Error: not found statement [{mUtil.tokensString(tokens)}]\n");
                 return RETURNTYPE.ERROR;
             }
             return RETURNTYPE.NORMAL;
@@ -396,7 +396,7 @@ namespace KScriptWin
                         if (tokens[1].mValue[1] == '=') {
                             token = express(tokens, 2);
                             if (token == null) {
-                                outputString($"Error: {tokensString(tokens)}\n");
+                                outputString($"Error: {mUtil.tokensString(tokens)}\n");
                                 return RETURNTYPE.ERROR;
                             }
                         }
@@ -428,7 +428,7 @@ namespace KScriptWin
                     return RETURNTYPE.NORMAL;
                 }
             }
-            outputString($"Error: {tokensString(tokens)}\n");
+            outputString($"Error: {mUtil.tokensString(tokens)}\n");
             return RETURNTYPE.ERROR;
         }
 
@@ -1256,7 +1256,7 @@ namespace KScriptWin
         /// <returns>変換変数</returns>
         private string convVariable(string array)
         {
-            List<string> arrayList = splitArrayVariable(array);
+            List<string> arrayList = mUtil.splitArrayVariable(array);
             string buf = "";
             foreach (var vari in arrayList) {
                 if (0 <= vari.IndexOf('[') && 0 <= vari.IndexOf(']')) {
@@ -1264,7 +1264,7 @@ namespace KScriptWin
                 } else if (0 <= vari.IndexOf('[') || 0 <= vari.IndexOf(']')
                  || 0 <= vari.IndexOf(',')) {
                     buf += vari;
-                    if (isArrayVariable(buf)) {
+                    if (mUtil.isArrayVariable(buf)) {
                         buf = mVar.getVariable(buf).mValue;
                     }
                 } else if (0 <= vari.IndexOf('{') || 0 <= vari.IndexOf('}')) {
@@ -1274,89 +1274,6 @@ namespace KScriptWin
                 }
             }
             return buf;
-        }
-
-        /// <summary>
-        /// 配列変数を分解する (a[b[n,0],0] →  a[ b[n,0] , 0 ]
-        /// </summary>
-        /// <param name="text">配列変数文字列</param>
-        /// <returns>分解リスト</returns>
-        private List<string> splitArrayVariable(string text)
-        {
-            List<string> extractList = new List<string>();
-            int pos = 0;
-            int count = 0;
-            string buf = "";
-            while (pos < text.Length) {
-                if (text[pos] == '[') {
-                    count++;
-                    buf += text[pos++];
-                    extractList.Add(buf);
-                    buf = "";
-                    while (pos < text.Length) {
-                        if (text[pos] == ']') {
-                            count--;
-                            if (count == 0) {
-                                if (0 < buf.Length)
-                                    extractList.Add(buf);
-                                extractList.Add(text[pos++].ToString());
-                                buf = "";
-                                break;
-                            } else {
-                                buf += text[pos++];
-                            }
-                        } else if (1 == count && text[pos] == ',') {
-                            if (0 < buf.Length)
-                                extractList.Add(buf);
-                            extractList.Add(text[pos++].ToString());
-                            buf = "";
-                        } else if (text[pos] == '[') {
-                            count++;
-                            buf += text[pos++];
-                        } else if (text[pos] == ' ' || text[pos] == '\n' || text[pos] == '\r') {
-                            pos++;
-                        } else {
-                            buf += text[pos++];
-                        }
-                    }
-                } else if (text[pos] == ',' || text[pos] == ']'
-                     || text[pos] == '{' || text[pos] == '}') {
-                    if (0 < buf.Length)
-                        extractList.Add(buf);
-                    extractList.Add(text[pos++].ToString());
-                    buf = "";
-                } else if (text[pos] == '"') {
-                    buf += text[pos++];
-                    while (pos < text.Length && text[pos] != '"') {
-                        buf += text[pos++];
-                    }
-                } else if (text[pos] == ' ' || text[pos] == '\t'
-                    || text[pos] == '\n' || text[pos] == '\r') {
-                    pos++;
-                } else {
-                    buf += text[pos++];
-                }
-            }
-            if (0 < buf.Length)
-                extractList.Add(buf);
-            return extractList;
-        }
-
-        /// <summary>
-        /// 文字列が配列変数かの確認 ([]の対応があっていないものは配列とはみなさない)
-        /// </summary>
-        /// <param name="vari">変数文字列</param>
-        /// <returns>配列変数</returns>
-        private bool isArrayVariable(string vari)
-        {
-            int sc = 0, ec = 0;
-            for (int i = 0; i < vari.Length; i++) {
-                if (vari[i] == '[') sc++;
-                if (vari[i] == ']') ec++;
-            }
-            if (0 < sc && sc == ec)
-                return true;
-            return false;
         }
 
         /// <summary>
@@ -1475,20 +1392,6 @@ namespace KScriptWin
                 tokens.ForEach(p => outputString($"{p.mValue} "));
                 outputString("\n");
             }
-        }
-
-        /// <summary>
-        /// デバッグ用トークンリストの文字列化
-        /// </summary>
-        /// <param name="tokens">トークンリスト</param>
-        /// <returns>文字列</returns>
-        private string tokensString(List<Token> tokens)
-        {
-            string buf = "";
-            foreach (var token in tokens)
-                buf += token.mValue + " ";
-            buf.Trim();
-            return buf;
         }
 
         /// <summary>

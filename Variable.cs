@@ -7,23 +7,26 @@ namespace KScriptWin
     /// 
     /// ===  変数の設定・取得  ===
     /// void setVariable(Token key, Token value = null)     変数の登録(変数名と数値)
-    /// Dictionary<string, Token> getVariables(Token key)   配列変数の抽出(a[],a[,],a[n,])
-    /// List<string>getVariableNameList(Dictionary<string, Token> variables, Token key)     変数登録リストから変数名リストを取得
     /// Token getVariable(Token key)                        変数の値の取得
     /// Token getVariable(string key)                       変数の値の取得
+    /// Dictionary<string, Token> getVariables(Token key)   配列変数の抽出(a[],a[,],a[n,])
     /// Dictionary<string, Token> getVariableList(Token variableName)  変数格納データの取得
     /// Dictionary<string, Token> getVariableList(string variableName) 変数格納データの取得
     /// bool containsVariable(string key)                   変数の存在確認
     /// void removeVariable(string key)                     指定した変数を削除
     /// 
     /// ===  配列  ====
-    /// int getArrayOder(Token var)                         配列変数の次数を求める
+    /// int getArrayOder(Token var)                         配列変数の次数を求める(Index無視)(次数=0 通常の変数,1:1次元配列,2=2次元配列 0> :エラー)
+    /// int getArrayOder2(Token var)                        配列変数の次数を求める(Indexのある次元は次数から除外 a[1,] == 1, a[,] == 2, a[1] = 0..)
     /// int countVariable(string key, string last = "")     指定の文字で始まる変数の数を求める(配列の大きさ)
     /// void clearArray(string key)                         指定の文字で始まる配列を削除
     /// void appendArray(Token arg, double v)               配列に値を追加する a[] = {1,2,3} => {1,2,3,4,v}
     /// List<string> getArrayNameList(Token array)          配列名から配列名リストを作成 (a[] => a[0],a[1]... , a[1,] => a[1,0],a[1,1]... , a[,1] => a[0,1],a[1,1]... )
     /// bool isStringArray(Token arg)                       配列に文字列名があるかの確認
     /// int getMaxArray(string arrayName)                   列の最大インデックスを求める
+    /// void sort(Token arrayName)                          配列の値をソートする
+    /// void reverse(Token arrayName)                       配列の値を逆順にする 
+    /// void squeeze(Token arrayName)                       配列の空きを詰める
     /// 
     /// ===  配列の変換  ===
     /// List<double> cnvListDouble(Token arg)               配列データを実数のリストに変換
@@ -59,6 +62,15 @@ namespace KScriptWin
     /// void multiArrayValue(Token arg, double v)                   配列の値に値を掛ける
     /// void multiArrayValue(List<string> arrayNameList, double v)  配列の値に値を掛ける
     /// 
+    /// ====  内部関数(private)
+    /// void setVariable(string key, Token value = null)            変数の登録(変数名と数値)
+    /// Dictionary<string, Token> getVariables(Dictionary<string, Token> variables, Token key)  配列変数の抽出(a[],a[,],a[n,])
+    /// void removeVariable(string key)                             指定した変数を削除
+    /// int arrayValueCompare(string a, string b)                   数値同士または文字列同士の比較
+    /// List<ArrayName> getArrayList(Token arrayName)               配列をArrayNameで取得しリストを作成
+    /// void setArrayList(List<ArrayName> arrayNameList)            ArrayName配列リストを変数テーブルに再登録
+    /// List<string> arrayNameSort(List<string> arrayNameList)      配列名リストを配列インデックスでソート
+    /// string clearIndexArrayName(string arrayName)                配列名からインデックスを削除した配列名の作成
     /// 
     /// </summary>
     public class Variable
@@ -113,39 +125,6 @@ namespace KScriptWin
         }
 
         /// <summary>
-        /// 配列変数の抽出(a[],a[,],a[n,])
-        /// </summary>
-        /// <param name="key">配列変数名</param>
-        /// <returns>抽出配列変数リスト</returns>
-        public Dictionary<string, Token> getVariables(Token key)
-        {
-            if (0 == key.mValue.IndexOf("g_")) {
-                //  グローバル変数
-                return getVariables(mGlobalVar, key);
-            } else {
-                //  ローカル変数
-                return getVariables(mVariables, key);
-            }
-        }
-
-        /// <summary>
-        /// 配列変数の抽出(a[],a[,],a[n,])
-        /// </summary>
-        /// <param name="variables">変数登録リスト</param>
-        /// <param name="key">配列変数名</param>
-        /// <returns>抽出配列変数リスト</returns>
-        private Dictionary<string, Token> getVariables(Dictionary<string, Token> variables, Token key)
-        {
-            Dictionary<string, Token> varsList = new Dictionary<string, Token>();
-            List<string> arrayName = mUtil.splitArrayName(key.mValue);
-            foreach (var variable in variables) {
-                if (mUtil.arrayNameMatch(arrayName, mUtil.splitArrayName(variable.Key)))
-                    varsList.Add(variable.Key, variable.Value);
-            }
-            return varsList;
-        }
-
-        /// <summary>
         /// 変数の値の取得
         /// </summary>
         /// <param name="key">変数名</param>
@@ -177,6 +156,39 @@ namespace KScriptWin
                 return new Token(key, TokenType.LITERAL);
             else
                 return new Token(key, TokenType.STRING);
+        }
+
+        /// <summary>
+        /// 配列変数の抽出(a[],a[,],a[n,])
+        /// </summary>
+        /// <param name="key">配列変数名</param>
+        /// <returns>抽出配列変数リスト</returns>
+        public Dictionary<string, Token> getVariables(Token key)
+        {
+            if (0 == key.mValue.IndexOf("g_")) {
+                //  グローバル変数
+                return getVariables(mGlobalVar, key);
+            } else {
+                //  ローカル変数
+                return getVariables(mVariables, key);
+            }
+        }
+
+        /// <summary>
+        /// 配列変数の抽出(a[],a[,],a[n,])
+        /// </summary>
+        /// <param name="variables">変数登録リスト</param>
+        /// <param name="key">配列変数名</param>
+        /// <returns>抽出配列変数リスト</returns>
+        private Dictionary<string, Token> getVariables(Dictionary<string, Token> variables, Token key)
+        {
+            Dictionary<string, Token> varsList = new Dictionary<string, Token>();
+            List<string> arrayName = mUtil.splitArrayName(key.mValue);
+            foreach (var variable in variables) {
+                if (mUtil.arrayNameMatch(arrayName, mUtil.splitArrayName(variable.Key)))
+                    varsList.Add(variable.Key, variable.Value);
+            }
+            return varsList;
         }
 
         /// <summary>
@@ -451,19 +463,63 @@ namespace KScriptWin
         }
 
         /// <summary>
+        /// 配列の値をソートする
+        /// </summary>
+        /// <param name="arrayName">配列名</param>
+        public void sort(Token arrayName)
+        {
+            //  配列名と値を取得し、値をソート
+            List<ArrayName> arrayNameList = getArrayList(arrayName);
+            List<string> workList = arrayNameList.ConvertAll(a => a.mValue);
+            workList.Sort((a, b) => arrayValueCompare(a, b));
+            //  ソートした値の設定
+            for (int i = 0; i < arrayNameList.Count; i++)
+                arrayNameList[i].mValue = workList[i];
+            setArrayList(arrayNameList);
+        }
+
+        /// <summary>
+        /// 配列の値を逆順にする
+        /// </summary>
+        /// <param name="arrayName">配列名</param>
+        public void reverse(Token arrayName)
+        {
+            //  配列名と値を取得し、値をソート
+            List<ArrayName> arrayNameList = getArrayList(arrayName);
+            List<string> workList = arrayNameList.ConvertAll(a => a.mValue);
+            //  ソートした値を逆順で設定
+            for (int i = 0; i < arrayNameList.Count; i++)
+                arrayNameList[arrayNameList.Count - 1 - i].mValue = workList[i];
+            setArrayList(arrayNameList);
+        }
+
+
+
+        /// <summary>
+        /// 数値同士または文字列同士の比較
+        /// </summary>
+        /// <param name="a">配列の値</param>
+        /// <param name="b">配列の値</param>
+        /// <returns>比較結果</returns>
+        private int arrayValueCompare(string a, string b)
+        {
+            double av, bv;
+            bool ab = double.TryParse(a, out av);
+            bool bb = double.TryParse(b, out bv);
+            if (ab && bb)
+                return Math.Sign(av - bv);
+            else
+                return a.CompareTo(b);
+        }
+
+        /// <summary>
         /// 配列の空きを詰める
         /// </summary>
         /// <param name="arrayName">配列名</param>
         public void squeeze(Token arrayName)
         {
-            string clearName = clearArrayNameIndex(arrayName.mValue);
-            List<string> nameList = getArrayNameList(new Token(clearName));
-            //  配列データの抽出
-            List<ArrayName> arrayNameList = new();
-            foreach (var name in nameList)
-                arrayNameList.Add(new ArrayName(name, getVariable(name).mValue));
-            //  ソート
-            arrayNameList.Sort((a, b) => a.compareTo(b));
+            string clearName = clearIndexArrayName(arrayName.mValue);
+            List<ArrayName> arrayNameList = getArrayList(new Token(clearName));
             //  squeeze処理
             for (int j = 0; j < arrayNameList[0].mIndexs.Count; j++) {
                 int count = 0;
@@ -484,6 +540,33 @@ namespace KScriptWin
         }
 
         /// <summary>
+        /// 配列をArrayNameで取得しリストを作成
+        /// </summary>
+        /// <param name="arrayName">配列名</param>
+        /// <returns>ArrayName配列リスト</returns>
+        private List<ArrayName> getArrayList(Token arrayName)
+        {
+            List<string> nameList = getArrayNameList(arrayName);
+            //  配列データの抽出
+            List<ArrayName> arrayNameList = new();
+            foreach (var name in nameList)
+                arrayNameList.Add(new ArrayName(name, getVariable(name).mValue));
+            //  配列インデックスでソート
+            arrayNameList.Sort((a, b) => a.compareTo(b));
+            return arrayNameList;
+        }
+
+        /// <summary>
+        /// ArrayName配列リストを変数テーブルに再登録
+        /// </summary>
+        /// <param name="arrayNameList"></param>
+        private void setArrayList(List<ArrayName> arrayNameList)
+        {
+            foreach (var arrayName in arrayNameList)
+                setVariable(arrayName.getArrayName(), new Token(arrayName.mValue));
+        }
+
+        /// <summary>
         /// 配列名リストを配列インデックスでソート
         /// </summary>
         /// <param name="arrayNameList">配列名リスト</param>
@@ -500,23 +583,12 @@ namespace KScriptWin
             return arrayNameList;
         }
 
-        public bool isStringIndex(string arrayName)
-        {
-            List<Token> argList = mLexer.splitArgList(arrayName);
-            for (int i = argList.Count - 1; 0 <= i; i--) {
-                if (argList[i].mType != TokenType.EXPRESS) {
-                    return true;
-                }
-            }
-            return false;
-        }
-
         /// <summary>
         /// 配列名からインデックスを削除した配列名の作成
         /// </summary>
         /// <param name="arrayName">配列名(インデックスあり)</param>
         /// <returns>配列名(インデックスなし)</returns>
-        private string clearArrayNameIndex(string arrayName)
+        private string clearIndexArrayName(string arrayName)
         {
             List<string> splitName = mUtil.splitArrayName(arrayName);
             string buf = splitName[0];
@@ -1113,5 +1185,7 @@ namespace KScriptWin
                 setVariable(arrayName, new Token((value * v).ToString(), TokenType.LITERAL));
             }
         }
+
+
     }
 }
