@@ -37,6 +37,9 @@ KScriptWin はWindows上でKScriptのコード作成とそれを実行する環�
 #### グラフィック表示  
 <img src="Image/MainWindow+Graph.png" width="80%">  
 
+#### データグラフ表示  
+<img src="Image/DataGraph.png" width="80%">  
+
 #### 3Dグラフィック表示
 <img src="Image/3DGraphic.png" width="80%">  
 
