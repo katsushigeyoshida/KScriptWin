@@ -233,7 +233,7 @@ namespace KScriptWin
             } else if (menuItem.Name.CompareTo("editSearchMenu") == 0) {
                 search();
             } else if (menuItem.Name.CompareTo("editReplaceMenu") == 0) {
-
+                replace();
             } else if (menuItem.Name.CompareTo("editToCommentMenu") == 0) {
                 toComment();
             } else if (menuItem.Name.CompareTo("editTab2SpaceMenu") == 0) {
@@ -284,7 +284,7 @@ namespace KScriptWin
                 if (mScript.mControlData.mPause)
                     outMessage("Pause\n");
             } else if (button.Name.CompareTo("btSearch") == 0) {
-                search();
+                search(cbSearchWord.Text);
             } else if (button.Name.CompareTo("btHelp") == 0) {
                 ylib.openUrl(mHelpFile);
             }
@@ -542,13 +542,25 @@ namespace KScriptWin
             }
         }
 
-
         /// <summary>
         /// 検索
         /// </summary>
         private void search()
         {
-            string searchWord = cbSearchWord.Text;
+            InputBox dlg = new InputBox();
+            dlg.Title = "検索";
+            if (dlg.ShowDialog() == true) {
+                cbSearchWord.Text = dlg.mEditText;
+                search(dlg.mEditText);
+            }
+        }
+
+        /// <summary>
+        /// 単語検索
+        /// </summary>
+        /// <param name="searchWord">検索文字列</param>
+        private void search(string searchWord)
+        {
             if (avalonEditor.Text.Length <= mSearchWordIndex)
                 mSearchWordIndex = 0;
             int index = avalonEditor.Text.IndexOf(searchWord, mSearchWordIndex);
@@ -563,6 +575,62 @@ namespace KScriptWin
                 avalonEditor.ScrollToLine(lineCount);
             } else {
                 mSearchWordIndex = 0;
+            }
+        }
+
+        /// <summary>
+        /// 文字列の置き換え
+        /// </summary>
+        private void replace()
+        {
+            InputBox2 dlg = new InputBox2();
+            dlg.Title = "置き換え";
+            dlg.mTitle1 = "検索文字列";
+            dlg.mTitle2 = "置換文字列";
+            if (dlg.ShowDialog() == true)
+                replace(dlg.mEditText1, dlg.mEditText2);
+        }
+
+        /// <summary>
+        /// 文字列の置き換え
+        /// </summary>
+        /// <param name="searchWord">検索文字列</param>
+        /// <param name="replaceWord">置換文字列</param>
+        private void replace(string searchWord, string replaceWord)
+        {
+            bool repeat = true;
+            while(repeat) {
+                if (avalonEditor.Text.Length <= mSearchWordIndex)
+                    mSearchWordIndex = 0;
+                int index = avalonEditor.Text.IndexOf(searchWord, mSearchWordIndex);
+                if (index != -1) {
+                    //  検出
+                    //  選択表示
+                    avalonEditor.Select(index, searchWord.Length);
+                    //  表示外の時スクロール
+                    int lineCount = 0;
+                    for (int i = 0; i < index; i++) {
+                        if (avalonEditor.Text[i] == '\n')
+                            lineCount++;
+                    }
+                    avalonEditor.ScrollToLine(lineCount);
+                    var result = MessageBox.Show("置換しますか?", "確認", MessageBoxButton.YesNoCancel);
+                    if (result == MessageBoxResult.Cancel)
+                        break;
+                    else if (result == MessageBoxResult.Yes) {
+                        //  置換処理
+                        int selSp = avalonEditor.SelectionStart;
+                        avalonEditor.Document.Remove(selSp, searchWord.Length);
+                        avalonEditor.Document.Insert(selSp, replaceWord);
+                    }
+                    //  次の検索開始位置
+                    mSearchWordIndex = index + searchWord.Length;
+                } else {
+                    mSearchWordIndex = 0;
+                    var result = MessageBox.Show("完了しました。最初からやりますか？", "確認", MessageBoxButton.YesNo);
+                    if (result == MessageBoxResult.No)
+                        break;
+                }
             }
         }
 
@@ -748,6 +816,7 @@ namespace KScriptWin
                     case Key.F: search(); break;
                     case Key.N: newScript(); break;
                     case Key.O: selectLoad(); break;
+                    case Key.R: replace(); break;
                     case Key.S: save(); break;
                     case Key.Divide: toComment(); break;
                     case Key.OemQuestion: toComment(); break;
@@ -755,10 +824,10 @@ namespace KScriptWin
                 }
             } else {
                 switch (key) {
-                    case Key.F5: exeute(); break;       //  実行
-                    case Key.F8: snippet(); break;      //  入力候補
-                    case Key.F12: updateSnippetKeyWird(avalonEditor.Text); break;
-                    case Key.Apps: snippet(); break;    //  入力候補
+                    case Key.F5: exeute(); break;                                   //  実行
+                    case Key.F8: snippet(); break;                                  //  入力候補
+                    case Key.F12: updateSnippetKeyWird(avalonEditor.Text); break;   //  入力候補の更新
+                    case Key.Apps: snippet(); break;                                //  入力候補
                     default: return false;;
                 }
             }
@@ -800,8 +869,8 @@ namespace KScriptWin
             (string text, int selectStart) = mSnippet.showDialog(this, avalonEditor.Text, avalonEditor.SelectionStart);
             if (0 <= selectStart) {
                 avalonEditor.Document.Text = text;
-                avalonEditor.Select(selectStart, 0);
             }
+            avalonEditor.Select(selectStart, 0);
         }
 
         /// <summary>

@@ -13,6 +13,7 @@ namespace KScriptWin
             "plot.Disp(); グラフィックデータの再表示",
             "plot.Aspect(1); アスペクト比固定の設定(0(非固定)/1(固定))",
             "plot.Color(\"Blue\"); 要素の色設定",
+            "plot.GetColorName(colorNo); 色番号から色名を取得(0-140)",
             "plot.Fill(1); 塗潰し設定(0:塗潰しなし/1:塗潰しあり",
             "plot.FillColor(\"Blue\"); 塗潰しの色設定",
             "plot.PointType(\"cross\"); 点種の設定(\"dot\", \"cross\", \"plus\", \"box\", \"circle\", \"triangle\")",
@@ -30,10 +31,12 @@ namespace KScriptWin
             "graph.SetSplitArea(m,n); グラフの画面を分割する SetSplitArea(横方向の分割数,縦方向の分割数)",
             "graph.SetUseArea(n); 画面分割したときのグラフの表示位置",
             "graph.SetDataArea(xs,ys,xe,ye); データの表示領域の設定 SetDataArea(xs,ys,xe,ye/ps[],pe[]/plist[,])",
+            "graph.SetStepY(stepSize); Y軸の補助線の間隔設定",
             "graph.GraphType(\"line\"); グラフの種別設定(折れ線\"line\",散布図\"scatter\",棒グラフ\"bar\")",
             "graph.SetColor(\"Blue\"); グラフの線の色設定",
             "graph.FontSize(5); グラフのフォントサイズの設定",
             "graph.SetFillColor(\"Blue\"); 塗潰しの色設定",
+            "graph.SetLegend(Label); 凡例の設定(label=凡例名)",
             "graph.LineType(\"dash\"); 線種の設定(\"solid\", \"dash\", \"center\", \"phantom\")",
             "graph.LineThickness(1); 線の太さ",
             "graph.PointType(\"cross\"); 点種の設定(\"dot\", \"cross\", \"plus\", \"box\", \"circle\", \"triangle\")",
@@ -53,6 +56,8 @@ namespace KScriptWin
         private double mGraphFontSize = 12;             //  文字サイズ
         private bool mAspectFix = true;                 //  アスペクト比固定
         private GraphDraw.GRAPHTYPE mGraphType = GraphDraw.GRAPHTYPE.LINE_GRAPH;    //  グラフの種別
+        public string mLegend = "";                     //  凡例(ラベル)
+        public int mLegendPos = 0;                      //  凡例の位置
         private string mLineColor = "Black";
         private string mLineType = "solid";
         private double mLineThickness = 1;
@@ -68,6 +73,7 @@ namespace KScriptWin
         private int mHeightSplitNo = 1;                 //  Viewの縦分割数
         private int mUseAreaNo = 0;                     //  表示するViewの位置
         private Box mDataDispArea;                      //  データの表示領域
+        private double mStepY = 0;                      //  Y方向のステップサイズ
         public bool mGraphInit = true;                  //  グラフダイヤログの初期化
 
         private KParse mParse;
@@ -99,6 +105,7 @@ namespace KScriptWin
                 case "plot.Disp"          : plotDisp(); break;
                 case "plot.Aspect"        : plotAspect(args); break;
                 case "plot.Color"         : plotColor(args); break;
+                case "plot.GetColorName"  : return getColorName(args);
                 case "plot.Fill"          : plotSetFill(args); break;
                 case "plot.FillColor"     : plotFillColor(args); break;
                 case "plot.PointType"     : plotPointType(args); break;
@@ -117,7 +124,9 @@ namespace KScriptWin
                 case "graph.SetUseArea"   : setUseArea(args); break;
                 case "graph.SetDataArea"  : setDataArea(args); break;
                 case "graph.GraphType"    : setGraphType(args); break;
+                case "graph.SetStepY"     : setStepY(args); break;
                 case "graph.SetColor"     : setLineColor(args); break;
+                case "graph.SetLegend"    : setLegend(args); break;  
                 case "graph.FontSize"     : graphFontSize(args); break;
                 case "graph.LineType"     : setLineType(args); break;
                 case "graph.LineThickness": setLineThickness(args); break;
@@ -182,6 +191,17 @@ namespace KScriptWin
         {
             string colorName = ylib.stripBracketString(args[0].mValue, '"');
             mGraph.setColor(colorName);
+        }
+
+        /// <summary>
+        /// 色番号から色名の取得
+        /// </summary>
+        /// <param name="args">色番号</param>
+        /// <returns>色名</returns>
+        private Token getColorName(List<Token> args)
+        {
+            int colorNo = ylib.intParse(args[0].getValue());
+            return new Token(ylib.getColorName(colorNo), TokenType.STRING);
         }
 
         /// <summary>
@@ -425,21 +445,33 @@ namespace KScriptWin
             mWidthSplitNo = 1;                  //  Viewの横分割数
             mHeightSplitNo = 1;                 //  Viewの縦分割数
             mUseAreaNo = 0;                     //  表示するViewの位置
+            mLegend = "";
+            mStepY = 0;
         }
 
 
         /// <summary>
-        /// グラフデータの設定(X[], Y[][, Title])
-        /// set(x[],y[],title)/set(pl[,],title)
+        /// グラフデータの設定(X[], Y[])
+        /// SetData(x[],y[])/SetData(pl[,])/SetData(y[])
         /// </summary>
         /// <param name="args">引数(x[],y[][,title]</param>
         public void setGraphData(List<Token> args)
         {
             List<PointD> dataList = new();
             List<string> xLabelList = new();
-            if (1 < args.Count) {
+            //  表示データの取得
+            if (args.Count < 1) {
+                return;
+            } else if (args.Count == 1 && mVar.getArrayOder2(args[0]) == 1) {
+                //  Yデータのみ SetData(y[])
+                List<double> ydata = mVar.getDoubleArrayList(args[0]);
+                for (int i = 0; i < ydata.Count && i < ydata.Count; i++)
+                    dataList.Add(new PointD(i, ydata[i]));
+
+            } else if (1 < args.Count) {
+                //  XデータとYデータが別 SetData(x[],y[])
                 if (mVar.getArrayOder2(args[0]) == 1 && mVar.isStringArrayList(args[0])) {
-                    //  X軸データがテキストの場合
+                    //  X軸データ(x[])がテキストの場合
                     xLabelList = mVar.getStringArrayList(args[0]);
                     List<double> xdata = new();
                     for (int i = 0; i < xLabelList.Count; i++)
@@ -451,10 +483,12 @@ namespace KScriptWin
                     dataList = mVar.args2PointList(args);
                 }
             } else {
+                //  XとYデータが一つの配列にある SetData(p[,])
                 dataList = mVar.args2PointList(args);
             }
             if (dataList.Count == 0)
                 return;
+            
             if (mGraphInit) {
                 //  グラフダイヤログの初期化
                 graphInit();
@@ -473,8 +507,13 @@ namespace KScriptWin
             mGraph.mDraw.mXTitle = mXTitle;
             mGraph.mDraw.mYTitle = mYTitle;
 
+            mLegendPos = 0;
             setProperty();
             mGraph.setGraph(dataList, xLabelList);
+
+            mGraph.setDataDispArea(mDataDispArea);
+            mLegend = "";
+            mStepY = 0;
         }
 
         /// <summary>
@@ -485,7 +524,15 @@ namespace KScriptWin
         {
             List<PointD> dataList = new();
             List<string> xLabelList = new();
-            if (1 < args.Count) {
+            if (args.Count < 1) {
+                return;
+            } else if (args.Count == 1 && mVar.getArrayOder2(args[0]) == 1) {
+                //  AddtData(y[])
+                List<double> ydata = mVar.getDoubleArrayList(args[0]);
+                for (int i = 0; i < ydata.Count && i < ydata.Count; i++)
+                    dataList.Add(new PointD(i, ydata[i]));
+
+            } else if (1 < args.Count) {
                 if (mVar.getArrayOder2(args[0]) == 1 && mVar.isStringArrayList(args[0])) {
                     //  X軸データがテキストの場合
                     xLabelList = mVar.getStringArrayList(args[0]);
@@ -503,8 +550,12 @@ namespace KScriptWin
             }
             if (dataList.Count == 0)
                 return;
+
+            mLegendPos++;
             setProperty();
             mGraph.addGraph(dataList, xLabelList);
+
+            mLegend = "";
         }
 
         /// <summary>
@@ -520,7 +571,10 @@ namespace KScriptWin
             mGraph.setPointType(mPointType);
             mGraph.setPointSize(mPointSize);
             mGraph.setFillColor(mFillColor);
+            mGraph.setLegend(mLegend);
+            mGraph.setLegendPos(mLegendPos);
             mGraph.setBarProperty(mBarCount, mBarPosition);
+            mGraph.setStepY(mStepY);
         }
 
         /// <summary>
@@ -586,6 +640,15 @@ namespace KScriptWin
         }
 
         /// <summary>
+        /// Y軸の補助線の間隔設定
+        /// </summary>
+        /// <param name="args"></param>
+        private void setStepY(List<Token> args)
+        {
+            mStepY = ylib.doubleParse(args[0].mValue);
+        }
+
+        /// <summary>
         /// グラフの種類を設定 (setGraphType = scatter(散布図) / line(折れ線) / bar(棒グラフ) )
         /// </summary>
         /// <param name="args"></param>
@@ -605,6 +668,15 @@ namespace KScriptWin
                 case "line": mGraphType = GraphDraw.GRAPHTYPE.LINE_GRAPH; break;
                 case "bar": mGraphType = GraphDraw.GRAPHTYPE.BAR_GRAPH; break;
             }
+        }
+
+        /// <summary>
+        /// 凡例の追加(名前)
+        /// </summary>
+        /// <param name="args"></param>
+        private void setLegend(List<Token> args)
+        {
+            mLegend = args[0].getValue();
         }
 
         /// <summary>

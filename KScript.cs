@@ -561,6 +561,7 @@ namespace KScriptWin
                                     }
                                     buf += mVar.getVariable(name).getValue() + " ";
                                 }
+                                buf = buf.TrimEnd();
                             }
                         } else if (i == tokenList.Count - 1) {
                             //  変数
@@ -1269,6 +1270,8 @@ namespace KScriptWin
                     }
                 } else if (0 <= vari.IndexOf('{') || 0 <= vari.IndexOf('}')) {
                     buf += vari;
+                } else if (0 <= vari.IndexOf("//") || 0 <= vari.IndexOf("/*")) {
+                    //  コメント除去
                 } else {
                     buf += express(new Token(vari)).mValue;
                 }

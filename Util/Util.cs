@@ -4,7 +4,6 @@ namespace KScriptWin
 {
     /// <summary>
     /// ===  配列===
-    /// List<String> arrayNameSort(List<string> arrayNameList)      配列名をソート
     /// List<string> splitArrayName(string arg)                     配列変数を分解する(abc[m,n] → abc [ m , n ]  , abc[,n] → abc [ "" , n ])
     /// bool arrayNameMatch(List<string> a, List<string> b)         配列名のマッチングを行う
     /// int indexOfArray(string array)                              1次元配列名のインデックスを求める

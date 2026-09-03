@@ -33,6 +33,8 @@ namespace KScriptWin
         public string mXTitle = "";                         //  X軸タイトル
         public string mYTitle = "";                         //  Y軸タイトル
         public List<string> mXLabelData = new List<string>();  //  X軸データがテキストのコピー
+        public string mLegend = "";                         //  凡例(ラベルと色)
+        public int mLegendPos = 0;                          //  凡例の位置
 
         private YLib ylib = new YLib();
 
@@ -47,7 +49,7 @@ namespace KScriptWin
             mDataArea = new Box(getXmin(),getYmax(),getXmax(),getYmin());
             mDataDispArea = getGraphArea(mDataArea);
             mDataDispArea.normalize();
-        }
+       }
 
         /// <summary>
         /// データ領域(ステップサイズを考慮)
@@ -165,10 +167,13 @@ namespace KScriptWin
         public int mHeightSplitNo = 1;                  //  Viewの縦分割数
         public int mUseAreaNo = 0;                      //  表示するViewの位置
         public Box mDataDispArea;                       //  データ表示領域
+        public double mStepY = 0;                       //  Y方向のステップサイズ
         public (int count, int pos) mBar = (1, 0);      //  棒の数と位置
         public string mTitle = "Title";
         public string mXTitle = "X-Title";
         public string mYTitle = "Y-Title";
+        public string mLegend = "";                     //  凡例の名勝
+        public int mLegendPos = 0;                      //  凡例の位置
 
         private List<Rect> mViewList;                   //  分割Viewリスト
         private Box mDispArea = new Box();
@@ -178,14 +183,14 @@ namespace KScriptWin
 
 
         //  プロットデータ
-        public List<Entity> mEntityList;
-        public Brush mColor        = Brushes.Black;
-        public LineType mLineType   = LineType.solid;
-        public PointType mPointType = PointType.dot;
-        public bool mFill           = false;
-        public Brush mFillColor     = Brushes.Black;
-        public double mThickness    = 1.0;
-        public double mPointSize    = 1.0;
+        public List<Entity> mEntityList;                //  表示要素リスト
+        public Brush mColor        = Brushes.Black;     //  要素の色
+        public LineType mLineType   = LineType.solid;   //  線種
+        public PointType mPointType = PointType.dot;    //  点種
+        public bool mFill           = false;            //  塗潰しの有無
+        public Brush mFillColor     = Brushes.Black;    //  塗潰し色
+        public double mThickness    = 1.0;              //  線の太さ
+        public double mPointSize    = 1.0;              //  テンの大きさ
 
         private Canvas mCanvas;
         private YWorldDraw ydraw;
@@ -313,6 +318,16 @@ namespace KScriptWin
         public void plotColor(string color)
         {
             mColor = ydraw.getColor(color);
+        }
+
+        /// <summary>
+        /// 色番号から色名を取得
+        /// </summary>
+        /// <param name="colorNo">色番号</param>
+        /// <returns>色名</returns>
+        public string plotGetColor(int colorNo)
+        {
+            return ydraw.getColorName(colorNo);
         }
 
         /// <summary>
@@ -459,6 +474,8 @@ namespace KScriptWin
             graphData.mPointSize  = mPointSize;
             graphData.mFontSize   = mFontSize;
             graphData.mFillColor  = mFillColor;
+            graphData.mLegend     = mLegend;
+            graphData.mLegendPos  = mLegendPos;
             graphData.mBar        = mBar;
             graphData.mTitle      = mTitle;
             graphData.mXTitle     = mXTitle;
@@ -467,7 +484,11 @@ namespace KScriptWin
             if (mDataDispArea != null) {
                 graphData.mDataDispArea = mDataDispArea.toCopy();
                 mDataDispArea = null;
+            }　else if (mGraphData.Count > 0 && mGraphData[mGraphData.Count - 1].mViewNo == graphData.mViewNo) {
+                graphData.mDataDispArea = mGraphData[mGraphData.Count - 1].mDataDispArea.toCopy();
             }
+            if (mStepY != 0)
+                graphData.mStepYsize = mStepY;
 
             mGraphData.Add(graphData);
         }
@@ -492,6 +513,7 @@ namespace KScriptWin
                 ydraw.mClipping = false;
                 ydraw.mFillColor = mBaseBackColor;
                 ydraw.mBrush = Brushes.Black;
+                ydraw.mThickness = 1;
                 ydraw.mAspectFix = false;                       //  アスペクト比保持
                 //  表示位置(View)設定
                 Rect graphView = mViewList[graphData.mViewNo];
@@ -508,6 +530,8 @@ namespace KScriptWin
                 //  補助線と目盛、タイトル表示
                 drawAxis(graphData);
             }
+            //  凡例
+            drawLegend(graphData);
             //  データ表示
             drawGraphData(graphData);
         }
@@ -581,6 +605,7 @@ namespace KScriptWin
                 ydraw.drawWText(graphData.mYTitle, new PointD(graphData.mDispArea.Left, cy), mFontWorldSize, Math.PI / 2, HorizontalAlignment.Center, VerticalAlignment.Top);
 
             //  X軸の補助線と目盛
+            ydraw.mThickness = 1;
             double x = graphData.mDataDispArea.Left;
             bool xLabelType = 0 < graphData.mXLabelData.Count ? true : false;
             ydraw.mBrush = Brushes.Black;
@@ -619,6 +644,27 @@ namespace KScriptWin
                 y += graphData.mStepYsize;
             }
         }
+
+        /// <summary>
+        /// 凡例の表示
+        /// </summary>
+        /// <param name="graphData"></param>
+        private void drawLegend(GraphData graphData)
+        {
+            if (graphData.mLegend == "")
+                return;
+            double x = graphData.mDataDispArea.Left + ydraw.screen2worldXlength(20);
+            double y = graphData.mDataDispArea.Top + ydraw.screen2worldYlength(10); ;
+            double dx = ydraw.screen2worldXlength(20);
+            double dy = ydraw.screen2worldYlength(graphData.mFontSize);
+            y += dy * graphData.mLegendPos * 1.3;
+            ydraw.mThickness = 1;
+            ydraw.mBrush = Brushes.Black;
+            ydraw.mFillColor = graphData.mGraphType == GRAPHTYPE.BAR_GRAPH ? graphData.mFillColor : graphData.mColor;
+            ydraw.drawWRectangle(new PointD(x, y), new PointD(x + dx, y + dy));
+            ydraw.drawWText(graphData.mLegend, new PointD(x + dx * 1.1, y), mFontWorldSize, 0, HorizontalAlignment.Left, VerticalAlignment.Top);
+        }
+
 
         /// <summary>
         /// X軸目盛の作成

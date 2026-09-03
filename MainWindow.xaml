@@ -24,7 +24,7 @@
                         <MenuItem Header="コピー Ctrol+C" Command="Copy" />
                         <MenuItem Header="貼付け Ctrol+V" Command="Paste" />
                         <MenuItem Name="editSearchMenu" Header="検索 Ctrol+F" Click="Menu_Click" />
-                        <MenuItem Name="editReplaceMenu" Header="置換え" Click="Menu_Click" />
+                        <MenuItem Name="editReplaceMenu" Header="置換え Ctrl+R" Click="Menu_Click" />
                         <MenuItem Name="editToCommentMenu" Header="コメント追加/解除 Ctrl+/" Click="Menu_Click" />
                         <MenuItem Name="editTab2SpaceMenu" Header="タブ→スペース" Click="Menu_Click" />
                     </MenuItem>

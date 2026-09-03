@@ -10,7 +10,10 @@ namespace KScriptWin
         public static string[] mFuncNames = new string[] {
             "array.contains(c[2]); 配列の有無(0:なし 1:あり)",
             "array.count(a[]); 配列のサイズ(arg=a[]/b[,]/b[n,])/b[,m]...)",
+            "array.maxIndex(a[]); 配列の最大インデックス値を求める",
+            "array.minIndex(a[]); 配列の最小インデックス値を求める",
             "array.remove(a[]); 配列要素を範囲指定で削除(arg=a[n]/a[]/b[,]/b[n,]/b[,m]...)",
+            "array.insert(a[],n,b[]); 配列要素の挿入(挿入元,挿入位置,挿入データ)(arg=a[]/a[,],n,b[])",
             "array.squeeze(a[]); 配列の未使用データを削除圧縮",
             "array.sort(a[]); 配列のソート(arg=a[]/b[,]/b[n,])/b[,m]...)",
             "array.reverse(a[]); 配列の逆順(arg=a[]/b[,]/b[n,])/b[,m]...)",
@@ -55,23 +58,26 @@ namespace KScriptWin
             List<Token> args = mScript.getFuncArgs(arg.mValue);
             switch (funcName.mValue) {
                 case "array.contains": return contains(arg);
-                case "array.count": return getCount(args);
-                case "array.clear": clear(args); break;
-                case "array.remove": remove(args); break;
-                case "array.squeeze": squeeze(args); break;
-                case "array.sort": sort(args); break;
-                case "array.reverse": reverse(args); break;
-                case "array.copy": return copy(args, ret);
-                case "array.concat": return concat(args, ret);
-                case "array.append": append(args); break;
-                case "array.add": add(args); break;
-                case "array.sub": sub(args); break;
-                case "array.multi": multi(args); break;
-                case "array.divide": divide(args); break;
-                case "array.arrange": return arrange(args, ret);
+                case "array.count"   : return getCount(args);
+                case "array.maxIndex": return maxIndex(args);
+                case "array.minIndex": return minIndex(args);
+                case "array.clear"   : clear(args); break;
+                case "array.remove"  : remove(arg); break;
+                case "array.insert"  : insert(args); break;
+                case "array.squeeze" : squeeze(args); break;
+                case "array.sort"    : sort(args); break;
+                case "array.reverse" : reverse(args); break;
+                case "array.copy"    : return copy(args, ret);
+                case "array.concat"  : return concat(args, ret);
+                case "array.append"  : append(args); break;
+                case "array.add"     : add(args); break;
+                case "array.sub"     : sub(args); break;
+                case "array.multi"   : multi(args); break;
+                case "array.divide"  : divide(args); break;
+                case "array.arrange" : return arrange(args, ret);
                 case "array.linspace": return linspace(args, ret);
-                case "array.create": return create(args, ret);
-                case "array.calc": calcArray(args, ret); break;
+                case "array.create"  : return create(args, ret);
+                case "array.calc"    : calcArray(args, ret); break;
                 default: return new Token("not found func", TokenType.ERROR);
             }
             return new Token("", TokenType.EMPTY);
@@ -106,6 +112,34 @@ namespace KScriptWin
         }
 
         /// <summary>
+        /// 配列のインデックスの最大値を求める
+        /// 2次元以上の場合は上位インデックスから最初に見つかった空白位置のインデックス値の最大値
+        /// </summary>
+        /// <param name="args">配列名</param>
+        /// <returns>最大インデックス</returns>
+        public Token maxIndex(List<Token> args)
+        {
+            if (args.Count == 0)
+                return new Token("", TokenType.EMPTY);
+            int maxInd = mVar.maxIndex(args[0]);
+            return new Token(maxInd.ToString(), TokenType.LITERAL);
+        }
+
+
+        /// 配列のインデックスの最小値を求める
+        /// 2次元以上の場合は上位インデックスから最初に見つかった空白位置のインデックス値の最小値
+        /// </summary>
+        /// <param name="args">配列名</param>
+        /// <returns>最小インデックス</returns>
+        public Token minIndex(List<Token> args)
+        {
+            if (args.Count == 0)
+                return new Token("", TokenType.EMPTY);
+            int maxInd = mVar.minIndex(args[0]);
+            return new Token(maxInd.ToString(), TokenType.LITERAL);
+        }
+
+        /// <summary>
         /// 配列をクリア(内部関数)
         /// </summary>
         /// <param name="args">配列名</param>
@@ -120,11 +154,14 @@ namespace KScriptWin
         /// remove(a[] / a[,] / a[0,] / a[,2] / a[1,2]...)
         /// </summary>
         /// <param name="args">配列名と要素番号</param>
-        public void remove(List<Token> args)
+        public void remove(Token arg)
         {
-            if (args.Count == 0)
-                return ;
-            mVar.remove(args[0]);
+            List<Token> args = mScript.getFuncArgNames(arg.mValue);
+            for (int i = 0; i < args.Count; i++)
+                if (args[i].mType == TokenType.ARRAY) {
+                    var v = mScript.getVariableName(args[i]);
+                    mVar.remove(v);
+                }
             //mVar.squeeze(args[0]);
         }
 
@@ -169,17 +206,17 @@ namespace KScriptWin
         /// <returns></returns>
         public Token copy(List<Token> args, Token ret)
         {
-            List<double> src = new List<double>();
-            List<double> dest = new List<double>();
+            List<Token> src = new List<Token>();
+            List<Token> dest = new List<Token>();
             int start = 0, end = 0;
             if (0 < args.Count && mVar.getArrayOder(args[0]) == 1) {
-                src = mVar.getDoubleArrayList(args[0]);
-                end = src.Count;
+                src = mVar.getTokenArrayList(args[0]);
+                end = src.Count- 1;
                 if (1 < args.Count && mVar.getArrayOder(args[1]) == 0)
                     start = (int)mVar.getDoubleFromArg(args[1]);
                 if (2 < args.Count && mVar.getArrayOder(args[2]) == 0)
                     end = Math.Min((int)mVar.getDoubleFromArg(args[2]), end);
-                dest = src.Skip(start).Take(end - start).ToList();
+                dest = src.Skip(start).Take(end - start + 1).ToList();
                 mVar.setReturnArray(dest.ToArray(), ret);
             } else
                 return new Token("", TokenType.EMPTY);
@@ -199,32 +236,35 @@ namespace KScriptWin
         /// <returns></returns>
         public Token concat(List<Token> args, Token ret)
         {
-            if (args.Count < 2)
+            if (args.Count < 2 || ret == null)
                 return new Token("", TokenType.ERROR);
-            (string arrayA, int noA) = mUtil.getArrayName(new Token(args[0].mValue, TokenType.VARIABLE));
-            (string arrayB, int noB) = mUtil.getArrayName(new Token(args[1].mValue, TokenType.VARIABLE));
-            if (noA == 1 && noB == 1) {
-                //  1次元配列同士
-                List<double> a = mVar.cnvListDouble(args[0]);
-                List<double> b = mVar.cnvListDouble(args[1]);
-                a.AddRange(b);
-                mVar.setReturnArray(a.ToArray(), ret);
-            } else if (noA ==2 && noB == 2) {
-                //  2次元配列同士
-                double[,] a = mVar.cnvArrayDouble2(args[0]);
-                double[,] b = mVar.cnvArrayDouble2(args[1]);
-                double[,] c = new double[a.GetLength(0) + b.GetLength(0), a.GetLength(1)];
-                for (int i = 0; i < a.GetLength(0); i++) {
-                    for (int j = 0; j < a.GetLength(1); j++)
-                        c[i, j] = a[i, j];
+
+            List<List<ArrayName>> arrayList = new List<List<ArrayName>>();
+            int maxIndexSize = 0;
+            for (int i = 0; i < args.Count; i++) {
+                arrayList.Add(mVar.getArrayList(args[i]));
+                int indexSize = arrayList[i].Max(x => x.mIndexs.Count);
+                if (maxIndexSize < indexSize)
+                    maxIndexSize = indexSize;
+            }
+            List<ArrayName> cList = new List<ArrayName>();
+            int indexCount = -1;
+            string preIndexCount = "";
+            string dest = ret.getValue();
+            string destName = dest.Substring(0, dest.IndexOf("["));
+            foreach (List<ArrayName> aList in arrayList) {
+                foreach (ArrayName arrayName in aList) {
+                    List<string> indexs = arrayName.getIndex(maxIndexSize).ToList();
+                    if (preIndexCount != indexs[0]) {
+                        indexCount++;
+                        preIndexCount = indexs[0];
+                    }
+                    indexs[0] = indexCount.ToString();
+                    cList.Add(new ArrayName(destName, indexs, arrayName.mValue));
                 }
-                for (int i = 0; i < b.GetLength(0); i++) {
-                    for (int j = 0; j < Math.Min(a.GetLength(1),b.GetLength(1)); j++)
-                        c[i + a.GetLength(0), j] = b[i, j];
-                }
-                mVar.setReturnArray(c, ret);
-            } else
-                return new Token("", TokenType.EMPTY);
+            }
+            remove(ret);
+            mVar.setArrayList(cList);
 
             //  戻り値の設定
             mVar.setVariable(new Token("return", TokenType.VARIABLE), ret);
@@ -250,12 +290,56 @@ namespace KScriptWin
         }
 
         /// <summary>
-        /// 配列のn番目に値を挿入 array.insert(a[], n, v);
+        /// 配列のn番目に値を挿入(挿入元配列,挿入位置,挿入データ) array.insert(a[]/a[,], n, v/v[]);
         /// </summary>
         /// <param name="args"></param>
         private void insert(List<Token> args)
         {
+            if (args.Count < 3)
+                return;
+            List<ArrayName> arrayList = mVar.getArrayList(args[0]);
+            string destName = arrayList[0].mName;                   //  挿入先データ
+            int indexSize = arrayList.Max(x => x.mIndexs.Count);    //  インデックスの数
+            int n = (int)mVar.getDoubleFromArg(args[1]);            //  挿入位置
+            List<ArrayName> blist = new List<ArrayName>();          //  挿入データ
+            if (mVar.getArrayOder(args[2]) == 0) {
+                //  挿入データが配列以外の変数または定数
+                List<string> indexs = new List<string>();
+                for (int i = 0; i < indexSize; i++)
+                    indexs.Add("0");
+                ArrayName arrayName = new ArrayName(destName, indexs, args[2].mValue);
+                blist.Add(arrayName);
+            } else {
+                //  挿入データが配列
+                blist = mVar.getArrayList(args[2]);
+            }
 
+            List<ArrayName> cList = new List<ArrayName>();
+            int indexCount = -1;
+            string preIndexCount = "*#*";  //    初期データ
+            foreach (ArrayName arrayName in arrayList) {
+                List<string> indexs = arrayName.getIndex(indexSize).ToList();
+                if (preIndexCount != indexs[0]) {
+                    if (indexCount == n - 1) {
+                        string preInsIndexCount = "*#*";
+                        foreach (var array in blist) {
+                            List<string> insIndex = array.getIndex(indexSize).ToList();
+                            if (preInsIndexCount != insIndex[0]) {
+                                indexCount++;
+                                preInsIndexCount = insIndex[0];
+                            }
+                            insIndex[0] = indexCount.ToString();
+                            cList.Add(new ArrayName(destName, insIndex, array.mValue));
+                        }
+                    }
+                    indexCount++;
+                    preIndexCount = indexs[0];
+                }
+                indexs[0] = indexCount.ToString();
+                cList.Add(new ArrayName(destName, indexs, arrayName.mValue));
+            }
+            remove(args[0]);
+            mVar.setArrayList(cList);
         }
 
         /// <summary>

@@ -155,6 +155,33 @@ namespace KScriptWin
         }
 
         /// <summary>
+        /// Y軸の補助線間隔の設定
+        /// </summary>
+        /// <param name="step">間隔</param>
+        public void setStepY(double step)
+        {
+            mDraw.mStepY = step;
+        }
+
+        /// <summary>
+        /// 凡例の設定
+        /// </summary>
+        /// <param name="label"></param>
+        public void setLegend(string label)
+        {
+            mDraw.mLegend = label;
+        }
+
+        /// <summary>
+        /// 凡例の位置
+        /// </summary>
+        /// <param name="pos"></param>
+        public void setLegendPos(int pos)
+        {
+            mDraw.mLegendPos = pos;
+        }
+
+        /// <summary>
         /// 棒グラフの属性設定
         /// </summary>
         /// <param name="count">棒の数</param>
@@ -168,6 +195,7 @@ namespace KScriptWin
         /// Graphモードでデータ設定
         /// </summary>
         /// <param name="dataList">データリスト</param>
+        /// <param name="xLabelList">X軸ラベルデータ</param>
         public void setGraph(List<PointD> dataList, List<string> xLabelList)
         {
             mGraphMode = MODE.GRAPH;
@@ -245,6 +273,16 @@ namespace KScriptWin
         public void setColor(string color)
         {
             mDraw.plotColor(color);
+        }
+
+        /// <summary>
+        /// 色番号から色名を取得
+        /// </summary>
+        /// <param name="colorNo">色番号</param>
+        /// <returns>色名</returns>
+        public string getColor(int colorNo)
+        {
+            return mDraw.plotGetColor(colorNo);
         }
 
         /// <summary>

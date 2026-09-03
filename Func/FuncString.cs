@@ -11,7 +11,7 @@ namespace KScriptWin
             "string.join(sep,str[]); 指定文字列を挟んで連結",
             "string.split(str,sep); 文字列を分割",
             "string.contains(str,val); 文字列内に指定文字列を含むか判定",
-            "string.indexOf(str,val,star,count); 文字列内から指定文字列を検索",
+            "string.indexOf(str,val,start,count); 文字列内から指定文字列を検索",
             "string.toString(form,v); 数値の書式設定",
             "string.format(form,v0,v1...); 数値の書式設定",
             "string.compare(strA,strB); 文字列を比較",
@@ -23,6 +23,7 @@ namespace KScriptWin
             "string.toUpper(str); 大文字化",
             "string.toLower(str); 小文字化",
             "string.trim(str[,trimChars]); 前後の空白削除",
+            "string.toDouble(str); 文字列を数値に変換",
         }; 
         //  共有クラス
         public KScript mScript;
@@ -71,7 +72,7 @@ namespace KScriptWin
                 case "string.toUpper": return toUpper(args);
                 case "string.toLower": return toLower(args);
                 case "string.trim": return trim(args);
-
+                case "string.toDouble": return toDouble(args, ret);
                 default: return new Token("not found func", TokenType.ERROR);
             }
             return new Token("", TokenType.EMPTY);
@@ -446,5 +447,31 @@ namespace KScriptWin
             }
             return new Token("", TokenType.EMPTY);
         }
+
+        /// <summary>
+        /// 文字列を数値に変換
+        /// double = toDouble(str);
+        /// </summary>
+        /// <param name="args"></param>
+        /// <returns></returns>
+        public Token toDouble(List<Token> args, Token ret)
+        {
+            if (0 < args.Count) {
+                int order = mVar.getArrayOder2(args[0]);
+                if (order == 0) {
+                    double x = ylib.doubleParse(args[0].getValue());
+                    return new Token(x.ToString(), TokenType.LITERAL);
+                } else {
+                    List<string> names = mVar.getArrayNameList(args[0]);
+                    foreach (string name in names) {
+                        Token value = mVar.getVariable(name);
+                        double x = ylib.doubleParse(value.getValue());
+                        mVar.setVariable(name, new Token(x.ToString(), TokenType.LITERAL));
+                    }
+                }
+            }
+            return new Token("", TokenType.EMPTY);
+        }
+
     }
 }

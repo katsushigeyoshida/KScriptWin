@@ -6,8 +6,23 @@
     public class ArrayName
     {
         public string mName;                //  配列名(インデックスなし)
-        public List<string> mIndexs;        //  配列のインデックス
+        public List<string> mIndexs;        //  配列のインデックス(上位から下位に積まれる)
         public string mValue;               //  配列の値
+
+
+        /// <summary>
+        /// コンストラクタ
+        /// </summary>
+        /// <param name="arrayName">配列名</param>
+        /// <param name="indexs">インデックスリスト</param>
+        /// <param name="value">値</param>
+        public ArrayName(string arrayName, List<string> indexs, string value)
+        {
+            mName= arrayName;
+            mIndexs = indexs;
+            mValue = value;
+        }
+
 
         /// <summary>
         /// コンストラクタ
@@ -70,6 +85,24 @@
             for (int i = 0; i < mIndexs.Count; i++)
                 indexs.Add(parseInt(mIndexs[i]));
             return indexs;
+        }
+
+        /// <summary>
+        /// インデックスのリストを指定サイズで返す
+        /// </summary>
+        /// <param name="size">インデックスサイズ</param>
+        /// <returns>インデックスリスト</returns>
+        public string[] getIndex(int size = 0)
+        {
+            size = size == 0 ? mIndexs.Count : size;
+            string[] array = new string[size];
+            for (int i = size - 1, j = mIndexs.Count -1; i >= 0; i--, j--) {
+                if (0 <= j)
+                    array[i] = mIndexs[j];
+                else
+                    array[i] = "";
+            }
+            return array;
         }
 
         /// <summary>

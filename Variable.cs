@@ -7,6 +7,7 @@ namespace KScriptWin
     /// 
     /// ===  変数の設定・取得  ===
     /// void setVariable(Token key, Token value = null)     変数の登録(変数名と数値)
+    /// void setVariable(string key, Token value = null)    変数の登録(変数名と数値)
     /// Token getVariable(Token key)                        変数の値の取得
     /// Token getVariable(string key)                       変数の値の取得
     /// Dictionary<string, Token> getVariables(Token key)   配列変数の抽出(a[],a[,],a[n,])
@@ -45,6 +46,7 @@ namespace KScriptWin
     /// void setReturnArray(double[,,] src, Token dest)     3D配列の戻り値に設定
     /// 
     /// ===  関数の引数を変数に変換
+    /// List<Token> getTokenArrayList(Token arg)            Token配列値の取得 (a[])
     /// List<double> getDoubleArrayList(Token arg)          数配列値の取得 (a[])
     /// List<string> getStringArrayList(Token arg)          文字配列値の取得
     /// List<PointD> args2PointList(List<Token> args)       引数からPointDリストを作成(plist[,]/p0[],p1[].../x0,y0,x1,y1...  → List<PointD>)</PointD>
@@ -105,7 +107,7 @@ namespace KScriptWin
         /// </summary>
         /// <param name="key">変数名</param>
         /// <param name="value">数値/数式(トークン)</param>
-        private void setVariable(string key, Token value = null)
+        public void setVariable(string key, Token value = null)
         {
             if (0 == key.IndexOf("g_")) {
                 //  グローバル変数
@@ -437,29 +439,49 @@ namespace KScriptWin
         }
 
         /// <summary>
-        /// 配列の最大インデックスを求める
+        /// 配列のインデックスの最大値を求める
+        /// 上位インデックスから最初に見つかった空白位置の最大インデックス値を求める
         /// </summary>
-        /// <param name="arrayName">配列名([]を含まない)</param>
-        /// <returns>最大インデックス値</returns>
-        public int getMaxArray(string arrayName)
+        /// <param name="arrayName">配列名</param>
+        /// <returns></returns>
+        public int maxIndex(Token arrayName)
         {
-            int maxCol = 0;
-            if (0 == arrayName.IndexOf("g_")) {
-                //  グローバル変数
-                foreach (var variable in mGlobalVar) {
-                    (string name, int? col) = mUtil.getArrayNo(variable.Key);
-                    if (name == arrayName && col != null)
-                        maxCol = Math.Max(maxCol, (int)col);
-                }
-            } else {
-                //  ローカル変数
-                foreach (var variable in mVariables) {
-                    (string name, int? col) = mUtil.getArrayNo(variable.Key);
-                    if (name == arrayName && col != null)
-                        maxCol = Math.Max(maxCol, (int)col);
-                }
+            List<string> splitName = mUtil.splitArrayName(arrayName.mValue);
+            int n = splitName.IndexOf("");
+            List<string> arrayNames = getArrayNameList(arrayName);
+            if (arrayNames.Count < 1)
+                return 0;
+            int max = int.MinValue;
+            foreach (string name in arrayNames) {
+                List<string> spName = mUtil.splitArrayName(name);
+                int m = ylib.intParse(spName[n]);
+                if (max < m)
+                    max = m;
             }
-            return maxCol;
+            return max;
+        }
+
+        /// <summary>
+        /// 配列のインデックスの最小値を求める
+        /// 上位インデックスから最初に見つかった空白位置の最小インデックス値を求める
+        /// </summary>
+        /// <param name="arrayName">配列名</param>
+        /// <returns></returns>
+        public int minIndex(Token arrayName)
+        {
+            List<string> splitName = mUtil.splitArrayName(arrayName.mValue);
+            int n = splitName.IndexOf("");
+            List<string> arrayNames = getArrayNameList(arrayName);
+            if (arrayNames.Count < 1)
+                return 0;
+            int min = int.MaxValue;
+            foreach (string name in arrayNames) {
+                List<string> spName = mUtil.splitArrayName(name);
+                int m = ylib.intParse(spName[n]);
+                if (min > m)
+                    min = m;
+            }
+            return min;
         }
 
         /// <summary>
@@ -513,24 +535,26 @@ namespace KScriptWin
         }
 
         /// <summary>
-        /// 配列の空きを詰める
+        /// 配列の空きを詰める(配列の次元数に関係なく行う)
         /// </summary>
         /// <param name="arrayName">配列名</param>
         public void squeeze(Token arrayName)
         {
             string clearName = clearIndexArrayName(arrayName.mValue);
+            //  配列名のインデックスでソートした配列名と値の取得
             List<ArrayName> arrayNameList = getArrayList(new Token(clearName));
             //  squeeze処理
+            //  上位のインデックスから詰めていく
             for (int j = 0; j < arrayNameList[0].mIndexs.Count; j++) {
                 int count = 0;
                 for (int i = 0; i < arrayNameList.Count; i++) {
-                    int preIndex = arrayNameList[i].getIntIndex(j);
-                    arrayNameList[i].setIntIndex(j, count);
+                    int preIndex = arrayNameList[i].getIntIndex(j);     //  j桁のインデックス値の取得
+                    arrayNameList[i].setIntIndex(j, count);             //  j桁のインデックス値の設定
                     if (i < arrayNameList.Count - 1 && preIndex != arrayNameList[i + 1].getIntIndex(j))
-                        count++;
+                        count++;                                        //  前のインデックス値と異なればインデックスをインクリメント
                     if (0 < j && i < arrayNameList.Count - 1 &&
                         arrayNameList[i].mIndexs[j - 1] != arrayNameList[i + 1].mIndexs[j - 1])
-                        count = 0;
+                        count = 0;                                      //  上位桁のインデックス値が変わった場合、0からインデックスを開始
                 }
             }
             //  再登録
@@ -544,7 +568,7 @@ namespace KScriptWin
         /// </summary>
         /// <param name="arrayName">配列名</param>
         /// <returns>ArrayName配列リスト</returns>
-        private List<ArrayName> getArrayList(Token arrayName)
+        public List<ArrayName> getArrayList(Token arrayName)
         {
             List<string> nameList = getArrayNameList(arrayName);
             //  配列データの抽出
@@ -560,7 +584,7 @@ namespace KScriptWin
         /// ArrayName配列リストを変数テーブルに再登録
         /// </summary>
         /// <param name="arrayNameList"></param>
-        private void setArrayList(List<ArrayName> arrayNameList)
+        public void setArrayList(List<ArrayName> arrayNameList)
         {
             foreach (var arrayName in arrayNameList)
                 setVariable(arrayName.getArrayName(), new Token(arrayName.mValue));
@@ -890,6 +914,20 @@ namespace KScriptWin
         //  ===  関数の引数を変数に変換
 
         /// <summary>
+        /// 配列のTokenリストを求める
+        /// </summary>
+        /// <param name="arg">配列名</param>
+        /// <returns>配列リスト</returns>
+        public List<Token> getTokenArrayList(Token arg)
+        {
+            List<Token> tokenList = new List<Token>();
+            List<string> arrayNameList = getArrayNameList(arg);
+            foreach (var name in arrayNameList)
+                tokenList.Add(getVariable(name));
+            return tokenList;
+        }
+
+        /// <summary>
         /// 実数配列値の取得 (a[] 
         /// </summary>
         /// <param name="arg">配列名</param>
@@ -1037,7 +1075,6 @@ namespace KScriptWin
             }
             return pointList;
         }
-
 
         /// <summary>
         /// 一引数から文字列を取得
